@@ -19,6 +19,7 @@ urlpatterns = [
     path("api/v1/", include("fees.urls")),
     path("api/v1/", include("attendance.urls")),
     path("api/v1/", include("merchants.urls")),
+    path("api/v1/", include("disputes.urls")),
 ]
 
 if settings.DEBUG:

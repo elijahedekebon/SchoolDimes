@@ -562,3 +562,28 @@ merchant_staff login to its merchant without changing Part 1's `User`.
 | Movement | Debit | Credit | entry_type | reference_id |
 |---|---|---|---|---|
 | Merchant sale | student main | merchant_settlement (merchant, card holder's school) | `pos_purchase` | `pos:<id>` |
+
+## `disputes` — Section H
+
+### `Dispute`
+| Field | Type | Notes |
+|---|---|---|
+| school | FK → School | from the disputed transaction |
+| raised_by | FK → User | guardian |
+| student | FK → Student | |
+| pos_transaction | FK → PosTransaction, null | exactly one of these two (DB check) |
+| ledger_entry | FK → LedgerEntry, null | fee_payment / shortfall_recovery debits |
+| reason_category | choice | `wrong_amount, not_received, unauthorized, duplicate, other` |
+| description | Text | |
+| status | choice | `open, under_review, resolved_refunded, resolved_denied` |
+| resolution_notes | Text | |
+| refund_amount | Decimal | 0 unless refunded |
+| resolved_by, resolved_at | | |
+| created_at, updated_at | | |
+
+DB-unique: one dispute in `open`/`under_review` per `pos_transaction` and per `ledger_entry`.
+
+### Chart of wallets — continued
+| Movement | Debit | Credit | entry_type | reference_id |
+|---|---|---|---|---|
+| Refund | school_settlement or merchant_settlement (whoever received it) | student main | `refund` | `refund:<dispute id>` |

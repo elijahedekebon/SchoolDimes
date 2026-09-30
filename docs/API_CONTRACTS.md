@@ -993,3 +993,51 @@ registered by a school_admin of an approving school
   be approved for the school (`400 reference_invalid`). A parent's override
   may block merchants for their child; resolution unions blocks and
   intersects allow-lists.
+
+### Disputes & refunds (`disputes` app) — Section H
+
+#### `POST /api/v1/disputes/`
+JWT, **a guardian of the student** (students later). Exactly one target:
+```json
+{ "pos_transaction": 88, "reason_category": "wrong_amount", "description": "Only bought one samosa" }
+```
+or `{ "ledger_entry": 512, … }` for a **fee payment or shortfall recovery**
+debit. Canteen and merchant sales are disputed via their `pos_transaction`.
+`reason_category` ∈ `wrong_amount, not_received, unauthorized, duplicate, other`.
+Response `201`:
+```json
+{ "id": 4, "school": 1, "raised_by": 3, "student": 12, "student_name": "Amina Nakato",
+  "pos_transaction": 88, "ledger_entry": null, "reason_category": "wrong_amount",
+  "description": "…", "status": "open", "resolution_notes": "", "refund_amount": "0.00",
+  "original_amount": "3000.00", "refunded_total": "0.00",
+  "resolved_by": null, "resolved_at": null, "created_at": "…", "updated_at": "…" }
+```
+`original_amount` = what was actually debited (for POS: applied + recovered).
+`refunded_total` = the sum of all refunds already granted on this
+transaction, across disputes. Errors: `404` (not your child's transaction),
+`409 dispute_already_open` (one open dispute per transaction, DB-enforced),
+`400 not_disputable` (credits, P2P, deposits, rejected sales),
+`400 target_required`.
+
+#### `GET /api/v1/disputes/`, `GET /api/v1/disputes/{id}/`
+JWT. school_admin: their school's queue; guardians: disputes they raised or
+that concern their children. Filters `?status=`, `?student=`.
+
+#### `POST /api/v1/disputes/{id}/review/`
+JWT, **school_admin of that school**. `open → under_review`. `409 dispute_not_open`.
+
+#### `POST /api/v1/disputes/{id}/resolve/`
+JWT, **school_admin of that school only**: not platform_admin (`403`),
+not canteen/merchant staff. From `open` or `under_review`.
+```json
+{ "outcome": "refund", "refund_amount": "1000", "resolution_notes": "Overcharged" }
+{ "outcome": "deny", "resolution_notes": "CCTV confirms purchase" }
+```
+A refund credits the student's **main** wallet from the wallet that received
+the money (school settlement, or the merchant's settlement wallet for that
+school): `entry_type=refund`, `reference_id=refund:<dispute id>`. Partial
+refunds are allowed; **the sum of refunds on one transaction can never
+exceed `original_amount`** (`422 refund_exceeds_original`, enforced under a
+row lock). `422 refund_source_insufficient` if the receiving wallet no longer
+holds the money. The raiser is notified on every status change
+(`dispute_status_changed`).

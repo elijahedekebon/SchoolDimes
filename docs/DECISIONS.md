@@ -502,3 +502,28 @@ existing behaviour, so it has been left for the product owner to approve
   with the school.
 - merchant_staff users are linked via `MerchantStaff` rather than a new
   column on Part 1's `User`.
+
+### Disputes & refunds (Section H)
+- **Resolvers: that school's school_admin only.** The proposal keeps
+  disputes with the school, so platform_admin can *see* disputes but gets
+  `403` on resolve. No canteen_staff permission was defined in Part 2: the
+  canteen is usually the party being disputed, and letting it adjudicate its
+  own sales is a conflict of interest. A delegated "dispute officer"
+  permission can be added later if schools ask for it.
+- **The refund comes from whoever received the money**: the school's
+  settlement wallet for canteen sales and fees, and the merchant's
+  settlement wallet for that school for merchant sales. It always goes to
+  the student's **main** wallet.
+- **Refund cap**: across all disputes on one transaction, refunds never exceed
+  what was actually debited (`applied_amount + recovered_amount` for POS
+  sales, so an un-recovered shortfall can't be "refunded"). The disputed row
+  is locked during resolution so two admins can't both pass the check.
+- **One open dispute per transaction** is a DB constraint. After resolution a
+  new dispute may be raised (e.g. a denied dispute with new evidence), still
+  under the cap.
+- **Disputable**: POS/merchant sales (via `pos_transaction`), fee payments
+  and shortfall recoveries (via `ledger_entry`). **Not disputable**: P2P (a
+  refund would have to come out of another child's wallet, so that's a
+  pastoral conversation plus a reverse transfer, not a refund), deposits
+  (those go through the aggregator's chargeback process), and rejected sales
+  (no money moved).
