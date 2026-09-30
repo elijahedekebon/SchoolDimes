@@ -264,3 +264,26 @@ the MD5 hasher. Production settings are unchanged.
 `CELERY_TASK_ALWAYS_EAGER=True` runs tasks inline. SMS/push dispatch
 failures never break a money movement: the event stays `pending`, and
 `retry_pending_notifications` (Beat) retries it later.
+
+### Pooled funds (Section B)
+- **Who can do what.** Any parent of the school, or its school_admin, can
+  create a fund and contribute. The **creator or a school_admin** can close
+  it. **Only a school_admin** (or platform_admin, audit-logged) can disburse.
+  Closing is harmless, but disbursing moves shared money, so it needs
+  institutional accountability rather than whichever parent created the fund.
+- **Totals come from the ledger.** `total_contributed`, `balance` and
+  `progress_percent` are recomputed from the fund wallet's ledger entries on
+  every read, so the displayed total cannot drift from the ledger.
+- **Money left in a closed, undisbursed fund stays in the fund wallet**,
+  visible to every parent, until a school_admin disburses it (to the school
+  settlement wallet or out to a phone, with a required description). There
+  is no automatic refund to contributors: that would need one payout per
+  contributor, and some contributions may come from contributors with no
+  phone on file. A per-contributor refund flow is a sensible Part 4 admin
+  feature.
+- A contribution confirmed **after** the fund was closed (the payer approved
+  the prompt late) is still credited and logged, because the payer was
+  charged. It simply increases what is left to disburse.
+- A parent whose children attend several schools must say which school
+  (`school`). The value is validated against the schools derived from their
+  Guardian links, so it is never trusted blindly.

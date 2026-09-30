@@ -363,3 +363,34 @@ updated_at`.
 
 ### `DevicePushToken`
 `user, token (unique), platform (android | ios | web), created_at, last_used_at`.
+
+## `pooled_funds` — Section B
+
+### `PooledFund`
+| Field | Type | Notes |
+|---|---|---|
+| school | FK → School | |
+| title | CharField | |
+| purpose | TextField | |
+| group_label | CharField | class/group, e.g. "P4 Blue" |
+| created_by | FK → User | parent or school_admin |
+| target_amount | Decimal, null | |
+| deadline | Date, null | contributions refused after it |
+| status | choice | `open, closed, disbursed` |
+| wallet | 1:1 → Wallet (`pooled_fund`) | holds the money |
+| created_at, closed_at | DateTime | |
+
+### `PooledFundContribution`
+Created only when the pooled-fund Deposit is **confirmed**.
+`fund, contributor_user (null), contributor (→ payments.Contributor, null),
+amount, deposit (1:1), created_at`.
+
+### `PooledFundDisbursement`
+`fund, amount, destination (school_settlement | external), description,
+payout (1:1 → payments.Payout, null), disbursed_by, created_at`.
+
+### Chart of wallets — continued
+| Movement | Debit | Credit | entry_type | reference_id |
+|---|---|---|---|---|
+| Disbursement to school | pooled_fund | school_settlement | `pooled_fund_disbursement` | `pooled:<fund>:<disbursement>` |
+| External disbursement | pooled_fund | aggregator_clearing | `pooled_fund_disbursement` | `payout:<id>` |

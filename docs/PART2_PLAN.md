@@ -68,7 +68,7 @@ updated → commit `Part 2 – Section X: ...`.
 - Tests: credit only on confirmed webhook, replay no-op, bad signature, failed = no money, link exposes no balance, revocation, throttling, gift voucher credit + notification, recurring schedule with frozen clock / double fire / auto-pause
 - Also: chart of system wallets + `post_transfer` + `authorize_debit` skeleton (cross-cutting rules 1–5), wallet auto-creation at student onboarding, concurrency test
 
-### [ ] B. Pooled funds
+### [x] B. Pooled funds
 - Models: `PooledFund` (own `pooled_fund` wallet), `PooledFundContribution`
 - Endpoints: `pooled-funds/` (POST, GET), `pooled-funds/{id}/` (log + total + progress), `/contribute/`, `/close/`, `/disburse/`
 - Tests: total == ledger sum, disburse permissions, can't over-disburse

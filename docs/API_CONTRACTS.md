@@ -387,3 +387,76 @@ mismatches, and a success after a recorded failure return `unmatched`: they are
 logged in `UnmatchedWebhook` for admin review and answered `200` so the
 aggregator stops retrying. A success for an `expired` deposit still confirms it,
 because the payer was charged.
+
+### Pooled funds (`pooled_funds` app) — Section B
+
+Visibility for every endpoint: parents see funds of the schools their linked
+students attend; school staff see their own school's; platform_admin sees all.
+Anything else is `404`.
+
+#### `GET /api/v1/pooled-funds/`
+JWT. Optional `?status=open|closed|disbursed`. Paginated list of:
+```json
+{ "id": 3, "school": 1, "title": "P4 trip to Entebbe Zoo", "purpose": "Bus + tickets",
+  "group_label": "P4", "created_by": 5, "target_amount": "20000.00",
+  "deadline": "2026-11-30", "status": "open", "wallet": 41,
+  "total_contributed": "12000.00", "balance": "12000.00", "progress_percent": 60.0,
+  "created_at": "…", "closed_at": null }
+```
+`total_contributed`, `balance` and `progress_percent` are computed from the
+**ledger of the fund's wallet** on every request (never stored), so they
+always equal the ledger. `progress_percent` is `null` when there is no target,
+and is capped at 100.
+
+#### `POST /api/v1/pooled-funds/`
+JWT, **parent** or **school_admin**. Body: `{ title, purpose?, group_label?,
+target_amount?, deadline?, school? }`. `school` is only needed by a parent
+whose children attend more than one school (`400 school_required`). It must
+be one of the caller's own schools (else `404`). Response `201`: the detail
+shape below.
+
+#### `GET /api/v1/pooled-funds/{id}/`
+JWT. List shape plus the full transparent log:
+```json
+{ "...": "…list fields…", "total_disbursed": "3000.00",
+  "contributions": [ { "id": 1, "contributor_user": 5, "contributor_name": "Moses Parent",
+                       "amount": "5000.00", "deposit": 9, "deposit_reference": "SD-PF-…",
+                       "created_at": "…" } ],
+  "disbursements": [ { "id": 1, "amount": "3000.00", "destination": "school_settlement",
+                       "description": "Bus hire deposit", "payout": null, "payout_status": null,
+                       "disbursed_by": 2, "created_at": "…" } ] }
+```
+Only **confirmed** contributions appear in the log.
+
+#### `POST /api/v1/pooled-funds/{id}/contribute/`
+JWT, anyone who can see the fund. Body:
+`{ amount, channel, payer_phone?, idempotency_key }`. Goes through the payments
+collection flow (a `Deposit` with `purpose=pooled_fund_contribution`,
+reference `SD-PF-…`). Response `201`/`200`: a Deposit (Section A shape).
+When the webhook confirms it, the fund wallet is credited
+(`entry_type=pooled_fund_contribution`), a contribution row appears, and the
+contributor gets `pooled_fund_contribution_confirmed`.
+Errors: `409 fund_not_open`, `409 fund_deadline_passed`.
+
+#### `POST /api/v1/pooled-funds/{id}/close/`
+JWT, **the fund's creator or a school_admin of that school** (or
+platform_admin, which is audit-logged). Stops new contributions. Response `200`:
+the detail shape. `409 fund_not_open` if the fund is already closed;
+`403 forbidden` for other users who can see the fund.
+
+#### `POST /api/v1/pooled-funds/{id}/disburse/`
+JWT, **school_admin of that school only** (or platform_admin, audit-logged);
+the creator cannot disburse unless they are that school's admin. Body:
+```json
+{ "amount": "3000", "destination": "school_settlement" | "external",
+  "description": "Bus hire deposit", "phone_number": "0772…", "idempotency_key": "uuid" }
+```
+`description` is required. `school_settlement` moves the money into the
+school settlement wallet (`entry_type=pooled_fund_disbursement`,
+`reference_id=pooled:<fund>:<disbursement>`). `external` pays it out to
+`phone_number` through an aggregator payout (`payout:<id>`); if the payout
+fails, the money is reversed back into the fund. Disbursing is allowed while
+the fund is open or closed. Once a **closed** fund's balance reaches 0, its
+status becomes `disbursed`. Response `201`: the disbursement row.
+Errors: `422 insufficient_funds` (more than the fund holds),
+`400 description_required`, `403 forbidden`.

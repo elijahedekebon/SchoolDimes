@@ -13,6 +13,7 @@ urlpatterns = [
     path("api/v1/", include("content.urls")),
     # Part 2
     path("api/v1/", include("payments.urls")),
+    path("api/v1/", include("pooled_funds.urls")),
 ]
 
 if settings.DEBUG:
