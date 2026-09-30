@@ -15,3 +15,18 @@ def apply_referral_reward(referral: SchoolReferral) -> SchoolReferral:
     referral.reward_applied = True
     referral.save(update_fields=["status", "reward_applied"])
     return referral
+
+
+
+def get_school_settings(school):
+    """Returns the school's SchoolSettings row, creating it with defaults."""
+    from django.db import IntegrityError, transaction
+
+    from .models import SchoolSettings
+
+    school_id = getattr(school, "pk", school)
+    try:
+        with transaction.atomic():
+            return SchoolSettings.objects.get_or_create(school_id=school_id)[0]
+    except IntegrityError:
+        return SchoolSettings.objects.get(school_id=school_id)

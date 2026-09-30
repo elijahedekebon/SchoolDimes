@@ -79,7 +79,7 @@ updated → commit `Part 2 – Section X: ...`.
 - Endpoints: policies, product-categories, products, `students/{id}/effective-policy/`, `wallets/{id}/savings/move-in|move-out|withdraw/`, `wallets/transfer/`, `students/{id}/p2p-history/`, `p2p-alerts/`, card freeze/unfreeze/report-lost
 - Tests: caps, blocked category/item/merchant, override resolution, parents can't loosen, savings moves, window, payout reversal, P2P rules + alert
 
-### [ ] D. Canteen POS + offline sync
+### [x] D. Canteen POS + offline sync
 - Models: `Device`, `PosTransaction`, `PosTransactionItem`; `School`-level offline ceiling setting (on `Policy` school default)
 - Device-token auth class; `pos/devices/` register/list/revoke/rotate-token; `pos/cache/` (+`?since=`); `pos/sync/`; `pos/purchase/`; `pos/shortfalls/` + resolve
 - Tests: idempotent replay, shortfall flagged, per-item isolation, revoked device, cache scoping, frozen in cache

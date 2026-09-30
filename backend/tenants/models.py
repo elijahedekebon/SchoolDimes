@@ -65,3 +65,33 @@ class SchoolReferral(models.Model):
 
     def __str__(self):
         return f"{self.referring_school} -> {self.referred_school} ({self.status})"
+
+
+class SchoolSettings(models.Model):
+    """Part 2: per-school operational settings (one row per school, created
+    lazily by tenants.services.get_school_settings)."""
+
+    school = models.OneToOneField(School, on_delete=models.CASCADE, related_name="settings")
+    offline_spend_ceiling = models.DecimalField(
+        max_digits=12, decimal_places=2, default=2000,
+        help_text="How far (UGX) a card may go below its cached balance across offline POS devices.",
+    )
+    pin_lockout_threshold = models.PositiveSmallIntegerField(
+        default=5, help_text="Wrong PINs reported within 24h that freeze a card."
+    )
+    device_stale_after_hours = models.PositiveSmallIntegerField(
+        default=24, help_text="A device that hasn't synced for this long is reported stale."
+    )
+    attendance_notify_guardians = models.BooleanField(
+        default=False, help_text="Notify guardians on a student's first tap-in of the day."
+    )
+    attendance_on_canteen_devices = models.BooleanField(
+        default=False, help_text="Allow canteen devices to record attendance taps too."
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "School settings"
+
+    def __str__(self):
+        return f"Settings({self.school_id})"

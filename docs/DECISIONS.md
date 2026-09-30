@@ -364,3 +364,74 @@ new Part 2 student sub-routes (`p2p-history`, `effective-policy`, …) avoid
 this by relying on queryset scoping. Fixing the Part 1 route would change
 existing behaviour, so it has been left for the product owner to approve
 (a one-line change in `students/views.py`).
+
+### Canteen POS + offline sync (Section D)
+- **Shipping PIN hashes to devices is a deliberate offline trade-off.**
+  Without it, a card can't be used when the canteen's connection is down,
+  which is the normal case the proposal designs for. Mitigations:
+  - **Scoping**: a device only ever receives cards of its own school (for
+    merchants, the schools that approved them).
+  - **Strong hashing**: Django's PBKDF2-SHA256 at 870k iterations with a
+    per-card salt. A 4–6 digit PIN is still brute-forceable offline by
+    someone who extracts the cache (10k–1M guesses), so hashing alone is
+    *not* the protection. It buys time and forces effort per card.
+  - **Device revocation** is immediate (token lookup), and **token rotation**
+    exists. A lost or stolen till should be revoked from the dashboard at once.
+  - **On-device attempt limits** (the app must lock a card after
+    `pin_lockout_threshold` wrong PINs) **plus server lockout**: attempts
+    reported via sync (or an online wrong PIN) freeze the card on reaching
+    the threshold within 24 h, and the freeze reaches every device on its
+    next refresh.
+  - **Bounded exposure**: offline spend per card is limited by the offline
+    spend ceiling, and every offline sale is re-validated and flagged on sync.
+  - The Android app (Part 3) must keep the cache in encrypted storage
+    (Android Keystore-backed), wipe it on revocation (401), and never log it.
+    Recommended future hardening: a separate, lower-value offline PIN
+    verifier (e.g. HMAC with a per-device key).
+- **Offline spend ceiling** defaults to **2,000 UGX** per school
+  (`SchoolSettings.offline_spend_ceiling`), about the price of a snack or
+  half a lunch. It caps how far one card can go below its cached balance
+  across all offline devices, so the worst-case loss from a double-spend is
+  small, and a student whose balance is out of date by one purchase can
+  still eat. A shortfall larger than the ceiling is flagged
+  `exceeds_offline_ceiling` (a device ignored its ceiling, or the cache was
+  very stale).
+- **The offline exception to the debit gate.** An offline sale already
+  happened at the counter, so sync *records* it even if it now breaks a
+  rule: the wallet is debited up to its true balance, and the remainder is a
+  `shortfall`. Rule breaches (frozen card, caps, blocked items/categories/
+  merchants) become `flags`. Both go to the review queue; nothing is silently
+  accepted or dropped. The same rule engine as `authorize_debit` is used
+  (`debit_violations`), so offline flags and online refusals always agree.
+  Online sales (`/pos/purchase/`) use `authorize_debit()` and are refused
+  outright.
+- **Wallets never go negative** because of a shortfall. The unpaid remainder
+  lives on the PosTransaction (`shortfall_amount − recovered_amount`), not
+  as a negative balance, which keeps the Part 1 invariant.
+- **Shortfall recovery is not "spending"**, so it bypasses `authorize_debit`
+  (a frozen card or a daily cap must not block repaying a debt the school
+  approved). It only ever takes what's in the wallet and runs on admin
+  decision plus confirmed top-ups.
+- **Idempotency is per (device, idempotency_key)** (DB unique constraint), so
+  two devices can never collide on each other's UUIDs. Rejected
+  transactions are stored too, so replays answer `duplicate` consistently. A
+  concurrent replay that loses the insert race is answered `duplicate` from
+  the winner's row.
+- **Ordering**: within a batch, sales are applied in device timestamp order.
+  Across devices, the server applies in arrival order: the second device to
+  sync is the one that gets the shortfall. The device timestamp is also the
+  "day" for daily-cap flags (clamped to server time).
+- **Rejected vs flagged**: only data problems are rejected (unknown or
+  out-of-scope card, invalid amount, items not adding up, missing key or
+  timestamp). Rule problems are flagged, never rejected, because the food has
+  already been handed over.
+- **Cache incrementality**: any ledger movement touches the main wallet's
+  `updated_at`, so balance changes are picked up via `?since=`. A school-level
+  policy or settings change re-sends the whole school rather than computing
+  which cards changed. `generated_at` is taken *before* reading, so changes
+  that happen during generation are re-sent next time.
+- **Heartbeat**: every device request updates `last_seen_at` (throttled to
+  once a minute to avoid write amplification); successful syncs update
+  `last_sync_at`, and "stale" is measured against that.
+- `SchoolSettings` is a new one-row-per-school model rather than new
+  columns on `School`, so Part 1's `/schools/` API shape is unchanged.

@@ -169,6 +169,9 @@ class P2PTransfer(models.Model):
     device_id_ref = models.BigIntegerField(
         null=True, blank=True, help_text="pos.Device id when initiated at a POS device with card + PIN."
     )
+    idempotency_key = models.CharField(
+        max_length=128, unique=True, null=True, blank=True, help_text="Set by POS-initiated transfers (retries)."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

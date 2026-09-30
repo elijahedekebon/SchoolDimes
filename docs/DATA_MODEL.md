@@ -445,3 +445,69 @@ application rule.
 | Savings move-out | savings | main | `savings_move_out` / `savings_move_in` | `savings:<random>` |
 | Savings withdrawal | savings | aggregator_clearing | `savings_withdrawal` | `payout:<id>` |
 | P2P | sender main | recipient main | `p2p_transfer_out` / `p2p_transfer_in` | `p2p:<id>` |
+
+## `tenants` — Section D addition
+
+### `SchoolSettings`
+One per school (created lazily). `school (1:1), offline_spend_ceiling
+(Decimal, default 2000), pin_lockout_threshold (default 5),
+device_stale_after_hours (default 24), attendance_notify_guardians (default
+false), attendance_on_canteen_devices (default false), updated_at`.
+
+## `pos` — Section D
+
+### `Device`
+| Field | Type | Notes |
+|---|---|---|
+| school | FK → School | registering school (tenant owner of the record) |
+| merchant | FK → merchants.Merchant, null | Section G; merchant devices only |
+| device_name | CharField | |
+| device_role | choice | `canteen, merchant, attendance` |
+| token_hash | CharField(64), unique | SHA-256 of the raw token; raw token never stored |
+| token_prefix | CharField(8) | display only |
+| status | choice | `active, revoked` |
+| last_seen_at, last_sync_at | DateTime, null | heartbeat / last successful sync |
+| app_version | CharField | from `X-App-Version` |
+| registered_by | FK → User | |
+| created_at, revoked_at | DateTime | |
+
+### `PosTransaction`
+| Field | Type | Notes |
+|---|---|---|
+| device | FK → Device | |
+| school | FK → School | the **card holder's** school |
+| merchant | FK → Merchant, null | Section G |
+| card, student, wallet | FK, null | null only for rejected unknown cards |
+| card_uid | CharField | as sent |
+| channel | choice | `offline_sync, online` |
+| amount | Decimal | sale total as rung up |
+| applied_amount | Decimal | actually debited |
+| shortfall_amount | Decimal | amount − applied_amount |
+| recovered_amount | Decimal | collected later by recovery |
+| idempotency_key | CharField | **unique per device** (DB constraint) |
+| device_local_timestamp | DateTime | |
+| received_at | DateTime | |
+| sync_status | choice | `applied, shortfall, rejected` (`duplicate` is only a response status) |
+| reject_reason | CharField | |
+| flags | JSON list | rule codes broken by an offline sale |
+| pin_verified | Boolean, null | as reported |
+| ledger_reference | CharField | `pos:<id>` |
+| review_status | choice | `none, pending, recovery_pending, resolved` |
+| resolution | choice | `accept, write_off, recover_from_next_topup, charge_guardian` |
+| reviewed_by, reviewed_at, review_notes | | |
+
+### `PosTransactionItem`
+`transaction, product (null), description, category (null), quantity,
+unit_price, line_total`.
+
+### `PinFailureReport`
+`device, card, failed_attempts, device_local_timestamp, received_at`.
+
+## `wallets` — Section D addition
+`P2PTransfer.idempotency_key` (unique, null): set by POS-initiated transfers.
+
+### Chart of wallets — continued
+| Movement | Debit | Credit | entry_type | reference_id |
+|---|---|---|---|---|
+| Canteen sale | student main | school_settlement | `pos_purchase` | `pos:<id>` |
+| Shortfall recovery | student main | the sale's settlement wallet | `shortfall_recovery` | `recovery:<txn>:<n>` |

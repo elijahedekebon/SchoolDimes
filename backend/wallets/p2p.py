@@ -27,8 +27,16 @@ def _card_state(student):
     return "active" in statuses, "frozen" in statuses
 
 
-def p2p_transfer(sender, recipient, amount, *, initiated_by=None, device=None, sender_card=None, note=""):
+def p2p_transfer(sender, recipient, amount, *, initiated_by=None, device=None, sender_card=None, note="",
+                 idempotency_key=None):
     amount = validate_amount(amount)
+    if idempotency_key:
+        existing = P2PTransfer.objects.filter(idempotency_key=idempotency_key).first()
+        if existing is not None:
+            if existing.sender_wallet.student_id != sender.pk or existing.amount != amount:
+                raise ServiceError("idempotency_conflict",
+                                   _("This idempotency_key was already used for a different request."), status=409)
+            return existing
     if sender.pk == recipient.pk:
         raise ServiceError("p2p_same_student", _("A student cannot send money to themselves."))
     if sender.school_id != recipient.school_id:
@@ -52,7 +60,7 @@ def p2p_transfer(sender, recipient, amount, *, initiated_by=None, device=None, s
         transfer = P2PTransfer.objects.create(
             school_id=sender.school_id, sender_wallet=sender_wallet, recipient_wallet=recipient_wallet,
             amount=amount, note=note[:140], initiated_by=initiated_by,
-            device_id_ref=getattr(device, "pk", None),
+            device_id_ref=getattr(device, "pk", None), idempotency_key=idempotency_key or None,
         )
         post_transfer(
             debit_wallet=sender_wallet,

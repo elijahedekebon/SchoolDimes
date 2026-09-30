@@ -613,3 +613,236 @@ When an alert is raised, the school's admins get `p2p_alert_raised`.
   (same rule as freeze). Sets `status: lost` permanently and notifies the other
   guardians (`card_reported_lost`). Replacement uses the Part 1
   `POST /api/v1/cards/{id}/reissue/` (school_admin).
+
+### Canteen POS + offline sync (`pos` app) — Section D
+
+**Device authentication.** Every device call sends
+`Authorization: Device <raw device token>` (and optionally
+`X-App-Version: 1.4.2`, stored on the device). The raw token is returned
+**once**, at registration or rotation; the server stores only its SHA-256.
+Unknown or revoked tokens → `401 {"detail": "Invalid or revoked device token."}`
+immediately. A JWT is never accepted on device endpoints, and a device token
+is never accepted on JWT endpoints. Every device call is a heartbeat
+(`last_seen_at`, updated at most once a minute).
+
+Device roles and allowed endpoints:
+
+| Endpoint | canteen | merchant | attendance |
+|---|---|---|---|
+| `GET /pos/cache/`, `POST /pos/sync/`, `POST /pos/purchase/` | ✓ | ✓ | ✗ (403) |
+| `POST /pos/p2p-transfer/` | ✓ | ✗ | ✗ |
+| `POST /attendance/tap/` (Section F) | only if `attendance_on_canteen_devices` | ✗ | ✓ |
+
+#### `GET|PATCH /api/v1/school-settings/`
+JWT. Staff of a school read their own school's settings; **school_admin**
+PATCHes them (platform_admin passes `?school=<id>`; audit-logged).
+```json
+{ "school": 1, "offline_spend_ceiling": "2000.00", "pin_lockout_threshold": 5,
+  "device_stale_after_hours": 24, "attendance_notify_guardians": false,
+  "attendance_on_canteen_devices": false, "updated_at": "…" }
+```
+
+#### `POST /api/v1/pos/devices/register/`
+JWT, **school_admin** (platform_admin must add `"school": <id>`). Body:
+`{ "device_name": "Canteen till 1", "device_role": "canteen" | "merchant" | "attendance", "merchant": <id, merchant devices only> }`.
+Response `201` — the Device plus the one-time token:
+```json
+{ "id": 3, "school": 1, "merchant": null, "device_name": "Canteen till 1",
+  "device_role": "canteen", "token_prefix": "q3X9aB1c", "status": "active",
+  "last_seen_at": null, "last_sync_at": null, "app_version": "", "registered_by": 2,
+  "created_at": "…", "revoked_at": null,
+  "device_token": "q3X9aB1c…(43 chars) — SHOWN ONCE, store it on the device" }
+```
+Errors: `400 device_role_invalid`, `400 merchant_not_approved` (merchant
+devices need a merchant approved by the school, Section G),
+`400 merchant_not_allowed`.
+
+#### `GET /api/v1/pos/devices/`, `GET /api/v1/pos/devices/{id}/`
+JWT, school_admin (own school). Filters `?device_role=`, `?status=`.
+`?stale=true` lists active devices that haven't synced for
+`device_stale_after_hours` (never-synced devices count once they're older than that).
+
+#### `POST /api/v1/pos/devices/{id}/revoke/`
+JWT, school_admin. The token stops working on the next request. `200`: the Device.
+
+#### `POST /api/v1/pos/devices/{id}/rotate-token/`
+JWT, school_admin. Issues a new token (returned once as `device_token`); the
+old one stops working. `409 device_revoked` for revoked devices.
+
+#### `GET /api/v1/pos/cache/` — offline cache
+Device (canteen/merchant). `?since=<ISO timestamp>` for an incremental
+refresh; pass the previous response's `generated_at`. Response:
+```json
+{
+  "generated_at": "2026-09-30T06:00:00.123456+00:00",
+  "cache_version": 1790748000123,
+  "since": null,
+  "full": true,
+  "full_school_ids": [1],
+  "spend_day": "2026-09-30",
+  "device": { "id": 3, "device_name": "Canteen till 1", "device_role": "canteen",
+              "school_id": 1, "merchant_id": null },
+  "school_ids": [1],
+  "offline_spend_ceilings": { "1": "2000.00" },
+  "pin_lockout_threshold": { "1": 5 },
+  "pin_hash_scheme": {
+    "format": "<algorithm>$<iterations>$<salt>$<hash>",
+    "algorithm": "pbkdf2_sha256",
+    "verify": "base64(PBKDF2-HMAC-SHA256(password=utf8(pin), salt=utf8(salt), iterations, dklen=32)) == hash",
+    "note": "Django's default hasher; iterations are per-hash (read them from the string)."
+  },
+  "cards": [ {
+    "card_id": 7, "card_uid": "04a2…", "status": "active",
+    "pin_hash": "pbkdf2_sha256$870000$Zp1…$k3N…=",
+    "student_id": 12, "student_display_name": "Amina Nakato", "photo_url": null,
+    "school_id": 1, "wallet_id": 31, "balance": "14500.00", "today_spend": "3000.00",
+    "offline_spend_ceiling": "2000.00",
+    "policy": { "daily_spend_cap": "5000.00", "weekly_spend_cap": null,
+                "per_transaction_cap": null, "p2p_daily_cap": null, "p2p_enabled": true,
+                "low_balance_threshold": "2000.00", "blocked_category_ids": [2],
+                "allowed_category_ids": null, "blocked_product_ids": [7],
+                "blocked_merchant_ids": [], "allowed_merchant_ids": null }
+  } ],
+  "products": [ { "id": 5, "name": "Rice & beans", "category_id": 1, "category_name": "Meals",
+                  "price": "3000.00", "active": true, "school_id": 1, "merchant_id": null } ],
+  "categories": [ { "id": 1, "name": "Meals", "is_unhealthy": false, "active": true, "school_id": 1 } ]
+}
+```
+**PIN verification offline (exact scheme).** `pin_hash` is Django's
+`make_password(pin)` output: `pbkdf2_sha256$<iterations>$<salt>$<b64hash>`.
+To verify an entered PIN: split on `$`, compute
+`PBKDF2-HMAC-SHA256(password = pin as UTF-8 bytes, salt = salt as UTF-8 bytes, iterations = int(iterations), dkLen = 32)`,
+base64-encode it (standard alphabet, with padding) and compare it, in constant
+time, to `<b64hash>`. Iterations are 870,000 today (Django 5.1) and may
+change per hash, so always read them from the string. Any other `algorithm`
+prefix means "can't verify offline": treat the card as online-only. The
+device must count wrong PINs locally, refuse the card after
+`pin_lockout_threshold` wrong attempts, and report them on the next sync.
+
+**Incremental refresh rules.** With `since`, `cards` contains only cards
+whose card, student, main wallet (any ledger movement) or policy override
+changed after `since`, and `products`/`categories` only rows changed after
+`since`. If a school's **default policy or settings** changed, every card
+of that school is re-sent and the school is listed in `full_school_ids`.
+Cards are never deleted from the response: a retired card arrives with
+`status: "lost"`. Replace cached rows by `card_uid` / `id`.
+`today_spend` is for `spend_day` (Africa/Kampala); the device resets its own
+counters at local midnight.
+
+**What the device must enforce offline** (the server re-checks everything
+on sync): card `status == active`; PIN; the item/category/merchant rules in
+`policy`; `per_transaction_cap`; `daily_spend_cap` against
+`today_spend + offline spend since the refresh`; and never let
+`balance − offline spend` go below `−offline_spend_ceiling` (the ceiling is
+how far a card may go below its cached balance, across all devices).
+
+#### `POST /api/v1/pos/sync/` — batch sync
+Device (canteen/merchant). Body:
+```json
+{ "transactions": [ {
+    "idempotency_key": "b1f0c7e2-…",           // UUID generated on the device, per sale
+    "card_uid": "04a2…",
+    "amount": "4500.00",
+    "items": [ { "product_id": 5, "quantity": 1, "unit_price": "3000.00" },
+               { "description": "Mandazi", "category_id": 3, "quantity": 3, "unit_price": "500.00" } ],
+    "device_local_timestamp": "2026-09-30T09:15:02+03:00",
+    "pin_verified": true
+  } ],
+  "pin_failures": [ { "card_uid": "04a2…", "failed_attempts": 2,
+                      "device_local_timestamp": "2026-09-30T09:14:40+03:00" } ] }
+```
+At most 500 transactions per call. `items` is optional, but when present the
+line totals (`quantity × unit_price`) must add up to `amount` exactly.
+`product_id` must belong to the device's scope; `category_id` is used only
+when there's no product.
+Response `200`, **always**, even if every transaction was rejected:
+```json
+{ "results": [ { "idempotency_key": "b1f0…", "status": "applied", "transaction_id": 88,
+                 "amount": "4500.00", "applied_amount": "4500.00", "shortfall_amount": "0.00",
+                 "flags": [], "reason": null } ],
+  "balances": [ { "card_uid": "04a2…", "card_status": "active", "wallet_id": 31,
+                  "balance": "10000.00", "today_spend": "7500.00" } ],
+  "server_time": "…" }
+```
+Processing: transactions are applied in `device_local_timestamp` order. Each
+one is independent (one bad transaction never fails the batch).
+`results[].status`:
+- `applied` — fully debited (`reference_id=pos:<transaction_id>`).
+- `shortfall` — the sale happened offline but the wallet didn't hold enough:
+  the wallet was debited to 0 (`applied_amount`), and `shortfall_amount`
+  is sent to admin review. The sale is **recorded, never dropped**.
+- `rejected` — nothing recorded against a wallet; `reason` ∈
+  `idempotency_key_required, unknown_card (not in the device's scope),
+  amount_invalid, amount_too_large, timestamp_required, items_invalid,
+  unknown_product, amount_mismatch, malformed, internal_error`.
+  Rejections are stored (so a replay returns `duplicate`), except ones
+  without an idempotency key.
+- `duplicate` — this `(device, idempotency_key)` was already processed; the
+  original result is returned and no money moves.
+
+`flags` lists the rules an offline sale broke even though it was recorded:
+`card_frozen, card_lost, per_transaction_cap_exceeded, daily_cap_exceeded,
+weekly_cap_exceeded, category_blocked, category_not_allowed, item_blocked,
+merchant_blocked, exceeds_offline_ceiling` (shortfall larger than the
+school's ceiling). A flagged or short transaction goes to the review queue,
+and the school's admins get `shortfall_flagged` / `pos_transaction_flagged`.
+`pin_failures` add up per card over 24 h; reaching the school's
+`pin_lockout_threshold` freezes the card (guardians get
+`card_locked_pin_failures`). `balances` covers every card in the batch:
+**overwrite the cached balance with it.**
+
+#### `POST /api/v1/pos/purchase/` — online sale
+Device (canteen/merchant). Same fields as one sync transaction, plus an
+optional `"pin": "1234"`, which the server verifies (`422 pin_invalid`, and
+it counts towards lockout). `authorize_debit()` is enforced in real time: a
+refused sale → `422 {"code": "<refusal code>", "detail": …, "violations": [...]}`
+and **nothing is recorded**. Success `201` (replay `200` with
+`status: "duplicate"`): the sync result object plus `"balance": {card balance row}`.
+A validation rejection (e.g. `unknown_card`) → `422` with the result and
+`code = reason`.
+
+#### `POST /api/v1/pos/p2p-transfer/`
+Device (**canteen** only; online only). The sender presents their card and PIN.
+```json
+{ "idempotency_key": "uuid", "sender_card_uid": "04a2…", "pin": "1234",
+  "recipient_card_uid": "04b7…", "amount": "500", "note": "" }
+```
+Both cards must be in the device's school (`404 unknown_card`). Wrong PIN →
+`422 pin_invalid` (counts towards lockout). All Section C P2P rules and
+codes apply. `201`: the P2PTransfer (Section C shape, `device` set); a replay
+with the same key returns the same transfer.
+
+#### `GET /api/v1/pos/transactions/`, `GET /api/v1/pos/transactions/{id}/`
+JWT, school_admin (own school). Every POS sale. Filters `?device=`,
+`?student=`, `?sync_status=`, `?review_status=`.
+```json
+{ "id": 88, "device": 3, "device_name": "Canteen till 1", "school": 1, "merchant": null,
+  "card": 7, "card_uid": "04a2…", "student": 12, "student_name": "Amina Nakato", "wallet": 31,
+  "channel": "offline_sync", "amount": "4500.00", "applied_amount": "3000.00",
+  "shortfall_amount": "1500.00", "recovered_amount": "0.00", "outstanding_amount": "1500.00",
+  "idempotency_key": "b1f0…", "device_local_timestamp": "…", "received_at": "…",
+  "sync_status": "shortfall", "reject_reason": "", "flags": ["item_blocked"],
+  "pin_verified": true, "ledger_reference": "pos:88", "review_status": "pending",
+  "resolution": "", "reviewed_by": null, "reviewed_at": null, "review_notes": "",
+  "items": [ { "id": 1, "product": 5, "description": "Rice & beans", "category": 1,
+               "quantity": 1, "unit_price": "3000.00", "line_total": "3000.00" } ] }
+```
+`review_status` ∈ `none, pending, recovery_pending, resolved`;
+`resolution` ∈ `accept, write_off, recover_from_next_topup, charge_guardian`.
+
+#### `GET /api/v1/pos/shortfalls/`, `GET /api/v1/pos/shortfalls/{id}/`
+JWT, school_admin. The review queue: by default `review_status=pending`
+(shortfalls **and** flagged sales). `?type=shortfall|flagged`,
+`?review_status=recovery_pending|resolved` to see the others. Same shape.
+
+#### `POST /api/v1/pos/shortfalls/{id}/resolve/`
+JWT, school_admin. Body `{ "resolution": "...", "review_notes": "…" }`.
+
+| resolution | allowed when | ledger effect |
+|---|---|---|
+| `accept` | flagged, no shortfall | none (acknowledged) |
+| `write_off` | shortfall > 0 | none: the school/merchant absorbs the loss; the missing money never existed in any wallet |
+| `recover_from_next_topup` | shortfall > 0 | collects immediately from the current balance, then from every later **confirmed deposit** into the main wallet until repaid: main → the sale's settlement wallet, `entry_type=shortfall_recovery`, `reference_id=recovery:<txn>:<n>`. Status `recovery_pending` → `resolved` |
+| `charge_guardian` | shortfall > 0 | as above, plus a collection request (`Deposit`, `idempotency_key=shortfall:<txn>`) for the outstanding amount to the primary guardian's phone; when paid, recovery completes |
+
+Errors: `409 not_pending`, `400 resolution_invalid`.
