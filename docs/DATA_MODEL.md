@@ -511,3 +511,20 @@ unit_price, line_total`.
 |---|---|---|---|---|
 | Canteen sale | student main | school_settlement | `pos_purchase` | `pos:<id>` |
 | Shortfall recovery | student main | the sale's settlement wallet | `shortfall_recovery` | `recovery:<txn>:<n>` |
+
+## `fees` — Section E
+
+### `FeeCategory`
+`school, name, amount_type (fixed | range), fixed_amount, min_amount,
+max_amount, active, due_date (null), applicable_classes (JSON list of
+class_name; empty = all), created_at, updated_at`.
+
+### `FeePayment`
+`school, student, fee_category, amount, paid_by (User), ledger_reference
+(fee:<id>), status (completed), idempotency_key (unique, null), created_at`.
+Only completed payments are stored; refusals are returned to the caller.
+
+### Chart of wallets — continued
+| Movement | Debit | Credit | entry_type | reference_id |
+|---|---|---|---|---|
+| Fee payment | student main | school_settlement | `fee_payment` | `fee:<id>` |

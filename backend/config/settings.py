@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "pooled_funds",
     "policies",
     "pos",
+    "fees",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

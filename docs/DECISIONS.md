@@ -435,3 +435,23 @@ existing behaviour, so it has been left for the product owner to approve
   `last_sync_at`, and "stale" is measured against that.
 - `SchoolSettings` is a new one-row-per-school model rather than new
   columns on `School`, so Part 1's `/schools/` API shape is unchanged.
+
+### Fee top-ups (Section E)
+- **Fees are exempt from the daily, weekly and per-transaction snack caps**
+  and from category rules. Those limits exist to control pocket-money
+  spending at the canteen; a 3,000 UGX daily cap must not make a 50,000 UGX
+  exam fee unpayable. Fees still pass through `authorize_debit()`
+  (kind `fee_payment`), so a **frozen card** and **insufficient funds** still
+  refuse, per the "freeze blocks all debits" rule.
+- Who may pay: the student's guardians, and that school's school_admin
+  (e.g. paying at the bursar's desk on the parent's instruction). Students
+  can't, because they have no login.
+- Fees are paid from the **main** wallet only. Savings stay protected; a
+  parent can move money out of savings first.
+- `applicable_classes` matches `Student.class_name` exactly (e.g. "P4").
+  Fixed fees must be paid in full in one payment; range fees allow instalments
+  (several payments, each within the range). There's no "amount outstanding
+  per student" ledger yet; a fee-balance view is a natural Part 4A
+  dashboard feature built on `/fees/payments/`.
+- Only completed payments are stored, because a refused payment moved no
+  money and there is nothing to audit.

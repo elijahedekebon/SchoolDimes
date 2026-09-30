@@ -846,3 +846,44 @@ JWT, school_admin. Body `{ "resolution": "...", "review_notes": "…" }`.
 | `charge_guardian` | shortfall > 0 | as above, plus a collection request (`Deposit`, `idempotency_key=shortfall:<txn>`) for the outstanding amount to the primary guardian's phone; when paid, recovery completes |
 
 Errors: `409 not_pending`, `400 resolution_invalid`.
+
+### Fee top-ups (`fees` app) — Section E
+
+#### `GET|POST /api/v1/fee-categories/`, `GET|PATCH|PUT|DELETE /api/v1/fee-categories/{id}/`
+JWT. Read: the school's staff and guardians of its students. Write: that
+school's **school_admin** (platform_admin passes `school`; audit-logged).
+```json
+{ "id": 2, "school": 1, "name": "Exam fee", "amount_type": "fixed",
+  "fixed_amount": "6000.00", "min_amount": null, "max_amount": null, "active": true,
+  "due_date": "2026-11-15", "applicable_classes": ["P4", "P5"],
+  "created_at": "…", "updated_at": "…" }
+```
+`amount_type: fixed` needs `fixed_amount`; `range` needs
+`0 < min_amount ≤ max_amount` (`400 fee_amount_invalid`). An empty
+`applicable_classes` means every class. Filters: `?active=true|false`,
+`?class_name=P4` (fees that apply to that class).
+
+#### `POST /api/v1/fees/pay/`
+JWT, **a guardian of the student or that school's school_admin**. Pays from
+the student's **main** wallet into the school settlement wallet
+(`entry_type=fee_payment`, `reference_id=fee:<id>`).
+```json
+{ "student": 12, "fee_category": 2, "amount": "6000", "idempotency_key": "uuid" }
+```
+`amount` may be omitted for a fixed fee (and must equal it if given).
+Goes through `authorize_debit` with kind `fee_payment`: **card freeze and
+balance apply; daily/weekly/per-transaction caps and category rules do not.**
+Response `201` (`200` on idempotent replay):
+```json
+{ "id": 5, "school": 1, "student": 12, "student_name": "Amina Nakato", "fee_category": 2,
+  "fee_category_name": "Exam fee", "amount": "6000.00", "paid_by": 3,
+  "ledger_reference": "fee:5", "status": "completed", "idempotency_key": "uuid", "created_at": "…" }
+```
+Errors: `404 not_found` (not your student / other school's category),
+`409 fee_inactive`, `400 fee_not_applicable`, `400 fee_amount_invalid`,
+`422 insufficient_funds | card_frozen`, `409 idempotency_conflict`.
+
+#### `GET /api/v1/fees/payments/`, `GET /api/v1/fees/payments/{id}/`
+JWT. Guardians: their students' payments; school_admin: their school's.
+Filters `?student=<id>` and `?fee_category=<id>` give the history per student
+and per category. Paginated, same shape as above.
