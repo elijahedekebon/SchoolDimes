@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from merchants.models import Merchant
+
 from .models import Policy, Product, ProductCategory
 
 
@@ -15,7 +17,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ["id", "school", "name", "category", "category_name", "price", "active", "created_at", "updated_at"]
+        fields = ["id", "school", "merchant", "name", "category", "category_name", "price", "active",
+                  "created_at", "updated_at"]
         read_only_fields = ["id", "school", "created_at", "updated_at"]
 
     def validate_price(self, value):
@@ -28,13 +31,16 @@ class PolicySerializer(serializers.ModelSerializer):
     blocked_categories = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=ProductCategory.objects.all())
     allowed_categories = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=ProductCategory.objects.all())
     blocked_items = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=Product.objects.all())
+    blocked_merchants = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=Merchant.objects.all())
+    allowed_merchants = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=Merchant.objects.all())
 
     class Meta:
         model = Policy
         fields = [
             "id", "school", "student", "daily_spend_cap", "weekly_spend_cap", "per_transaction_cap",
             "p2p_daily_cap", "p2p_enabled", "low_balance_threshold", "blocked_categories",
-            "allowed_categories", "blocked_items", "updated_by", "created_at", "updated_at",
+            "allowed_categories", "blocked_items", "blocked_merchants", "allowed_merchants",
+            "updated_by", "created_at", "updated_at",
         ]
         read_only_fields = ["id", "school", "updated_by", "created_at", "updated_at"]
         extra_kwargs = {"student": {"required": False, "allow_null": True}}

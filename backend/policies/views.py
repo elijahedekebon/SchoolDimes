@@ -74,12 +74,20 @@ class ProductViewSet(_SchoolCatalogViewSet):
         qs = super().get_queryset().select_related("category")
         if self.request.query_params.get("category"):
             qs = qs.filter(category_id=self.request.query_params["category"])
+        if self.request.query_params.get("merchant"):
+            qs = qs.filter(merchant_id=self.request.query_params["merchant"])
         return qs
 
     def _check_refs(self, serializer, school_id):
         category = serializer.validated_data.get("category")
         if category is not None and category.school_id != school_id:
             raise ServiceError("category_invalid", _("That category belongs to another school."))
+        merchant = serializer.validated_data.get("merchant")
+        if merchant is not None:
+            from merchants.services import is_approved_for
+
+            if not is_approved_for(merchant, school_id):
+                raise ServiceError("merchant_not_approved", _("That merchant is not approved for this school."))
 
 
 class PolicyViewSet(AuditPlatformAdminWritesMixin, viewsets.ModelViewSet):
@@ -98,7 +106,8 @@ class PolicyViewSet(AuditPlatformAdminWritesMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Policy.objects.prefetch_related("blocked_categories", "allowed_categories", "blocked_items")
+        qs = Policy.objects.prefetch_related("blocked_categories", "allowed_categories", "blocked_items",
+                                             "blocked_merchants", "allowed_merchants")
         if is_platform_admin(user):
             return qs
         if user.role == User.Role.PARENT:
@@ -127,6 +136,12 @@ class PolicyViewSet(AuditPlatformAdminWritesMixin, viewsets.ModelViewSet):
             for obj in data.get(f) or []:
                 if obj.school_id != school_id:
                     raise ServiceError("reference_invalid", _("A referenced category or item belongs to another school."))
+        from merchants.services import is_approved_for
+
+        for f in ("blocked_merchants", "allowed_merchants"):
+            for merchant in data.get(f) or []:
+                if not is_approved_for(merchant, school_id):
+                    raise ServiceError("reference_invalid", _("A referenced merchant is not approved for this school."))
 
     def _tighten_check(self, data, student, instance=None):
         if student is None or not self.request.user.role == User.Role.PARENT:

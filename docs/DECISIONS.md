@@ -473,3 +473,32 @@ existing behaviour, so it has been left for the product owner to approve
 - `in`/`out` is recorded as sent. The server doesn't pair them or infer
   presence; a daily register view is a Part 4A dashboard concern built on
   these rows.
+
+### Approved nearby merchant network (Section G)
+- **Two switches.** Each school approves or suspends a merchant for itself
+  (`MerchantApproval`), and platform_admin has a platform-wide `status` for
+  fraud or abuse. A merchant transacts with a school's cards only while both
+  are `approved`. Schools never see or affect each other's approvals.
+- **A school_admin who registers a merchant approves it for their own school
+  at once.** Other school_admins can see all merchants in order to find and
+  approve a shared one, but they only ever see *their own* school in
+  `approved_school_ids`, and only their own school's statement lines.
+- **Settlement wallet per (merchant, school)**, not one global wallet:
+  `LedgerEntry.school` is non-nullable (Part 1), and per-school wallets keep
+  every ledger row inside one tenant. Each school can reconcile exactly what
+  its students paid the merchant. The merchant's statement aggregates them.
+  Paying merchants out to their bank/MoMo is a settlement process for later
+  (it would be a `Payout` from the settlement wallet).
+- **No parallel payment path**: merchant devices are ordinary `Device`s and
+  use the same cache/sync/purchase code. Only the scope (approving schools)
+  and the credit wallet differ, both decided in `pos.services`.
+- A merchant device is registered by a school_admin of an approving school;
+  `Device.school` is that registering school (the owner of the device record),
+  while the cards it serves come from every approving school.
+- Offline sales from a merchant that has since been suspended arrive with
+  cards out of scope and are **rejected** (`unknown_card`), not flagged: once
+  a school suspends a merchant, it has withdrawn consent to charge its
+  students. Such rows are stored for audit, and the merchant settles directly
+  with the school.
+- merchant_staff users are linked via `MerchantStaff` rather than a new
+  column on Part 1's `User`.

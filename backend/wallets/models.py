@@ -40,6 +40,10 @@ class Wallet(models.Model):
     # wallets.services.post_ledger_entry -- see compute_balance() for the
     # source of truth this cache is checked against.
     cached_balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0"))
+    merchant = models.ForeignKey(
+        "merchants.Merchant", on_delete=models.PROTECT, null=True, blank=True, related_name="settlement_wallets",
+        help_text="Set only for merchant_settlement wallets (one per merchant per school).",
+    )
     # Part 2: parent-configured window in which savings may be withdrawn to
     # mobile money (savings wallets only; both null = withdrawals closed).
     withdrawal_window_start = models.DateTimeField(null=True, blank=True)
@@ -65,6 +69,11 @@ class Wallet(models.Model):
                 fields=["school", "wallet_type"],
                 condition=models.Q(wallet_type__in=SCHOOL_SINGLETON_WALLET_TYPES),
                 name="one_school_system_wallet_per_type",
+            ),
+            models.UniqueConstraint(
+                fields=["school", "merchant"],
+                condition=models.Q(wallet_type="merchant_settlement"),
+                name="one_merchant_settlement_wallet_per_school",
             ),
         ]
 

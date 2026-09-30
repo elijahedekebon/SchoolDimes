@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "pos",
     "fees",
     "attendance",
+    "merchants",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

@@ -24,6 +24,10 @@ class ProductCategory(models.Model):
 
 class Product(models.Model):
     school = models.ForeignKey("tenants.School", on_delete=models.CASCADE, related_name="products")
+    merchant = models.ForeignKey(
+        "merchants.Merchant", on_delete=models.CASCADE, null=True, blank=True, related_name="products",
+        help_text="Null = sold by the school canteen (Section G).",
+    )
     name = models.CharField(max_length=100)
     category = models.ForeignKey(ProductCategory, on_delete=models.PROTECT, related_name="products")
     price = models.DecimalField(max_digits=12, decimal_places=2)
@@ -63,6 +67,10 @@ class Policy(models.Model):
         ProductCategory, blank=True, related_name="+", help_text="Empty = every category allowed."
     )
     blocked_items = models.ManyToManyField(Product, blank=True, related_name="+")
+    blocked_merchants = models.ManyToManyField("merchants.Merchant", blank=True, related_name="+")
+    allowed_merchants = models.ManyToManyField(
+        "merchants.Merchant", blank=True, related_name="+", help_text="Empty = every approved merchant allowed."
+    )
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )

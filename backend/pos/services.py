@@ -327,6 +327,7 @@ def _prepare_items(device, raw_items, amount):
 def _store_rejected(device, raw, reason, card=None, amount=None):
     txn = PosTransaction.objects.create(
         device=device,
+        merchant_id=device_merchant_id(device),
         school_id=card.school_id if card else device.school_id,
         card=card,
         card_uid=str(raw.get("card_uid", ""))[:64],
@@ -403,7 +404,7 @@ def record_sale(device, raw: dict, *, channel=PosTransaction.Channel.OFFLINE_SYN
                 locked = Wallet.objects.select_for_update().select_related("student").get(pk=wallet.pk)
                 flags = [v for v in debit_violations(locked, amount, context, check_balance=False) if v not in FLAG_ONLY]
             txn = PosTransaction.objects.create(
-                device=device, school_id=card.school_id, card=card, card_uid=card.card_uid,
+                device=device, merchant_id=merchant_id, school_id=card.school_id, card=card, card_uid=card.card_uid,
                 student=card.student, wallet=wallet, channel=channel, amount=amount,
                 idempotency_key=key, device_local_timestamp=ts or timezone.now(),
                 sync_status=PosTransaction.SyncStatus.APPLIED, flags=flags,

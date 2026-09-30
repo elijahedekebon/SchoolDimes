@@ -926,3 +926,70 @@ empty. Filters: `?date=YYYY-MM-DD` (a Kampala day), or `?from=` / `?to=`
 #### `GET /api/v1/students/{id}/attendance/`
 JWT, **guardians of the student and that school's school_admin**. Same
 filters and shape.
+
+### Approved nearby merchant network (`merchants` app) — Section G
+
+A merchant can charge a school's cards only while **both** its platform
+`status` is `approved` **and** that school's approval is `approved`.
+
+#### `GET|POST /api/v1/merchants/`, `GET|PATCH /api/v1/merchants/{id}/`
+JWT. List visibility: school_admin sees every merchant (so a school can find
+and approve a merchant that a neighbouring school registered); parents see
+merchants approved for their children's schools (so they can block them);
+merchant_staff see their own merchant; platform_admin sees all.
+```json
+{ "id": 3, "name": "Ntinda Bookshop", "category": "bookshop", "contact_phone": "0772…",
+  "status": "approved", "approved_school_ids": [1],
+  "my_school_approval": "approved", "created_at": "…", "updated_at": "…" }
+```
+`approved_school_ids` only lists schools the caller belongs to (merchant_staff
+and platform_admin see all of them). `my_school_approval` is the caller's own
+school's approval status (`pending | approved | suspended | null`).
+Create: **school_admin** (the merchant is immediately approved for their
+school) or platform_admin (unattached). PATCH: the admin who registered it,
+or platform_admin (who may also set `status`, the platform-wide switch).
+
+#### `POST /api/v1/merchants/{id}/approve/`, `POST /api/v1/merchants/{id}/suspend/`
+JWT, **school_admin — for their own school only** (platform_admin passes
+`"school": <id>`; audit-logged). Response
+`{ "merchant": 3, "school": 1, "status": "approved", "decided_at": "…" }`.
+Approving creates the merchant's settlement wallet for that school.
+Suspending removes the school's cards from the merchant's devices at their
+next cache refresh; sales synced afterwards are rejected `unknown_card`.
+
+#### `POST /api/v1/merchants/{id}/staff/`
+JWT, platform_admin or a school_admin of an approving school. Body
+`{ "user": <id of a merchant_staff user> }`. Links the user to the merchant.
+
+#### `GET /api/v1/merchants/{id}/statement/`
+JWT. **merchant_staff of this merchant**: all of its schools (`?school=` to
+narrow). **school_admin**: their own school only. `?from=` / `?to=`
+(inclusive Kampala days). Response:
+```json
+{ "merchant": 3, "school_ids": [1, 2],
+  "balances": [ { "school_id": 1, "wallet_id": 77, "balance": "1200.00" } ],
+  "total_credits": "1700.00", "total_debits": "0.00",
+  "entries": { "count": 2, "next": null, "previous": null,
+               "results": [ {LedgerEntry: id, wallet, amount, direction, entry_type, reference_id, description, created_at} ] } }
+```
+
+#### Merchant devices
+They are ordinary `Device`s with `device_role: merchant` and a `merchant`,
+registered by a school_admin of an approving school
+(`POST /pos/devices/register/` with `"merchant": <id>`). They use the **same**
+`/pos/cache/`, `/pos/sync/` and `/pos/purchase/` endpoints (not
+`/pos/p2p-transfer/`). Differences:
+- the cache contains the cards of **every school that approved the
+  merchant**, and only the merchant's own products (`Product.merchant`);
+- sales credit the merchant's settlement wallet **for the card holder's
+  school**; `PosTransaction.merchant` is set;
+- the `merchant_blocked` rule applies (parents block via policy).
+
+#### Changes to Section C endpoints
+- `Product` gains `merchant` (null = canteen). It must be a merchant
+  approved for the school (`400 merchant_not_approved`). `/products/?merchant=<id>`.
+- `Policy` gains `blocked_merchants` and `allowed_merchants` (id lists;
+  an empty allow-list = every approved merchant). Referenced merchants must
+  be approved for the school (`400 reference_invalid`). A parent's override
+  may block merchants for their child; resolution unions blocks and
+  intersects allow-lists.

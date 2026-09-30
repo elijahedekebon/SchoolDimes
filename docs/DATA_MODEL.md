@@ -535,3 +535,30 @@ Only completed payments are stored; refusals are returned to the caller.
 `school, student, card (null), device (→ pos.Device), direction (in | out),
 device_local_timestamp, received_at, idempotency_key`. Unique
 `(device, idempotency_key)`. Indexed on `(school, device_local_timestamp)`.
+
+## `merchants` — Section G
+
+### `Merchant`
+`name, category, contact_phone, status (pending | approved | suspended;
+platform-level switch, default approved), approved_for_schools (M2M → School
+through MerchantApproval), created_by, created_at, updated_at`.
+
+### `MerchantApproval` (through model)
+`merchant, school, status (pending | approved | suspended), decided_by,
+decided_at, created_at, updated_at`. Unique `(merchant, school)`.
+
+### `MerchantStaff`
+`user (1:1 → User, role merchant_staff), merchant, created_at`: links a
+merchant_staff login to its merchant without changing Part 1's `User`.
+
+### Section G fields added elsewhere
+- `wallets.Wallet.merchant` (FK, null): set on `merchant_settlement` wallets;
+  DB-unique `(school, merchant)` for that type.
+- `pos.Device.merchant`, `pos.PosTransaction.merchant` (FK, null).
+- `policies.Product.merchant` (FK, null = canteen).
+- `policies.Policy.blocked_merchants`, `allowed_merchants` (M2M → Merchant).
+
+### Chart of wallets — continued
+| Movement | Debit | Credit | entry_type | reference_id |
+|---|---|---|---|---|
+| Merchant sale | student main | merchant_settlement (merchant, card holder's school) | `pos_purchase` | `pos:<id>` |

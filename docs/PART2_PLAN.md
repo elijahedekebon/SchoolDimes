@@ -86,7 +86,7 @@ updated → commit `Part 2 – Section X: ...`.
 
 ### [x] E. Fee top-ups — `FeeCategory`, `FeePayment`, `fees/pay/`, CRUD, history
 ### [x] F. Attendance — `AttendanceRecord`, `attendance/tap/`, `attendance/`, `students/{id}/attendance/`
-### [ ] G. Merchant network — `Merchant` (+ approvals M2M, per-school settlement wallets), approve/suspend, `merchants/{id}/statement/`, blocked merchants in policy
+### [x] G. Merchant network — `Merchant` (+ approvals M2M, per-school settlement wallets), approve/suspend, `merchants/{id}/statement/`, blocked merchants in policy
 ### [ ] H. Disputes & refunds — `Dispute`, raise/list/resolve, refund ≤ original
 ### [ ] I. Notifications — `NotificationEvent`, `NotificationPreference`, `DevicePushToken`, `notify()`, channel backends, low-balance throttle, endpoints, lg/sw translations
 ### [ ] J. Privacy — `privacy/my-data/` (json/csv), `DataRequest`, redaction service

@@ -17,6 +17,10 @@ class Device(models.Model):
         REVOKED = "revoked", _("Revoked")
 
     school = models.ForeignKey("tenants.School", on_delete=models.CASCADE, related_name="devices")
+    merchant = models.ForeignKey(
+        "merchants.Merchant", on_delete=models.PROTECT, null=True, blank=True, related_name="devices",
+        help_text="Merchant devices only.",
+    )
     device_name = models.CharField(max_length=100)
     device_role = models.CharField(max_length=12, choices=Role.choices)
     token_hash = models.CharField(max_length=64, unique=True)
@@ -65,6 +69,10 @@ class PosTransaction(models.Model):
     device = models.ForeignKey(Device, on_delete=models.PROTECT, related_name="transactions")
     school = models.ForeignKey("tenants.School", on_delete=models.CASCADE, related_name="pos_transactions",
                                help_text="The card holder's school (the tenant the money belongs to).")
+    merchant = models.ForeignKey(
+        "merchants.Merchant", on_delete=models.PROTECT, null=True, blank=True, related_name="pos_transactions",
+        help_text="Set for sales made on a merchant device.",
+    )
     card = models.ForeignKey("cards.Card", on_delete=models.PROTECT, null=True, blank=True, related_name="pos_transactions")
     card_uid = models.CharField(max_length=64, help_text="As sent by the device (kept even if unknown).")
     student = models.ForeignKey("students.Student", on_delete=models.PROTECT, null=True, blank=True, related_name="pos_transactions")
