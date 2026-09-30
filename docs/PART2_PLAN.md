@@ -88,7 +88,7 @@ updated → commit `Part 2 – Section X: ...`.
 ### [x] F. Attendance — `AttendanceRecord`, `attendance/tap/`, `attendance/`, `students/{id}/attendance/`
 ### [x] G. Merchant network — `Merchant` (+ approvals M2M, per-school settlement wallets), approve/suspend, `merchants/{id}/statement/`, blocked merchants in policy
 ### [x] H. Disputes & refunds — `Dispute`, raise/list/resolve, refund ≤ original
-### [ ] I. Notifications — `NotificationEvent`, `NotificationPreference`, `DevicePushToken`, `notify()`, channel backends, low-balance throttle, endpoints, lg/sw translations
+### [x] I. Notifications — `NotificationEvent`, `NotificationPreference`, `DevicePushToken`, `notify()`, channel backends, low-balance throttle, endpoints, lg/sw translations
 ### [ ] J. Privacy — `privacy/my-data/` (json/csv), `DataRequest`, redaction service
 ### [ ] K. Analytics & reconciliation — read-only endpoints
 ### [ ] L. Seed data — extend `seed_demo`

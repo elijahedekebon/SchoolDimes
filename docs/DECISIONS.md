@@ -527,3 +527,36 @@ existing behaviour, so it has been left for the product owner to approve
   pastoral conversation plus a reverse transfer, not a refund), deposits
   (those go through the aggregator's chargeback process), and rejected sales
   (no money moved).
+
+### Notifications (Section I)
+- **Rendered once, at creation, in the recipient's language.** The stored
+  title/body are what the user saw. The machine-readable `payload` lets
+  clients re-render or act (e.g. one-tap top-up) without parsing text.
+  Reason/status/rule codes in payloads are translated through
+  `notifications/labels.py`.
+- **Translations without GNU gettext.** The dev machine has no `msgfmt`, and
+  the Docker image doesn't need one: `manage.py build_locale` generates the
+  `.po` files and compiles the `.mo` files in pure Python from
+  `notifications/translations.py`, and both are committed. Kiswahili is
+  standard East African usage. **Luganda is best-effort and must be reviewed
+  by a native speaker before launch**; every string is in one file to make
+  that review easy. Untranslated strings fall back to English.
+- **Channels**: in-app is authoritative and always on by default. SMS
+  (Africa's Talking) and push (FCM) are clearly stubbed backends that log
+  what they would send and mark the event `logged`, never `sent`. Where
+  credentials plug in is documented in `notifications/backends.py` and
+  `.env.example` (`SMS_BACKEND`, `AFRICASTALKING_*`, `PUSH_BACKEND`, `FCM_*`).
+  No working integration has been faked.
+- **Dispatch never breaks money movement**: SMS/push are enqueued with
+  `transaction.on_commit`, so a rolled-back transfer never notifies. If the
+  broker is down, the event stays `pending` and
+  `retry_pending_notifications` (Beat, every 10 min) retries it.
+- **Low balance** is evaluated on the ledger signal (crossing from ≥ to <
+  the threshold on a main-wallet debit, so it can't repeat while the balance
+  stays low) and throttled per guardian per wallet in the Redis cache
+  (`LOW_BALANCE_ALERT_THROTTLE_HOURS`, default 12). If the surrounding
+  transaction rolls back after the cache key was set, one alert may be
+  suppressed for the throttle window; that's an acceptable trade-off for a
+  reminder.
+- Card freeze/unfreeze/lost notify the **other** guardians: the actor
+  already knows.

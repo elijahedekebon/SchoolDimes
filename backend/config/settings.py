@@ -212,4 +212,6 @@ P2P_ALERT_WINDOW_DAYS = env.int("P2P_ALERT_WINDOW_DAYS", default=7)
 P2P_ALERT_DISTINCT_SENDERS = env.int("P2P_ALERT_DISTINCT_SENDERS", default=4)
 P2P_ALERT_NEAR_CAP_RATIO = env.float("P2P_ALERT_NEAR_CAP_RATIO", default=0.8)
 P2P_ALERT_NEAR_CAP_COUNT = env.int("P2P_ALERT_NEAR_CAP_COUNT", default=3)
+# At most one low-balance alert per guardian per wallet in this many hours.
+LOW_BALANCE_ALERT_THROTTLE_HOURS = env.int("LOW_BALANCE_ALERT_THROTTLE_HOURS", default=12)
 

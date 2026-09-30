@@ -587,3 +587,7 @@ DB-unique: one dispute in `open`/`under_review` per `pos_transaction` and per `l
 | Movement | Debit | Credit | entry_type | reference_id |
 |---|---|---|---|---|
 | Refund | school_settlement or merchant_settlement (whoever received it) | student main | `refund` | `refund:<dispute id>` |
+
+## `notifications` — Section I additions
+No new models (created in Section A). Translations: `backend/locale/{lg,sw}/LC_MESSAGES/django.{po,mo}`,
+generated from `notifications/translations.py` by `manage.py build_locale`.

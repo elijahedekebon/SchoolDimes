@@ -1041,3 +1041,73 @@ exceed `original_amount`** (`422 refund_exceeds_original`, enforced under a
 row lock). `422 refund_source_insufficient` if the receiving wallet no longer
 holds the money. The raiser is notified on every status change
 (`dispute_status_changed`).
+
+### Notifications (`notifications` app) — Section I
+
+Every notification is rendered **once, in the recipient's
+`preferred_language`** (en / lg / sw), and stored as a `NotificationEvent` per
+channel. `in_app` is always delivered (it *is* the in-app notification).
+`sms` and `push` are dispatched by Celery after the money movement commits.
+In Part 2 they are **stub backends that log** what they would send (`status: logged`).
+
+**Event types** (`event_type`) and their `payload` keys (all ids are ints;
+amounts are pre-formatted strings such as `"5,000"`):
+
+| event_type | recipient | payload keys |
+|---|---|---|
+| `deposit_confirmed` | parent who paid | deposit_id, amount, student_id, student_name |
+| `deposit_failed` | parent who paid | deposit_id, amount, student_id, student_name, reason |
+| `contributor_topup_received` | all guardians | + contributor_name |
+| `gift_received` | all guardians | + gift_voucher_id, sender_name, message |
+| `recurring_topup_executed` / `_failed` / `_paused` | the parent | + recurring_topup_id (+ reason / failures) |
+| `low_balance` | each guardian | student_id, student_name, wallet_id, balance, threshold, **action** |
+| `savings_goal_reached` | all guardians | student_id, student_name, goal_id, goal_name, target_amount |
+| `savings_withdrawal_completed` / `_failed` | all guardians | payout_id, amount, student_id, student_name, phone_number, reason |
+| `card_frozen` / `card_unfrozen` / `card_reported_lost` | the **other** guardians | card_id, student_id, student_name, actor_name |
+| `card_locked_pin_failures` | all guardians | card_id, student_id, student_name, failures |
+| `p2p_transfer_received` | recipient's guardians | student_id, student_name, sender_name, amount, p2p_transfer_id |
+| `p2p_alert_raised` | school admins | alert_id, student_id, student_name, rule |
+| `shortfall_flagged` / `pos_transaction_flagged` | school admins | pos_transaction_id, student_id, student_name, device_name, shortfall_amount, flags |
+| `dispute_status_changed` | the raiser | dispute_id, status, student_id, refund_amount, notes |
+| `attendance_tap_in` | all guardians (opt-in per school) | student_id, student_name, time, attendance_record_id |
+| `pooled_fund_contribution_confirmed` | the contributor | fund_id, fund_title, amount |
+| `data_request_updated` | the requester | request_id, request_type, status |
+
+**Low-balance one-tap top-up**: `payload.action` =
+`{ "type": "top_up", "student_id": 12, "wallet_id": 31, "suggested_amount": "5000" }`.
+The parent app can pass `wallet_id` and `suggested_amount` straight to
+`POST /payments/deposits/`. A low-balance alert fires when a debit takes the
+student's **main** wallet from ≥ threshold to < threshold. The threshold is
+the guardian's own per-student setting, else the effective policy's
+`low_balance_threshold`, else 2,000. It fires at most once per guardian per
+wallet every `LOW_BALANCE_ALERT_THROTTLE_HOURS` (12), de-duplicated in Redis.
+
+#### `GET /api/v1/notifications/`, `GET /api/v1/notifications/{id}/`
+JWT, the caller's own **in-app** notifications (newest first). `?unread=true`,
+`?event_type=`. The paginated response adds `unread_count`:
+```json
+{ "count": 3, "next": null, "previous": null, "unread_count": 2,
+  "results": [ { "id": 51, "event_type": "low_balance", "title": "Low balance",
+                 "body": "Amina Nakato's balance is 1,500 UGX, below your alert level of 2,000 UGX. Tap to top up.",
+                 "payload": {…}, "channel": "in_app", "status": "sent",
+                 "created_at": "…", "sent_at": "…", "read_at": null } ] }
+```
+
+#### `POST /api/v1/notifications/{id}/read/`
+JWT. Marks it read (idempotent). `200`: the notification. Someone else's → `404`.
+
+#### `POST /api/v1/notifications/read-all/`
+JWT. `200 {"marked_read": 2}`.
+
+#### `GET|PUT|PATCH /api/v1/notifications/preferences/`
+JWT.
+```json
+{ "in_app_enabled": true, "sms_enabled": false, "push_enabled": true,
+  "low_balance_thresholds": { "12": "2500.00" }, "updated_at": "…" }
+```
+`low_balance_thresholds` keys must be the caller's linked students (`400` otherwise).
+
+#### `GET|POST /api/v1/notifications/push-tokens/`, `DELETE /api/v1/notifications/push-tokens/{token}/`
+JWT. `POST {"token": "<FCM/APNs token>", "platform": "android" | "ios" | "web"}`
+is an upsert: `201` when new, `200` when the token already existed (it is
+moved to the caller, e.g. a phone that changed hands). Call `DELETE` on logout.
