@@ -599,3 +599,27 @@ generated from `notifications/translations.py` by `manage.py build_locale`.
 (self | student), student (null), school (the handling school), details,
 status (pending | in_progress | completed | rejected), notes, handled_by,
 handled_at, created_at`.
+
+## Part 2 entity relationship summary
+
+```
+School 1──1 SchoolSettings            School 1──1 Policy(default)   Student 0..1──1 Policy(override)
+School 1──* Wallet(system: school_settlement, aggregator_clearing [one each], pooled_fund, merchant_settlement)
+School 1──* ProductCategory 1──* Product *──0..1 Merchant
+Merchant *──* School (through MerchantApproval)   Merchant 1──* MerchantStaff(User)
+Merchant 1──* Wallet(merchant_settlement, one per approving school)
+
+Wallet 1──* Deposit (purpose: wallet_topup | gift_voucher | pooled_fund_contribution) *──0..1 Contributor
+Deposit 1──0..1 GiftVoucher        Deposit 1──0..1 PooledFundContribution *──1 PooledFund 1──1 Wallet(pooled_fund)
+Wallet 1──* Payout (savings_withdrawal | pooled_fund_disbursement) 0..1──1 PooledFundDisbursement
+Student 1──* StudentTopUpLink, RecurringTopUp(→ Deposit*), P2PAlert, FeePayment, AttendanceRecord, Dispute
+Wallet(main) 1──* P2PTransfer (sender / recipient)
+
+Device(canteen | merchant | attendance) 1──* PosTransaction 1──* PosTransactionItem
+PosTransaction *──1 Card, Student, Wallet   PosTransaction 1──* Dispute   LedgerEntry 1──* Dispute
+Device 1──* PinFailureReport, AttendanceRecord
+User 1──* NotificationEvent, DevicePushToken, DataRequest;  User 1──1 NotificationPreference
+AuditLog: actor, school, target (any)
+```
+Every money movement: two `LedgerEntry` rows (one debit, one credit) sharing
+a `reference_id`, on two wallets of the same school.

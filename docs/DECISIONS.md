@@ -695,3 +695,18 @@ and `notifications.tasks.retry_pending_notifications`.
   (real HTTP to the running server), then `mock_webhook <ref> --base-url …` and
   `run_recurring_topups --now`, all against Postgres, leaving each school's
   books at exactly 0.
+
+### What Part 2 leaves for later parts
+- **Part 3 (Android POS/merchant/attendance app)**: everything server-side
+  is ready. See the handover notes in the Part 2 summary and the Section D
+  API contract (cache format, exact PIN scheme, sync semantics, what to
+  enforce offline).
+- **Part 4A (admin dashboard)**: review queues exist as APIs (POS
+  shortfalls/flags, disputes, P2P alerts, data requests, unmatched webhooks
+  are in Django admin only), plus analytics and reconciliation.
+- **Part 4B (parent app)**: deposits (poll `GET /payments/deposits/{id}/`),
+  notifications with one-tap top-up payload, push-token registration, policy
+  overrides, savings, P2P, disputes, privacy export.
+- **Real integrations (any time)**: aggregator clients (Flutterwave /
+  Pesapal / DPO skeletons), Africa's Talking SMS, FCM push.
+- **Native-speaker review of Luganda strings** (`notifications/translations.py`).

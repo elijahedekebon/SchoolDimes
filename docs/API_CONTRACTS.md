@@ -1250,3 +1250,44 @@ every wallet in the school, which double-entry keeps at exactly 0.
 `manage.py run_recurring_topups [--now]`, `manage.py build_locale`. See
 `docs/TESTING_WITHOUT_DEVICES.md`. Every endpoint above has a runnable
 example in `docs/requests/*.http`.
+
+### Part 1 endpoints affected by Part 2 (read this if you built against Part 1)
+Every change below is **additive**. No Part 1 field was renamed or removed.
+- `GET /api/v1/wallets/` (school staff): now also lists the school's
+  **system wallets** (`wallet_type` ∈ `school_settlement, aggregator_clearing,
+  pooled_fund, merchant_settlement`) with `student: null`. Parents only ever
+  see their children's `main`/`savings` wallets. `aggregator_clearing` is
+  normally **negative** (see the chart of wallets). Clients showing student
+  balances should filter to `wallet_type in (main, savings)`.
+- `POST /api/v1/students/` now also creates the student's `main` and
+  `savings` wallets.
+- `LedgerEntry.entry_type` gains `reversal` and `shortfall_recovery`. Part 2
+  entries carry `reference_id="<kind>:<id>"`.
+- `GET /api/v1/savings-goals/…` gains `current_amount`, `progress_percent`,
+  `is_reached`, `reached_at` (read-only).
+- `POST /api/v1/cards/{id}/freeze/` and `/unfreeze/` also notify the other
+  guardians. Unfreezing a **lost** card now returns `409 card_lost`. New:
+  `POST /api/v1/cards/{id}/report-lost/`.
+- `School.policy_defaults` (in `/api/v1/schools/`) is **superseded** by
+  `/api/v1/policies/`. It is still returned and writable, but ignored.
+- New Part 2 student sub-routes: `/students/{id}/effective-policy/`,
+  `/students/{id}/p2p-history/`, `/students/{id}/attendance/`.
+- Known Part 1 quirk, **not changed**: `GET /api/v1/students/{id}/` returns
+  `403` for parents (their `school` is null and `IsSameSchoolObject` refuses).
+  The list endpoint works. See DECISIONS.md; a one-line fix is waiting for approval.
+
+### Part 2 endpoint index
+| Area | Endpoints |
+|---|---|
+| Payments | `payments/deposits/`, `payments/topup-links/`, `payments/gift-vouchers/`, `payments/recurring-topups/`, `payments/webhook/`, `public/topup-links/{token}/…` |
+| Pooled funds | `pooled-funds/`, `…/{id}/contribute|close|disburse/` |
+| Policy & catalogue | `policies/`, `product-categories/`, `products/`, `students/{id}/effective-policy/` |
+| Wallet ops | `wallets/{id}/savings/move-in|move-out|withdraw|withdrawal-window/`, `wallets/transfer/`, `students/{id}/p2p-history/`, `p2p-alerts/`, `cards/{id}/report-lost/` |
+| POS | `school-settings/`, `pos/devices/…`, `pos/cache/`, `pos/sync/`, `pos/purchase/`, `pos/p2p-transfer/`, `pos/transactions/`, `pos/shortfalls/…` |
+| Fees | `fee-categories/`, `fees/pay/`, `fees/payments/` |
+| Attendance | `attendance/tap/`, `attendance/`, `students/{id}/attendance/` |
+| Merchants | `merchants/`, `…/{id}/approve|suspend|staff|statement/` |
+| Disputes | `disputes/`, `…/{id}/review|resolve/` |
+| Notifications | `notifications/`, `…/{id}/read/`, `…/read-all/`, `…/preferences/`, `…/push-tokens/` |
+| Privacy | `privacy/my-data/`, `privacy/data-requests/`, `…/{id}/handle/` |
+| Analytics | `analytics/sales-summary|best-sellers|peak-hours|category-breakdown|reconciliation/`, `analytics/students/{id}/spending/` |
