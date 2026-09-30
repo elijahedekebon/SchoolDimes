@@ -1,0 +1,62 @@
+# SchoolDimes Part 2 -- Analytics & reconciliation (Section K)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+@studentId = 1
+@from = 2026-09-01
+@to = 2026-09-30
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### Sales summary
+GET {{baseUrl}}/analytics/sales-summary/?from={{from}}&to={{to}}
+Authorization: Bearer {{adminToken}}
+
+### Best sellers
+GET {{baseUrl}}/analytics/best-sellers/?from={{from}}&to={{to}}&limit=5
+Authorization: Bearer {{adminToken}}
+
+### Peak hours (Kampala)
+GET {{baseUrl}}/analytics/peak-hours/?from={{from}}&to={{to}}
+Authorization: Bearer {{adminToken}}
+
+### Category breakdown + unhealthy share
+GET {{baseUrl}}/analytics/category-breakdown/?from={{from}}&to={{to}}
+Authorization: Bearer {{adminToken}}
+
+### One student's spending (admin)
+GET {{baseUrl}}/analytics/students/{{studentId}}/spending/?from={{from}}&to={{to}}
+Authorization: Bearer {{adminToken}}
+
+### One student's spending (guardian)
+GET {{baseUrl}}/analytics/students/{{studentId}}/spending/
+Authorization: Bearer {{parentToken}}
+
+### Daily reconciliation
+GET {{baseUrl}}/analytics/reconciliation/?date={{to}}
+Authorization: Bearer {{adminToken}}

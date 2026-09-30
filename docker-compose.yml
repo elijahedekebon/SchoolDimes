@@ -55,7 +55,15 @@ services:
 
   celery-beat:
     build: ./backend
-    command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    # Wait until `web` has applied migrations: the DatabaseScheduler reads its
+    # tables (and installs CELERY_BEAT_SCHEDULE) the moment it starts.
+    command:
+      - sh
+      - -c
+      - >-
+        until python manage.py migrate --check >/dev/null 2>&1;
+        do echo "celery-beat waiting for migrations"; sleep 3; done;
+        exec celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - ./backend:/app
     env_file:

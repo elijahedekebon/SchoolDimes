@@ -631,7 +631,7 @@ def run_due_recurring_topups(now=None, *, force=False) -> list[dict]:
     client = get_aggregator_client()
     for rt_id in list(qs.values_list("pk", flat=True)):
         with transaction.atomic():
-            rt = RecurringTopUp.objects.select_for_update().select_related("parent", "student", "wallet").get(pk=rt_id)
+            rt = RecurringTopUp.objects.select_for_update(of=("self",)).select_related("parent", "student", "wallet").get(pk=rt_id)
             if not rt.active or (not force and rt.next_run_at > now):
                 continue
             scheduled_for = rt.next_run_at

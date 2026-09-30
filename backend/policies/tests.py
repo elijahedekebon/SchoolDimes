@@ -89,9 +89,14 @@ class TestAuthorizeDebit:
         assert decide(wallet, "1500", items=[item(catalog["soda"])]).code == "category_blocked"
         assert decide(wallet, "1000", items=[item(catalog["chips"])]).code == "item_blocked"
         assert decide(wallet, "20000").violations[:1] == ["insufficient_funds"]
-        # spend 3000 today, then 1500 more breaks the 4000 daily cap
-        post_transfer(debit_wallet=wallet, credit_wallet=get_system_wallet(school_a, Wallet.WalletType.SCHOOL_SETTLEMENT),
-                      amount=Decimal("3000"), entry_type=LedgerEntry.EntryType.POS_PURCHASE, reference_id="t:1")
+        # a real 3000 sale today, then 1500 more breaks the 4000 daily cap
+        from django.utils import timezone
+
+        from pos.services import record_sale, register_device
+
+        till, _raw = register_device(None, school=school_a, device_name="Till", device_role="canteen")
+        record_sale(till, {"idempotency_key": "cap-1", "card_uid": funded_student_a1.cards.get().card_uid,
+                           "amount": "3000", "device_local_timestamp": timezone.now().isoformat()})
         assert decide(wallet, "1500").code == "daily_cap_exceeded"
         assert decide(wallet, "1000").allowed
 

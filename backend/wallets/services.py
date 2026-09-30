@@ -284,7 +284,7 @@ def authorize_debit(wallet: Wallet, amount: Decimal, context: DebitContext) -> D
     """
     from policies.services import refusal_message
 
-    locked = Wallet.objects.select_for_update().select_related("student").get(pk=wallet.pk)
+    locked = Wallet.objects.select_for_update(of=("self",)).select_related("student").get(pk=wallet.pk)
     violations = debit_violations(locked, amount, context)
     if violations:
         code = violations[0]

@@ -1,0 +1,74 @@
+# SchoolDimes Part 2 -- Disputes & refunds (Section H)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+@txnId = 1
+@disputeId = 1
+@ledgerEntryId = 1
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### Raise a dispute on a POS sale
+POST {{baseUrl}}/disputes/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"pos_transaction": {{txnId}}, "reason_category": "wrong_amount", "description": "Only had one plate"}
+
+### Raise a dispute on a fee payment (ledger entry)
+POST {{baseUrl}}/disputes/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"ledger_entry": {{ledgerEntryId}}, "reason_category": "not_received", "description": "Trip was cancelled"}
+
+### My disputes
+GET {{baseUrl}}/disputes/
+Authorization: Bearer {{parentToken}}
+
+### School queue (admin)
+GET {{baseUrl}}/disputes/?status=open
+Authorization: Bearer {{adminToken}}
+
+### Start review (admin)
+POST {{baseUrl}}/disputes/{{disputeId}}/review/
+Authorization: Bearer {{adminToken}}
+
+### Resolve with a partial refund (admin)
+POST {{baseUrl}}/disputes/{{disputeId}}/resolve/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"outcome": "refund", "refund_amount": "1000", "resolution_notes": "Overcharged by one plate"}
+
+### Resolve by denying (admin)
+POST {{baseUrl}}/disputes/{{disputeId}}/resolve/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"outcome": "deny", "resolution_notes": "Receipt confirms two plates"}

@@ -168,15 +168,27 @@ def _debit_sum(wallet, entry_types, since, until=None):
     return qs.aggregate(s=Sum("amount"))["s"] or Decimal("0")
 
 
+def purchases_between(wallet, start, end) -> Decimal:
+    """Spending that counts toward caps: the gross amount of every recorded
+    sale (canteen + merchant, online + offline) whose DEVICE timestamp falls
+    in [start, end) -- i.e. the day the student bought, not the day an
+    offline till happened to sync. Rejected sales don't count."""
+    from pos.models import PosTransaction
+
+    return PosTransaction.objects.filter(
+        wallet=wallet, sync_status__in=["applied", "shortfall"],
+        device_local_timestamp__gte=start, device_local_timestamp__lt=end,
+    ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
+
+
 def spent_today(wallet, now=None) -> Decimal:
     start, end = kampala_day_bounds(now)
-    return _debit_sum(wallet, ["pos_purchase"], start, end)
+    return purchases_between(wallet, start, end)
 
 
 def spent_this_week(wallet, now=None) -> Decimal:
-    start, _end = kampala_day_bounds(now)
-    start -= timedelta(days=start.weekday())
-    return _debit_sum(wallet, ["pos_purchase"], start)
+    start, end = kampala_day_bounds(now)
+    return purchases_between(wallet, start - timedelta(days=start.weekday()), end)
 
 
 def p2p_sent_today(wallet, now=None) -> Decimal:

@@ -92,7 +92,7 @@ updated → commit `Part 2 – Section X: ...`.
 ### [x] J. Privacy — `privacy/my-data/` (json/csv), `DataRequest`, redaction service
 ### [x] K. Analytics & reconciliation — read-only endpoints
 ### [x] L. Seed data — extend `seed_demo`
-### [ ] M. Testing without devices — `simulate_pos`, `mock_webhook`, `run_recurring_topups`, `docs/TESTING_WITHOUT_DEVICES.md`, `docs/requests/*.http`
+### [x] M. Testing without devices — `simulate_pos`, `mock_webhook`, `run_recurring_topups`, `docs/TESTING_WITHOUT_DEVICES.md`, `docs/requests/*.http`
 
 (Sections A–C are built in the order listed but the cross-cutting pieces —
 system wallets, `authorize_debit`, `notify()` — are introduced in A as thin

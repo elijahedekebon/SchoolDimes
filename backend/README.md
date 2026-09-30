@@ -1,8 +1,13 @@
 # SchoolDimes Backend
 
 Django 5 + DRF backend for SchoolDimes, a cashless pocket-money and canteen
-payments platform for schools. This is **Part 1**: multi-tenant core,
-identity/auth, the append-only ledger, savings goals, and i18n scaffolding.
+payments platform for schools. **Part 1**: multi-tenant core, identity/auth,
+the append-only ledger, savings goals, i18n scaffolding. **Part 2**:
+double-entry money movement (deposits, contributors, gift vouchers,
+recurring top-ups, pooled funds, savings, P2P, fees, refunds), spending
+policy, canteen POS with offline sync, merchants, attendance,
+notifications (en/lg/sw), privacy, and analytics/reconciliation.
+See `../docs/PART2_PLAN.md` and `../docs/TESTING_WITHOUT_DEVICES.md`.
 See `../docs/API_CONTRACTS.md`, `../docs/DATA_MODEL.md`, and
 `../docs/DECISIONS.md` for the full contract, schema, and rationale.
 
@@ -50,7 +55,8 @@ export DATABASE_URL=sqlite:///db.sqlite3   # or a local/test Postgres
 pytest
 ```
 
-23 tests cover: tenant isolation (wallets/students visibility across
+Part 2 brings the suite to ~165 tests (see `docs/TESTING_WITHOUT_DEVICES.md`).
+Part 1's original 23 tests cover: tenant isolation (wallets/students visibility across
 schools and roles), ledger correctness (cached balance always matches an
 independent re-sum of ledger entries, insufficient-funds is rejected
 atomically), PIN hashing (never stored/returned raw), guardian↔student
@@ -71,6 +77,21 @@ Idempotent (safe to re-run). Creates:
   seeded via `post_ledger_entry` with a deposit + a POS purchase + a move
   to savings, a savings wallet with one `SavingsGoal`.
 - Four financial literacy tips: two in English, one Luganda, one Kiswahili.
+
+## Part 2 apps
+
+| App | What |
+|---|---|
+| `payments` | aggregator abstraction (mock + skeletons), deposits, payouts, contributor links, gift vouchers, recurring top-ups, webhook |
+| `pooled_funds` | transparent group funds |
+| `policies` | product categories, products, spending policy (`get_effective_policy`) |
+| `wallets` (extended) | system wallets, `post_transfer`, **`authorize_debit`** (the one debit gate), savings ops, P2P + alerts |
+| `pos` | devices + device-token auth, offline cache, sync, online purchase, shortfall review |
+| `fees`, `attendance`, `merchants`, `disputes`, `privacy`, `analytics` | Sections E–K |
+| `notifications` | `notify()`, in-app + stub SMS/push, preferences, push tokens, lg/sw catalogs |
+
+Management commands: `seed_demo`, `simulate_pos`, `mock_webhook`,
+`run_recurring_topups`, `build_locale`.
 
 ## What's deferred
 

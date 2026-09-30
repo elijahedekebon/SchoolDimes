@@ -1,0 +1,125 @@
+# SchoolDimes Part 2 -- Canteen POS + offline sync (Section D)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+# Paste the raw tokens printed by `python manage.py seed_demo` (they rotate on every run):
+@canteenToken = PASTE_CANTEEN_DEVICE_TOKEN
+@merchantToken = PASTE_MERCHANT_DEVICE_TOKEN
+@attendanceToken = PASTE_ATTENDANCE_DEVICE_TOKEN
+
+@deviceId = 1
+@cardUid = PASTE_A_CARD_UID_FROM_THE_CACHE
+@recipientCardUid = PASTE_ANOTHER_CARD_UID
+@txnId = 1
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### Register a device (admin) -- the token is shown ONCE
+POST {{baseUrl}}/pos/devices/register/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"device_name": "Till 2", "device_role": "canteen"}
+
+### List devices
+GET {{baseUrl}}/pos/devices/
+Authorization: Bearer {{adminToken}}
+
+### Stale devices
+GET {{baseUrl}}/pos/devices/?stale=true
+Authorization: Bearer {{adminToken}}
+
+### Rotate a device token
+POST {{baseUrl}}/pos/devices/{{deviceId}}/rotate-token/
+Authorization: Bearer {{adminToken}}
+
+### Revoke a device
+POST {{baseUrl}}/pos/devices/{{deviceId}}/revoke/
+Authorization: Bearer {{adminToken}}
+
+### School settings (offline ceiling etc.)
+GET {{baseUrl}}/school-settings/
+Authorization: Bearer {{adminToken}}
+
+### Change the offline spend ceiling
+PATCH {{baseUrl}}/school-settings/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"offline_spend_ceiling": "3000"}
+
+### Full offline cache (as the canteen device)
+GET {{baseUrl}}/pos/cache/
+Authorization: Device {{canteenToken}}
+
+### Incremental refresh
+GET {{baseUrl}}/pos/cache/?since=2026-09-30T00:00:00Z
+Authorization: Device {{canteenToken}}
+
+### Sync an offline batch (replay it unchanged to see 'duplicate')
+POST {{baseUrl}}/pos/sync/
+Authorization: Device {{canteenToken}}
+Content-Type: application/json
+
+{"transactions": [
+  {"idempotency_key": "http-demo-sale-1", "card_uid": "{{cardUid}}", "amount": "3500.00",
+   "items": [{"product_id": 1, "quantity": 1, "unit_price": "3000.00"},
+             {"description": "Mandazi", "category_id": 2, "quantity": 1, "unit_price": "500.00"}],
+   "device_local_timestamp": "2026-09-30T12:45:00+03:00", "pin_verified": true}
+ ],
+ "pin_failures": []}
+
+### Online purchase (authorize_debit enforced; PIN checked server-side)
+POST {{baseUrl}}/pos/purchase/
+Authorization: Device {{canteenToken}}
+Content-Type: application/json
+
+{"idempotency_key": "{{$guid}}", "card_uid": "{{cardUid}}", "amount": "500", "pin": "1001",
+ "items": [{"description": "Chapati", "quantity": 1, "unit_price": "500"}]}
+
+### P2P at the till (sender card + PIN)
+POST {{baseUrl}}/pos/p2p-transfer/
+Authorization: Device {{canteenToken}}
+Content-Type: application/json
+
+{"idempotency_key": "{{$guid}}", "sender_card_uid": "{{cardUid}}", "pin": "1001", "recipient_card_uid": "{{recipientCardUid}}", "amount": "300"}
+
+### All POS transactions (admin)
+GET {{baseUrl}}/pos/transactions/?sync_status=shortfall
+Authorization: Bearer {{adminToken}}
+
+### Review queue: shortfalls + flagged sales
+GET {{baseUrl}}/pos/shortfalls/
+Authorization: Bearer {{adminToken}}
+
+### Resolve: write off / recover_from_next_topup / charge_guardian / accept
+POST {{baseUrl}}/pos/shortfalls/{{txnId}}/resolve/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"resolution": "recover_from_next_topup", "review_notes": "Double-spend across tills"}

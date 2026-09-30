@@ -1,0 +1,125 @@
+# SchoolDimes Part 2 -- Payments (Section A)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+@walletId = 1
+@studentId = 1
+@depositId = 1
+@linkId = 1
+@recurringId = 1
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### My students' wallets (find @walletId)
+GET {{baseUrl}}/wallets/
+Authorization: Bearer {{parentToken}}
+
+### Initiate a top-up (mock: phones ending 999 are declined)
+POST {{baseUrl}}/payments/deposits/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"wallet": {{walletId}}, "amount": "5000", "channel": "momo", "payer_phone": "0772000111", "idempotency_key": "{{$guid}}"}
+
+### Same request with a FIXED key twice -> second answer is 200 with the same deposit
+POST {{baseUrl}}/payments/deposits/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"wallet": {{walletId}}, "amount": "3000", "channel": "ussd", "idempotency_key": "demo-fixed-key-1"}
+
+### Poll a deposit
+GET {{baseUrl}}/payments/deposits/{{depositId}}/
+Authorization: Bearer {{parentToken}}
+
+### Deposit history (filter by student / status / purpose)
+GET {{baseUrl}}/payments/deposits/?student={{studentId}}&status=pending
+Authorization: Bearer {{parentToken}}
+
+### School admin view of deposits
+GET {{baseUrl}}/payments/deposits/
+Authorization: Bearer {{adminToken}}
+
+### Create a contributor top-up link
+POST {{baseUrl}}/payments/topup-links/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"student": {{studentId}}}
+
+### List my top-up links
+GET {{baseUrl}}/payments/topup-links/
+Authorization: Bearer {{parentToken}}
+
+### Revoke a link
+POST {{baseUrl}}/payments/topup-links/{{linkId}}/revoke/
+Authorization: Bearer {{parentToken}}
+
+### Send a gift voucher
+POST {{baseUrl}}/payments/gift-vouchers/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"student": {{studentId}}, "amount": "2500", "message": "Happy birthday!", "channel": "momo", "payer_phone": "0772000111", "idempotency_key": "{{$guid}}"}
+
+### Gift vouchers (sent + received)
+GET {{baseUrl}}/payments/gift-vouchers/
+Authorization: Bearer {{parentToken}}
+
+### Create a weekly recurring top-up (Mondays 08:00 Kampala)
+POST {{baseUrl}}/payments/recurring-topups/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"student": {{studentId}}, "amount": "4000", "channel": "momo", "payer_phone": "0772000111", "frequency": "weekly", "day_of_week": 0}
+
+### List recurring top-ups
+GET {{baseUrl}}/payments/recurring-topups/
+Authorization: Bearer {{parentToken}}
+
+### Pause a recurring top-up
+PATCH {{baseUrl}}/payments/recurring-topups/{{recurringId}}/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"active": false}
+
+### Delete a recurring top-up
+DELETE {{baseUrl}}/payments/recurring-topups/{{recurringId}}/
+Authorization: Bearer {{parentToken}}
+
+### Aggregator webhook -- simplest from a terminal instead:
+###   python manage.py mock_webhook --list
+###   python manage.py mock_webhook SD-DEP-XXXX            (or --fail)
+### A hand-made request below will get 401 unless the signature matches
+### HMAC-SHA256(PAYMENT_AGGREGATOR_WEBHOOK_SECRET, exact body).
+POST {{baseUrl}}/payments/webhook/
+Content-Type: application/json
+X-SchoolDimes-Signature: not-a-valid-signature
+
+{"reference": "SD-DEP-XXXX", "aggregator_ref": "", "status": "successful", "amount": "5000.00", "failure_reason": ""}

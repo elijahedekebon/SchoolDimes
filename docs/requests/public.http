@@ -1,0 +1,54 @@
+# SchoolDimes Part 2 -- Public contributor endpoints (Section A)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+# Paste TOPUP_LINK_TOKEN from the seed_demo output:
+@linkToken = PASTE_TOPUP_LINK_TOKEN
+@reference = SD-DEP-XXXX
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### What a contributor sees (first name + school only)
+GET {{baseUrl}}/public/topup-links/{{linkToken}}/
+
+### Contributor top-up
+POST {{baseUrl}}/public/topup-links/{{linkToken}}/deposits/
+Content-Type: application/json
+
+{"contributor": {"name": "Jjajja Nalongo", "phone_number": "0701000222", "relationship_label": "Grandmother"},
+ "amount": "3000", "channel": "ussd", "idempotency_key": "{{$guid}}"}
+
+### Poll a contributor deposit
+GET {{baseUrl}}/public/topup-links/{{linkToken}}/deposits/{{reference}}/
+
+### Contributor gift voucher
+POST {{baseUrl}}/public/topup-links/{{linkToken}}/gift-vouchers/
+Content-Type: application/json
+
+{"contributor": {"name": "Uncle Tom", "email": "tom@example.com"}, "amount": "2000", "message": "Buy a book!",
+ "channel": "momo", "payer_phone": "0701000333", "idempotency_key": "{{$guid}}"}

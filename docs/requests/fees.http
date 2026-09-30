@@ -1,0 +1,70 @@
+# SchoolDimes Part 2 -- Fee top-ups (Section E)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+@studentId = 1
+@feeCategoryId = 1
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### Fee categories
+GET {{baseUrl}}/fee-categories/?active=true
+Authorization: Bearer {{parentToken}}
+
+### Fees applicable to a class
+GET {{baseUrl}}/fee-categories/?class_name=P4
+Authorization: Bearer {{parentToken}}
+
+### Create a fee category (admin)
+POST {{baseUrl}}/fee-categories/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"name": "Swimming", "amount_type": "range", "min_amount": "2000", "max_amount": "10000", "applicable_classes": []}
+
+### Pay a fee (guardian; exempt from snack caps)
+POST {{baseUrl}}/fees/pay/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"student": {{studentId}}, "fee_category": {{feeCategoryId}}, "idempotency_key": "{{$guid}}"}
+
+### Pay a range fee with an amount
+POST {{baseUrl}}/fees/pay/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"student": {{studentId}}, "fee_category": 2, "amount": "2500"}
+
+### Payment history per student
+GET {{baseUrl}}/fees/payments/?student={{studentId}}
+Authorization: Bearer {{parentToken}}
+
+### Payment history per category (admin)
+GET {{baseUrl}}/fees/payments/?fee_category={{feeCategoryId}}
+Authorization: Bearer {{adminToken}}

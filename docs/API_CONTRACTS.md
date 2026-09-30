@@ -1244,3 +1244,9 @@ Every `*_amount` next to a `ledger_amount` is recomputed from the
 `LedgerEntry` rows carrying its `reference_id` (`pos:`, `deposit:`,
 `fee:`), and `matches` shows whether they agree. `books_total` is the sum of
 every wallet in the school, which double-entry keeps at exactly 0.
+
+### Developer tools (not endpoints) — Section M
+`manage.py simulate_pos [--base-url URL]`, `manage.py mock_webhook <reference> [--fail] [--reason R] [--list] [--base-url URL]`,
+`manage.py run_recurring_topups [--now]`, `manage.py build_locale`. See
+`docs/TESTING_WITHOUT_DEVICES.md`. Every endpoint above has a runnable
+example in `docs/requests/*.http`.

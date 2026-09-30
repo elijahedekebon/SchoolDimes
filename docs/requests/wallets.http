@@ -1,0 +1,171 @@
+# SchoolDimes Part 2 -- Wallets: policy, savings, P2P, cards (Section C)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+@walletId = 1
+@savingsWalletId = 2
+@studentId = 1
+@recipientStudentId = 3
+@cardId = 1
+@policyId = 1
+@alertId = 1
+@goalId = 1
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### Product categories
+GET {{baseUrl}}/product-categories/
+Authorization: Bearer {{parentToken}}
+
+### Create a category (admin)
+POST {{baseUrl}}/product-categories/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"name": "Fruit", "is_unhealthy": false}
+
+### Products
+GET {{baseUrl}}/products/?active=true
+Authorization: Bearer {{parentToken}}
+
+### Create a product (admin)
+POST {{baseUrl}}/products/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"name": "Banana", "category": 1, "price": "200"}
+
+### Policies (school default + overrides) as admin
+GET {{baseUrl}}/policies/
+Authorization: Bearer {{adminToken}}
+
+### Tighten the school default (admin)
+PATCH {{baseUrl}}/policies/{{policyId}}/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"daily_spend_cap": "6000", "p2p_daily_cap": "3000"}
+
+### Parent creates an override for their child (tighten only)
+POST {{baseUrl}}/policies/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"student": {{studentId}}, "daily_spend_cap": "3000", "blocked_categories": [3]}
+
+### Parent tries to LOOSEN -> 400 policy_cannot_loosen
+POST {{baseUrl}}/policies/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"student": {{studentId}}, "daily_spend_cap": "999999"}
+
+### Effective policy for a student
+GET {{baseUrl}}/students/{{studentId}}/effective-policy/
+Authorization: Bearer {{parentToken}}
+
+### Move 2,000 main -> savings
+POST {{baseUrl}}/wallets/{{walletId}}/savings/move-in/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"amount": "2000"}
+
+### Move 500 savings -> main
+POST {{baseUrl}}/wallets/{{walletId}}/savings/move-out/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"amount": "500"}
+
+### Savings goals with progress
+GET {{baseUrl}}/savings-goals/
+Authorization: Bearer {{parentToken}}
+
+### Open a withdrawal window (guardian)
+PUT {{baseUrl}}/wallets/{{savingsWalletId}}/savings/withdrawal-window/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"withdrawal_window_start": "2026-01-01T00:00:00Z", "withdrawal_window_end": "2027-12-31T00:00:00Z"}
+
+### Check the window
+GET {{baseUrl}}/wallets/{{savingsWalletId}}/savings/withdrawal-window/
+Authorization: Bearer {{parentToken}}
+
+### Withdraw savings to mobile money (mock: 998 fails and is reversed)
+POST {{baseUrl}}/wallets/{{savingsWalletId}}/savings/withdraw/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"amount": "1000", "phone_number": "0772000111", "idempotency_key": "{{$guid}}"}
+
+### P2P transfer (guardian of the sender)
+POST {{baseUrl}}/wallets/transfer/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"sender_student": {{studentId}}, "recipient_student": {{recipientStudentId}}, "amount": "500", "note": "lunch money"}
+
+### P2P history
+GET {{baseUrl}}/students/{{studentId}}/p2p-history/
+Authorization: Bearer {{parentToken}}
+
+### P2P pattern alerts (admin)
+GET {{baseUrl}}/p2p-alerts/?status=open
+Authorization: Bearer {{adminToken}}
+
+### Review an alert (admin)
+POST {{baseUrl}}/p2p-alerts/{{alertId}}/review/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"status": "reviewed", "review_notes": "Spoke to the class teacher"}
+
+### My children's cards
+GET {{baseUrl}}/cards/
+Authorization: Bearer {{parentToken}}
+
+### Freeze a card (notifies the other guardians)
+POST {{baseUrl}}/cards/{{cardId}}/freeze/
+Authorization: Bearer {{parentToken}}
+
+### Unfreeze
+POST {{baseUrl}}/cards/{{cardId}}/unfreeze/
+Authorization: Bearer {{parentToken}}
+
+### Report a card lost (then the admin reissues)
+POST {{baseUrl}}/cards/{{cardId}}/report-lost/
+Authorization: Bearer {{parentToken}}
+
+### Reissue (admin)
+POST {{baseUrl}}/cards/{{cardId}}/reissue/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"pin": "2468"}

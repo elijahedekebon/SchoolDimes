@@ -1,0 +1,72 @@
+# SchoolDimes Part 2 -- Pooled funds (Section B)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+@fundId = 1
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### List funds of my children's schools
+GET {{baseUrl}}/pooled-funds/
+Authorization: Bearer {{parentToken}}
+
+### Create a fund
+POST {{baseUrl}}/pooled-funds/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"title": "P4 sports day", "purpose": "Medals and water", "group_label": "P4", "target_amount": "30000", "deadline": "2026-12-01"}
+
+### Fund detail with the transparent contribution log
+GET {{baseUrl}}/pooled-funds/{{fundId}}/
+Authorization: Bearer {{parentToken}}
+
+### Contribute (confirm it with manage.py mock_webhook SD-PF-...)
+POST {{baseUrl}}/pooled-funds/{{fundId}}/contribute/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"amount": "5000", "channel": "momo", "payer_phone": "0772000111", "idempotency_key": "{{$guid}}"}
+
+### Close (creator or school admin)
+POST {{baseUrl}}/pooled-funds/{{fundId}}/close/
+Authorization: Bearer {{parentToken}}
+
+### Disburse to the school (school admin only)
+POST {{baseUrl}}/pooled-funds/{{fundId}}/disburse/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"amount": "5000", "destination": "school_settlement", "description": "Bus hire deposit"}
+
+### Disburse externally to a phone (mock: phones ending 998 fail and are reversed)
+POST {{baseUrl}}/pooled-funds/{{fundId}}/disburse/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"amount": "1000", "destination": "external", "description": "Teacher gift", "phone_number": "0772111222"}

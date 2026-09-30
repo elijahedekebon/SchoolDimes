@@ -23,7 +23,7 @@ from core.exceptions import LedgerError, ServiceError
 from core.money import validate_amount
 from notifications.services import fmt_amount, notify_guardians, notify_school_admins
 from policies.models import Policy, Product, ProductCategory
-from policies.services import get_school_policy, kampala_day_bounds, resolve
+from policies.services import get_school_policy, kampala_day_bounds, purchases_between, resolve
 from tenants.services import get_school_settings
 from wallets.models import LedgerEntry, Wallet
 from wallets.services import (
@@ -201,10 +201,10 @@ def build_cache(device, since=None, now=None) -> dict:
         student = next(c.student for c in cards if c.student_id == sid)
         wallets[sid] = get_student_wallet(student)
     spend = dict(
-        LedgerEntry.objects.filter(
-            wallet__in=wallets.values(), direction="debit", entry_type="pos_purchase",
-            created_at__gte=day_start, created_at__lt=day_end,
-        ).values_list("wallet_id").annotate(s=Sum("amount"))
+        PosTransaction.objects.filter(
+            wallet__in=wallets.values(), sync_status__in=["applied", "shortfall"],
+            device_local_timestamp__gte=day_start, device_local_timestamp__lt=day_end,
+        ).order_by().values_list("wallet_id").annotate(s=Sum("amount"))
     )
     overrides = {p.student_id: p for p in Policy.objects.filter(student_id__in=student_ids)}
     policy_cache = {}
@@ -401,7 +401,7 @@ def record_sale(device, raw: dict, *, channel=PosTransaction.Channel.OFFLINE_SYN
                 require_debit(wallet, amount, context)
                 flags = []
             else:
-                locked = Wallet.objects.select_for_update().select_related("student").get(pk=wallet.pk)
+                locked = Wallet.objects.select_for_update(of=("self",)).select_related("student").get(pk=wallet.pk)
                 flags = [v for v in debit_violations(locked, amount, context, check_balance=False) if v not in FLAG_ONLY]
             txn = PosTransaction.objects.create(
                 device=device, merchant_id=merchant_id, school_id=card.school_id, card=card, card_uid=card.card_uid,
@@ -512,9 +512,7 @@ def card_balances(device, card_uids) -> list:
     rows = []
     for card in Card.objects.filter(card_uid__in=card_uids, school_id__in=device_scope_school_ids(device)).select_related("student"):
         wallet = get_student_wallet(card.student)
-        today = LedgerEntry.objects.filter(
-            wallet=wallet, direction="debit", entry_type="pos_purchase", created_at__gte=day_start, created_at__lt=day_end
-        ).aggregate(s=Sum("amount"))["s"] or Decimal("0")
+        today = purchases_between(wallet, day_start, day_end)
         rows.append({"card_uid": card.card_uid, "card_status": card.status, "wallet_id": wallet.pk,
                      "balance": money(wallet.cached_balance), "today_spend": money(today)})
     return rows

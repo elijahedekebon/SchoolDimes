@@ -1,0 +1,75 @@
+# SchoolDimes Part 2 -- Notifications (Section I)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+@notificationId = 1
+@studentId = 1
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### My notifications (with unread_count)
+GET {{baseUrl}}/notifications/
+Authorization: Bearer {{parentToken}}
+
+### Unread only
+GET {{baseUrl}}/notifications/?unread=true
+Authorization: Bearer {{parentToken}}
+
+### Mark one read
+POST {{baseUrl}}/notifications/{{notificationId}}/read/
+Authorization: Bearer {{parentToken}}
+
+### Mark all read
+POST {{baseUrl}}/notifications/read-all/
+Authorization: Bearer {{parentToken}}
+
+### Preferences
+GET {{baseUrl}}/notifications/preferences/
+Authorization: Bearer {{parentToken}}
+
+### Update preferences + per-child low-balance level
+PUT {{baseUrl}}/notifications/preferences/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"in_app_enabled": true, "sms_enabled": true, "push_enabled": true, "low_balance_thresholds": {"{{studentId}}": "2500"}}
+
+### Register a push token
+POST {{baseUrl}}/notifications/push-tokens/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"token": "demo-fcm-token", "platform": "android"}
+
+### List push tokens
+GET {{baseUrl}}/notifications/push-tokens/
+Authorization: Bearer {{parentToken}}
+
+### Remove a push token (logout)
+DELETE {{baseUrl}}/notifications/push-tokens/demo-fcm-token/
+Authorization: Bearer {{parentToken}}

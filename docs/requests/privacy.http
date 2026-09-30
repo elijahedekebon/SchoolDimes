@@ -1,0 +1,70 @@
+# SchoolDimes Part 2 -- Privacy (Section J)
+# VS Code "REST Client" extension (humao.rest-client). Click "Send Request".
+# Prerequisites: stack running (docker compose up) and `python manage.py seed_demo`.
+# IDs below are placeholders: look real ones up with the GET requests
+# (e.g. GET {{baseUrl}}/students/ or /wallets/) and edit the @variables.
+
+@baseUrl = http://localhost:8000/api/v1
+@password = pw123456
+@parentEmail = parent1@schooldimes.test
+@parent2Email = parent2@schooldimes.test
+@adminEmail = admin@kampaladps.schooldimes.test
+@merchantStaffEmail = shop@ntindabookshop.schooldimes.test
+# JWTs captured from the login requests below (send those first):
+@parentToken = {{parentLogin.response.body.access}}
+@adminToken = {{adminLogin.response.body.access}}
+@shopToken = {{shopLogin.response.body.access}}
+
+@studentId = 1
+@requestId = 1
+
+### Log in as parent1 (guardian of Amina + Brian)
+# @name parentLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{parentEmail}}", "password": "{{password}}"}
+
+### Log in as the Kampala school admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{"email": "{{adminEmail}}", "password": "{{password}}"}
+
+### My data (JSON)
+GET {{baseUrl}}/privacy/my-data/
+Authorization: Bearer {{parentToken}}
+
+### My data (CSV download)
+GET {{baseUrl}}/privacy/my-data/?format=csv
+Authorization: Bearer {{parentToken}}
+
+### Request a correction
+POST {{baseUrl}}/privacy/data-requests/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"request_type": "correction", "subject": "student", "student": {{studentId}}, "details": "Date of birth should be 2016-03-04"}
+
+### Request deletion of my own account
+POST {{baseUrl}}/privacy/data-requests/
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{"request_type": "deletion", "subject": "self", "details": "Moving abroad"}
+
+### My requests
+GET {{baseUrl}}/privacy/data-requests/
+Authorization: Bearer {{parentToken}}
+
+### School's requests (admin)
+GET {{baseUrl}}/privacy/data-requests/
+Authorization: Bearer {{adminToken}}
+
+### Handle a request (admin; completing a deletion redacts PII, keeps the ledger)
+POST {{baseUrl}}/privacy/data-requests/{{requestId}}/handle/
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{"status": "in_progress", "notes": "Checking with the class teacher"}
