@@ -40,6 +40,10 @@ class Wallet(models.Model):
     # wallets.services.post_ledger_entry -- see compute_balance() for the
     # source of truth this cache is checked against.
     cached_balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0"))
+    # Part 2: parent-configured window in which savings may be withdrawn to
+    # mobile money (savings wallets only; both null = withdrawals closed).
+    withdrawal_window_start = models.DateTimeField(null=True, blank=True)
+    withdrawal_window_end = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -133,6 +137,9 @@ class SavingsGoal(models.Model):
     goal_name = models.CharField(max_length=255)
     target_amount = models.DecimalField(max_digits=12, decimal_places=2)
     target_date = models.DateField(null=True, blank=True)
+    reached_at = models.DateTimeField(
+        null=True, blank=True, help_text="Set once, when savings first reach target_amount (Part 2)."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
@@ -143,3 +150,52 @@ class SavingsGoal(models.Model):
 
     def __str__(self):
         return f"{self.goal_name} ({self.wallet.student})"
+
+
+class P2PTransfer(models.Model):
+    """Student-to-student transfer (same school only). Ledger: sender main
+    debit `p2p_transfer_out`, recipient main credit `p2p_transfer_in`,
+    reference_id "p2p:<id>"."""
+
+    school = models.ForeignKey("tenants.School", on_delete=models.CASCADE, related_name="p2p_transfers")
+    sender_wallet = models.ForeignKey(Wallet, on_delete=models.PROTECT, related_name="p2p_sent")
+    recipient_wallet = models.ForeignKey(Wallet, on_delete=models.PROTECT, related_name="p2p_received")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    note = models.CharField(max_length=140, blank=True)
+    initiated_by = models.ForeignKey(
+        "accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        help_text="Guardian who initiated it (null when initiated at a POS device).",
+    )
+    device_id_ref = models.BigIntegerField(
+        null=True, blank=True, help_text="pos.Device id when initiated at a POS device with card + PIN."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+
+class P2PAlert(models.Model):
+    """Rule-based "pressure or bullying" flag for school_admin review (§5)."""
+
+    class Rule(models.TextChoices):
+        MANY_DISTINCT_SENDERS = "many_distinct_senders", "Many distinct senders"
+        REPEATED_NEAR_CAP = "repeated_near_cap", "Repeatedly sending near the cap"
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Open"
+        REVIEWED = "reviewed", "Reviewed"
+        DISMISSED = "dismissed", "Dismissed"
+
+    school = models.ForeignKey("tenants.School", on_delete=models.CASCADE, related_name="p2p_alerts")
+    student = models.ForeignKey("students.Student", on_delete=models.CASCADE, related_name="p2p_alerts")
+    rule = models.CharField(max_length=32, choices=Rule.choices)
+    details = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN)
+    reviewed_by = models.ForeignKey("accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]

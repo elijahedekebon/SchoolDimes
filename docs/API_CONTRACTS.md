@@ -460,3 +460,156 @@ the fund is open or closed. Once a **closed** fund's balance reaches 0, its
 status becomes `disbursed`. Response `201`: the disbursement row.
 Errors: `422 insufficient_funds` (more than the fund holds),
 `400 description_required`, `403 forbidden`.
+
+### Spending controls, savings, P2P, card freeze — Section C
+
+#### Debit refusal codes (`authorize_debit`)
+Every debit path (POS/merchant purchase, P2P, fee payment, savings move,
+savings withdrawal) goes through `wallets.services.authorize_debit()`. A
+refusal is `422` with
+`{"code": "<first violation>", "detail": "<translated>", "violations": ["…all…"]}`.
+Codes, in the order they are checked:
+`wallet_not_spendable`, `card_frozen`, `card_lost`, `insufficient_funds`,
+`per_transaction_cap_exceeded`, `daily_cap_exceeded`, `weekly_cap_exceeded`,
+`category_blocked`, `category_not_allowed`, `item_blocked`, `merchant_blocked`
+(purchases only), and `p2p_disabled`, `p2p_cap_exceeded` (P2P only).
+Fee payments, savings moves and savings withdrawals are **exempt from
+spending caps and category rules**; card-freeze and balance still apply.
+"Today" and "this week" (Monday start) are Africa/Kampala. Daily/weekly spend
+= the sum of `pos_purchase` debits on the student's main wallet.
+
+#### `GET|POST /api/v1/product-categories/`, `GET|PATCH|PUT|DELETE /api/v1/product-categories/{id}/`
+JWT. Read: anyone attached to the school (staff; parents of its students).
+Write: that school's **school_admin** (platform_admin must pass `school`;
+audit-logged). Fields: `{ id, school (read-only), name, is_unhealthy, active,
+created_at, updated_at }`. `name` is unique per school. `?active=true|false`.
+
+#### `GET|POST /api/v1/products/`, `GET|PATCH|PUT|DELETE /api/v1/products/{id}/`
+Same permissions. Fields: `{ id, school, name, category, category_name,
+price, active, created_at, updated_at }`. `category` must belong to the same
+school (`400 category_invalid`). `?category=<id>`, `?active=`. (Section G adds
+`merchant`.)
+
+#### `GET|POST /api/v1/policies/`, `GET|PATCH|PUT|DELETE /api/v1/policies/{id}/`
+JWT. One **school default** row per school (`student: null`, created
+automatically) plus at most one **override** per student.
+```json
+{ "id": 4, "school": 1, "student": 12, "daily_spend_cap": "3000.00",
+  "weekly_spend_cap": null, "per_transaction_cap": null, "p2p_daily_cap": "2000.00",
+  "p2p_enabled": null, "low_balance_threshold": "1500.00",
+  "blocked_categories": [2], "allowed_categories": [], "blocked_items": [7],
+  "updated_by": 3, "created_at": "…", "updated_at": "…" }
+```
+`null` caps mean "no limit / inherit". `p2p_enabled: null` means inherit (a
+school default of `null` means enabled). An empty `allowed_categories` means
+every category is allowed.
+- school_admin: reads all of their school's rows; PATCHes the default; CRUDs
+  overrides in their school.
+- parent: reads the default of their children's schools and the overrides of
+  linked students; creates/PATCHes/DELETEs overrides for **linked students
+  only**, and only to tighten: a cap above the school's, `p2p_enabled: true`
+  when the school has it off, or allowing a category the school doesn't allow
+  → `400 policy_cannot_loosen`.
+- staff (canteen/merchant): read-only, own school.
+- `POST` with `student: null` → `409 default_exists` (PATCH the default
+  instead); a second override → `409 override_exists`. Referenced
+  categories/items must be from the same school (`400 reference_invalid`).
+  The default can't be deleted.
+
+**Resolution** (`policies.services.get_effective_policy(student)`): caps =
+the smaller of default and override; blocked categories/items/merchants =
+union; allow-lists = intersection; P2P allowed only if both allow it;
+`low_balance_threshold` = override, else default, else
+`LOW_BALANCE_DEFAULT_THRESHOLD` (2000).
+
+#### `GET /api/v1/students/{id}/effective-policy/`
+JWT, anyone who can see the student. Response:
+```json
+{ "student": 12, "daily_spend_cap": "3000.00", "weekly_spend_cap": null,
+  "per_transaction_cap": null, "p2p_daily_cap": "2000.00", "p2p_enabled": true,
+  "low_balance_threshold": "1500.00", "blocked_category_ids": [2],
+  "allowed_category_ids": null, "blocked_product_ids": [7],
+  "blocked_merchant_ids": [], "allowed_merchant_ids": null }
+```
+`allowed_*_ids: null` = no allow-list. This is the same object the POS cache
+embeds per card.
+
+#### `POST /api/v1/wallets/{id}/savings/move-in/` and `/savings/move-out/`
+JWT: guardians of the student, that school's school_admin, platform_admin.
+`{id}` is the student's main **or** savings wallet. Body `{ "amount": "4000" }`.
+move-in = main → savings, move-out = savings → main. Ledger (Part 1's
+convention, kept): the debit side is always `savings_move_out` and the credit
+side `savings_move_in`, with `reference_id=savings:<random>`. Response `200`:
+`{ "main": {Wallet}, "savings": {Wallet} }`. `422` debit refusal codes apply.
+
+#### `GET|PUT /api/v1/wallets/{id}/savings/withdrawal-window/`
+GET: anyone allowed above. PUT: **guardians only**. Body
+`{ "withdrawal_window_start": "2026-12-01T00:00:00Z", "withdrawal_window_end": "2027-01-31T00:00:00Z" }`
+(both null = closed). Response `{ wallet, withdrawal_window_start,
+withdrawal_window_end, is_open }`. `400 window_invalid` if only one is
+given or end ≤ start.
+
+#### `POST /api/v1/wallets/{id}/savings/withdraw/`
+JWT, **guardians only** (`403` otherwise). Body
+`{ "amount": "1000", "phone_number": "0772000111", "idempotency_key": "uuid" }`
+(`phone_number` defaults to the guardian's). Allowed only while the window is
+open (`409 withdrawal_window_closed`). Debits savings into clearing at once
+(`entry_type=savings_withdrawal`, `reference_id=payout:<id>`) and starts a
+mobile-money payout. Response `201`: a Payout
+`{ id, school, purpose, source_wallet, amount, phone_number, description, status,
+reference, aggregator_ref, failure_reason, created_at, completed_at }`.
+`status: failed` means a `reversal` has already returned the money to
+savings. Guardians get `savings_withdrawal_completed` / `_failed`.
+
+#### `GET /api/v1/savings-goals/…` (Part 1 endpoint, extended)
+Responses gain read-only `current_amount` (the savings wallet balance),
+`progress_percent` (0–100, capped), `is_reached`, and `reached_at` (stamped
+the first time savings reach the target, which also sends
+`savings_goal_reached` to guardians). Several goals on one wallet each compare
+against the whole savings balance.
+
+#### `POST /api/v1/wallets/transfer/`
+JWT, **a guardian of the sender**. Body:
+```json
+{ "sender_student": 12, "recipient_student": 15, "amount": "500", "note": "lunch" }
+```
+(or `recipient_card_uid` instead of `recipient_student`). Rules: same school
+only (a student in another school is `404 recipient_not_found`); the sender
+has an active card and no frozen card; the recipient's card is active
+(`422 recipient_card_inactive`); P2P enabled for both (`422 p2p_disabled`);
+within the sender's `p2p_daily_cap` (`422 p2p_cap_exceeded`); and
+`authorize_debit` passes. Ledger: `p2p_transfer_out` / `p2p_transfer_in`,
+`reference_id=p2p:<id>`. The recipient's guardians get
+`p2p_transfer_received`. Response `201`:
+```json
+{ "id": 3, "school": 1, "sender_student": 12, "sender_name": "Amina Nakato",
+  "recipient_student": 15, "recipient_name": "Brian Okello", "amount": "500.00",
+  "note": "lunch", "initiated_by": 3, "device": null, "created_at": "…" }
+```
+The POS-device variant (card + PIN) is `POST /api/v1/pos/p2p-transfer/` (Section D).
+
+#### `GET /api/v1/students/{id}/p2p-history/`
+JWT, **guardians of the student and that school's school_admin only**
+(other staff get `404`). Paginated transfers in either direction, same shape.
+
+#### `GET /api/v1/p2p-alerts/`, `GET /api/v1/p2p-alerts/{id}/`, `POST /api/v1/p2p-alerts/{id}/review/`
+JWT, **school_admin** (own school) / platform_admin. `?status=open|reviewed|dismissed`.
+```json
+{ "id": 1, "school": 1, "student": 15, "student_name": "Brian Okello",
+  "rule": "many_distinct_senders", "details": {"distinct_senders": 4, "window_days": 7},
+  "status": "open", "reviewed_by": null, "reviewed_at": null, "review_notes": "", "created_at": "…" }
+```
+Review body: `{ "status": "reviewed" | "dismissed", "review_notes": "…" }`.
+When an alert is raised, the school's admins get `p2p_alert_raised`.
+
+#### Cards (Part 1 endpoints, extended — same paths and response shape)
+- `POST /api/v1/cards/{id}/freeze/` / `/unfreeze/`: now also notify the
+  student's **other** guardians (`card_frozen` / `card_unfrozen`), and are
+  audit-logged for platform_admin. A freeze blocks every debit through
+  `authorize_debit` immediately and reaches offline POS devices on their next
+  cache refresh (the card's `updated_at` changes). Unfreezing a **lost** card
+  → `409 card_lost` (Part 1 would have silently reactivated it).
+- **New** `POST /api/v1/cards/{id}/report-lost/`: guardian or school_admin
+  (same rule as freeze). Sets `status: lost` permanently and notifies the other
+  guardians (`card_reported_lost`). Replacement uses the Part 1
+  `POST /api/v1/cards/{id}/reissue/` (school_admin).

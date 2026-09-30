@@ -287,3 +287,80 @@ failures never break a money movement: the event stays `pending`, and
 - A parent whose children attend several schools must say which school
   (`school`). The value is validated against the schools derived from their
   Guardian links, so it is never trusted blindly.
+
+### Spending controls (Section C)
+- **One gate.** `wallets.services.authorize_debit(wallet, amount, context)`
+  is called by every debit path *inside* `transaction.atomic()`, and locks
+  the wallet row first, so balance **and cap** checks can't race a
+  concurrent debit. It returns a `DebitDecision`; `require_debit()` raises
+  `DebitRefused` (422). The offline POS sync path calls the same rule engine
+  (`debit_violations(..., check_balance=False)`) to *flag* rather than refuse.
+- **Parents may only tighten, never loosen.** This is guaranteed twice: by
+  resolution (min of caps, union of blocks, intersection of allow-lists,
+  AND of `p2p_enabled`), and by a `400 policy_cannot_loosen` so parents get
+  a clear error instead of a silently ignored setting. The same resolution
+  applies to overrides written by a school_admin, so to loosen for everyone
+  the admin changes the school default. (Per-student loosening by an admin
+  isn't supported; it can be added later as an explicit flag.)
+- **Fee payments are exempt from spending caps** and category rules (a
+  3,000 UGX daily snack cap must not stop a 50,000 UGX exam fee). Card freeze
+  and balance still apply. Savings moves and withdrawals are exempt too.
+- **Freeze blocks every debit, including guardian-initiated ones** (fees,
+  savings moves, P2P), as the spec requires. A card presented at a POS is
+  checked directly. For non-card debits, any *frozen* card of the student
+  blocks, while *lost* cards do not (a lost card is retired and replaced, so
+  it shouldn't block the parent from paying a fee). Unfreezing a lost card
+  is refused with 409; Part 1 allowed it, which was a latent bug.
+- **Low-balance threshold** is an alert level, not a limit, so an override
+  simply replaces the school value (it may be higher or lower).
+- `School.policy_defaults` is superseded (approved). List-valued keys in it
+  (category or item names) could not be migrated because no categories
+  existed in Part 1. All seeded schools had `{}`.
+
+### Savings (Section C)
+- **Withdrawal window**, interpreting "typically while at home during
+  holidays": a guardian sets `withdrawal_window_start/end` on the savings
+  wallet. Withdrawals to mobile money are allowed only inside it, and only by
+  a guardian (school admins can move money between main and savings but can
+  never send it out of the platform). Both fields null = closed (the default).
+- A withdrawal debits savings immediately. A failed payout is reversed with a
+  compensating `reversal` transfer, and guardians are told the money is back.
+- Part 1 named the savings entry types `savings_move_in` / `savings_move_out`
+  and its seed used them as *credit side* / *debit side*. That convention is
+  kept for both directions, so the type alone doesn't tell you the direction:
+  read `direction` and which wallet the entry is on.
+- A goal's `reached_at` is stamped once. The notification runs inside the
+  posting transaction (so a rolled-back movement never notifies), and SMS/push
+  I/O is still deferred to commit by `notify()`.
+
+### P2P transfers (Section C)
+- **Who initiates, given students have no login yet.** Two paths, one service
+  (`wallets.p2p.p2p_transfer`): (1) a **guardian of the sender** from the
+  parent app (`POST /wallets/transfer/`); (2) the **sender at a POS device**
+  presenting card + PIN (`POST /pos/p2p-transfer/`, Section D). The recipient
+  is chosen by student id or card uid, within the sender's school only. A
+  guardian of the *recipient* cannot pull money.
+- Both cards must be usable: the sender with an active and not frozen card,
+  the recipient with an active card. Both students need P2P enabled.
+- **Pattern flagging** (§5 "pressure or bullying"), configurable in settings
+  and deliberately simple:
+  - `many_distinct_senders`: a student received from ≥
+    `P2P_ALERT_DISTINCT_SENDERS` (4) different students within
+    `P2P_ALERT_WINDOW_DAYS` (7) — possible extortion or pressure;
+  - `repeated_near_cap`: a student sent ≥ `P2P_ALERT_NEAR_CAP_COUNT` (3)
+    transfers, each ≥ `P2P_ALERT_NEAR_CAP_RATIO` (80%) of their daily P2P cap,
+    in the window — possibly being pressured to pay out daily. It only
+    applies when a cap is set.
+  One open alert per (student, rule). Admins are notified and review/dismiss
+  in `/p2p-alerts/`. Alerts never block transfers; they are for a human.
+- P2P history is visible only to the student's guardians and that school's
+  school_admin (not canteen/merchant staff).
+
+### Part 1 permission quirk noticed (not changed)
+Part 1's `StudentViewSet` applies `IsSameSchoolObject` to detail routes, and
+a parent's `school` is null, so **parents get 403 on
+`GET /api/v1/students/{id}/`** for their own children (the list works). The
+new Part 2 student sub-routes (`p2p-history`, `effective-policy`, …) avoid
+this by relying on queryset scoping. Fixing the Part 1 route would change
+existing behaviour, so it has been left for the product owner to approve
+(a one-line change in `students/views.py`).

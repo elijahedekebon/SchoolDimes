@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from decimal import Decimal
 
 from django.db import IntegrityError, transaction
@@ -181,3 +182,120 @@ def school_books_total(school) -> Decimal:
     for wallet in Wallet.objects.filter(school=school):
         total += wallet.cached_balance
     return total
+
+
+# ---------------------------------------------------------------------------
+# The one debit gate (Part 2, cross-cutting rule 4)
+# ---------------------------------------------------------------------------
+
+class DebitKind:
+    PURCHASE = "purchase"  # canteen or merchant sale (POS / online purchase)
+    P2P = "p2p"
+    FEE_PAYMENT = "fee_payment"
+    SAVINGS_MOVE = "savings_move"
+    SAVINGS_WITHDRAWAL = "savings_withdrawal"
+
+
+@dataclass
+class DebitContext:
+    kind: str
+    card: object = None  # the Card presented, if any
+    items: list = field(default_factory=list)  # [{"product_id": .., "category_id": ..}]
+    merchant_id: int | None = None
+    now: object = None
+
+
+@dataclass
+class DebitDecision:
+    allowed: bool
+    code: str = ""
+    message: str = ""
+    violations: list = field(default_factory=list)
+
+
+def debit_violations(wallet: Wallet, amount: Decimal, context: DebitContext, *, check_balance=True) -> list[str]:
+    """
+    Every rule a debit breaks, in priority order (empty list = allowed).
+    Checks card/wallet status, balance, and the student's effective Policy:
+    purchases -> per-transaction / daily / weekly caps, categories, items,
+    merchants; p2p -> p2p_enabled and p2p_daily_cap. Fee payments, savings
+    moves and savings withdrawals are exempt from spending caps.
+    The POS offline sync path uses this with check_balance=False to *flag*
+    (not refuse) a sale that already happened.
+    """
+    from policies.services import get_effective_policy, p2p_sent_today, spent_this_week, spent_today
+
+    amount = Decimal(amount)
+    if wallet.is_system:
+        return ["wallet_not_spendable"]
+    violations = []
+    student = wallet.student
+
+    card = context.card
+    if card is not None:
+        if card.status == "frozen":
+            violations.append("card_frozen")
+        elif card.status == "lost":
+            violations.append("card_lost")
+    elif student.cards.filter(status="frozen").exists():
+        # Freeze blocks every debit, including guardian-initiated ones.
+        violations.append("card_frozen")
+
+    if check_balance and wallet.cached_balance < amount:
+        violations.append("insufficient_funds")
+
+    if context.kind in (DebitKind.PURCHASE, DebitKind.P2P):
+        policy = get_effective_policy(student)
+    if context.kind == DebitKind.PURCHASE:
+        if policy.per_transaction_cap is not None and amount > policy.per_transaction_cap:
+            violations.append("per_transaction_cap_exceeded")
+        if policy.daily_spend_cap is not None and spent_today(wallet, context.now) + amount > policy.daily_spend_cap:
+            violations.append("daily_cap_exceeded")
+        if policy.weekly_spend_cap is not None and spent_this_week(wallet, context.now) + amount > policy.weekly_spend_cap:
+            violations.append("weekly_cap_exceeded")
+        category_ids = {i.get("category_id") for i in context.items if i.get("category_id")}
+        product_ids = {i.get("product_id") for i in context.items if i.get("product_id")}
+        if category_ids & policy.blocked_category_ids:
+            violations.append("category_blocked")
+        if policy.allowed_category_ids is not None and category_ids - policy.allowed_category_ids:
+            violations.append("category_not_allowed")
+        if product_ids & policy.blocked_product_ids:
+            violations.append("item_blocked")
+        if context.merchant_id and (
+            context.merchant_id in policy.blocked_merchant_ids
+            or (policy.allowed_merchant_ids is not None and context.merchant_id not in policy.allowed_merchant_ids)
+        ):
+            violations.append("merchant_blocked")
+    elif context.kind == DebitKind.P2P:
+        if not policy.p2p_enabled:
+            violations.append("p2p_disabled")
+        elif policy.p2p_daily_cap is not None and p2p_sent_today(wallet, context.now) + amount > policy.p2p_daily_cap:
+            violations.append("p2p_cap_exceeded")
+    return violations
+
+
+def authorize_debit(wallet: Wallet, amount: Decimal, context: DebitContext) -> DebitDecision:
+    """
+    The single gate every debit path calls before post_ledger_entry()/
+    post_transfer(): POS/merchant purchases, P2P, fee payments, savings moves
+    and withdrawals. MUST be called inside transaction.atomic(): it locks the
+    wallet row (select_for_update) so the balance and cap checks can't race
+    a concurrent debit. Returns a DebitDecision; use require_debit() to raise.
+    """
+    from policies.services import refusal_message
+
+    locked = Wallet.objects.select_for_update().select_related("student").get(pk=wallet.pk)
+    violations = debit_violations(locked, amount, context)
+    if violations:
+        code = violations[0]
+        return DebitDecision(False, code, refusal_message(code), violations)
+    return DebitDecision(True)
+
+
+def require_debit(wallet: Wallet, amount: Decimal, context: DebitContext) -> None:
+    """authorize_debit() that raises core.exceptions.DebitRefused (HTTP 422)."""
+    from core.exceptions import DebitRefused
+
+    decision = authorize_debit(wallet, amount, context)
+    if not decision.allowed:
+        raise DebitRefused(decision.code, decision.message, extra={"violations": decision.violations})

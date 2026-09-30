@@ -394,3 +394,54 @@ payout (1:1 → payments.Payout, null), disbursed_by, created_at`.
 |---|---|---|---|---|
 | Disbursement to school | pooled_fund | school_settlement | `pooled_fund_disbursement` | `pooled:<fund>:<disbursement>` |
 | External disbursement | pooled_fund | aggregator_clearing | `pooled_fund_disbursement` | `payout:<id>` |
+
+## `policies` — Section C
+
+### `ProductCategory`
+`school, name (unique per school), is_unhealthy (analytics nutrition flag),
+active, created_at, updated_at`.
+
+### `Product`
+`school, name, category (→ ProductCategory, PROTECT), price, active,
+created_at, updated_at`. (Section G adds `merchant`.)
+
+### `Policy`
+| Field | Type | Notes |
+|---|---|---|
+| school | FK → School | |
+| student | 1:1 → Student, null | null = the school default (DB-unique per school) |
+| daily_spend_cap, weekly_spend_cap, per_transaction_cap, p2p_daily_cap | Decimal, null | null = no limit / inherit |
+| p2p_enabled | Boolean, null | null = inherit (default row: null = enabled) |
+| low_balance_threshold | Decimal, null | alert level, not a limit |
+| blocked_categories, allowed_categories | M2M → ProductCategory | empty allow-list = all allowed |
+| blocked_items | M2M → Product | |
+| updated_by | FK → User, null | |
+| created_at, updated_at | DateTime | |
+
+`School.policy_defaults` (Part 1 JSON) is **superseded**: migration
+`policies.0002` copied its recognised scalar keys into each school's default
+row. The field stays in the schema and API but nothing reads it any more.
+
+## `wallets` — Section C additions
+- `Wallet.withdrawal_window_start`, `Wallet.withdrawal_window_end`
+  (DateTime, null; used on savings wallets).
+- `SavingsGoal.reached_at` (DateTime, null).
+
+### `P2PTransfer`
+`school, sender_wallet, recipient_wallet (both student main wallets), amount,
+note, initiated_by (guardian, null), device_id_ref (POS device id, null),
+created_at`.
+
+### `P2PAlert`
+`school, student, rule (many_distinct_senders | repeated_near_cap), details
+(JSON), status (open | reviewed | dismissed), reviewed_by, reviewed_at,
+review_notes, created_at`. At most one open alert per (student, rule), by
+application rule.
+
+### Chart of wallets — continued
+| Movement | Debit | Credit | entry_type (debit / credit) | reference_id |
+|---|---|---|---|---|
+| Savings move-in | main | savings | `savings_move_out` / `savings_move_in` | `savings:<random>` |
+| Savings move-out | savings | main | `savings_move_out` / `savings_move_in` | `savings:<random>` |
+| Savings withdrawal | savings | aggregator_clearing | `savings_withdrawal` | `payout:<id>` |
+| P2P | sender main | recipient main | `p2p_transfer_out` / `p2p_transfer_in` | `p2p:<id>` |

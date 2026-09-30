@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -7,7 +8,14 @@ from core.permissions import IsSchoolAdminOrPlatformAdmin, is_platform_admin, is
 
 from .models import Card
 from .serializers import CardSerializer, IssueCardSerializer, ReissueCardSerializer
-from .services import freeze_card, issue_card, reissue_card, unfreeze_card
+from .services import (
+    card_status_changed,
+    freeze_card,
+    issue_card,
+    reissue_card,
+    report_lost_card,
+    unfreeze_card,
+)
 
 
 def can_manage_card(user, card: Card) -> bool:
@@ -69,11 +77,35 @@ class CardViewSet(viewsets.ModelViewSet):
         card = self.get_object()
         if not can_manage_card(request.user, card):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        return Response(CardSerializer(freeze_card(card)).data)
+        # Part 2: same response; also notifies the other guardians and is
+        # audit-logged for platform_admin. Takes effect for authorize_debit()
+        # immediately and reaches offline POS devices on their next cache refresh.
+        freeze_card(card)
+        card_status_changed(card, request.user, "card_frozen")
+        return Response(CardSerializer(card).data)
 
     @action(detail=True, methods=["post"])
     def unfreeze(self, request, pk=None):
         card = self.get_object()
         if not can_manage_card(request.user, card):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        return Response(CardSerializer(unfreeze_card(card)).data)
+        if card.status == Card.Status.LOST:
+            # Part 2: a lost card is replaced via reissue, never reactivated.
+            return Response(
+                {"code": "card_lost", "detail": _("A lost card cannot be unfrozen; reissue it instead.")},
+                status=status.HTTP_409_CONFLICT,
+            )
+        unfreeze_card(card)
+        card_status_changed(card, request.user, "card_unfrozen")
+        return Response(CardSerializer(card).data)
+
+    @action(detail=True, methods=["post"], url_path="report-lost")
+    def report_lost(self, request, pk=None):
+        """Part 2: guardian or school_admin marks the card lost (permanent).
+        A school_admin then issues a replacement via POST /cards/{id}/reissue/."""
+        card = self.get_object()
+        if not can_manage_card(request.user, card):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        report_lost_card(card)
+        card_status_changed(card, request.user, "card_reported_lost")
+        return Response(CardSerializer(card).data)

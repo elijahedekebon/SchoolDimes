@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "notifications",
     "payments",
     "pooled_funds",
+    "policies",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -198,3 +199,12 @@ AFRICASTALKING_SENDER_ID = env("AFRICASTALKING_SENDER_ID", default="")
 PUSH_BACKEND = env("PUSH_BACKEND", default="log")
 FCM_PROJECT_ID = env("FCM_PROJECT_ID", default="")
 FCM_SERVICE_ACCOUNT_FILE = env("FCM_SERVICE_ACCOUNT_FILE", default="")
+
+# Low-balance alert level when neither the parent nor the school set one.
+LOW_BALANCE_DEFAULT_THRESHOLD = env.int("LOW_BALANCE_DEFAULT_THRESHOLD", default=2000)
+# P2P "pressure or bullying" pattern rules (Section C).
+P2P_ALERT_WINDOW_DAYS = env.int("P2P_ALERT_WINDOW_DAYS", default=7)
+P2P_ALERT_DISTINCT_SENDERS = env.int("P2P_ALERT_DISTINCT_SENDERS", default=4)
+P2P_ALERT_NEAR_CAP_RATIO = env.float("P2P_ALERT_NEAR_CAP_RATIO", default=0.8)
+P2P_ALERT_NEAR_CAP_COUNT = env.int("P2P_ALERT_NEAR_CAP_COUNT", default=3)
+

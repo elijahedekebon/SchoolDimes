@@ -1,4 +1,6 @@
 from rest_framework import permissions, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from accounts.models import User
 from core.permissions import (
@@ -31,6 +33,10 @@ class StudentViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):
             return [IsSchoolAdminOrPlatformAdmin()]
+        if self.action in ("p2p_history", "effective_policy"):
+            # Part 2 actions: scoping comes from get_queryset() (parents have
+            # school=null, so IsSameSchoolObject would wrongly refuse them).
+            return [permissions.IsAuthenticated()]
         return [permissions.IsAuthenticated(), IsSameSchoolObject()]
 
     def perform_create(self, serializer):
@@ -44,6 +50,44 @@ class StudentViewSet(viewsets.ModelViewSet):
             serializer.save(school=user.school)
         # Part 2: every student gets their main + savings wallets at onboarding.
         ensure_student_wallets(serializer.instance)
+
+    # ---- Part 2 read-only student sub-resources -------------------------
+
+    def _student_for_family_or_admin(self):
+        from django.utils.translation import gettext as _
+
+        from core.exceptions import ServiceError
+        from students.access import can_view_student
+
+        student = self.get_object()
+        if not can_view_student(self.request.user, student):
+            raise ServiceError("not_found", _("Student not found."), status=404)
+        return student
+
+    @action(detail=True, methods=["get"], url_path="p2p-history")
+    def p2p_history(self, request, pk=None):
+        """Guardians of the student and that school's school_admin only."""
+        from django.db.models import Q
+
+        from core.pagination import StandardResultsSetPagination
+        from wallets.models import P2PTransfer
+        from wallets.serializers import P2PTransferSerializer
+
+        student = self._student_for_family_or_admin()
+        qs = P2PTransfer.objects.filter(
+            Q(sender_wallet__student=student) | Q(recipient_wallet__student=student)
+        ).select_related("sender_wallet__student", "recipient_wallet__student")
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(qs, request, view=self)
+        return paginator.get_paginated_response(P2PTransferSerializer(page, many=True).data)
+
+    @action(detail=True, methods=["get"], url_path="effective-policy")
+    def effective_policy(self, request, pk=None):
+        """Anyone who can see the student (guardians, that school's staff)."""
+        from policies.services import get_effective_policy
+
+        student = self.get_object()
+        return Response({"student": student.pk, **get_effective_policy(student).to_dict()})
 
 
 class GuardianViewSet(viewsets.ModelViewSet):

@@ -45,3 +45,29 @@ def unfreeze_card(card: Card) -> Card:
     card.status = Card.Status.ACTIVE
     card.save(update_fields=["status", "updated_at"])
     return card
+
+
+def report_lost_card(card: Card) -> Card:
+    card.status = Card.Status.LOST
+    card.save(update_fields=["status", "updated_at"])
+    return card
+
+
+def card_status_changed(card: Card, actor, event_type: str):
+    """Part 2: notify the student's other guardians (not the actor) and
+    audit-log platform_admin actions."""
+    from core.audit import audit
+    from notifications.services import notify_guardians
+
+    audit(actor, event_type, card)
+    notify_guardians(
+        card.student,
+        event_type,
+        {
+            "card_id": card.pk,
+            "student_id": card.student_id,
+            "student_name": card.student.name,
+            "actor_name": actor.full_name or actor.email,
+        },
+        exclude_user_ids=[actor.pk],
+    )

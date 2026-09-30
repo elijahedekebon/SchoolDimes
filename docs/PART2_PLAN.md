@@ -73,7 +73,7 @@ updated → commit `Part 2 – Section X: ...`.
 - Endpoints: `pooled-funds/` (POST, GET), `pooled-funds/{id}/` (log + total + progress), `/contribute/`, `/close/`, `/disburse/`
 - Tests: total == ledger sum, disburse permissions, can't over-disburse
 
-### [ ] C. Wallet ops — policy, savings, P2P, card freeze
+### [x] C. Wallet ops — policy, savings, P2P, card freeze
 - Models: `Policy`, `ProductCategory`, `Product`, `P2PTransfer`, `P2PAlert`, `SavingsWithdrawal`; wallet withdrawal window fields
 - Services: `get_effective_policy`, `authorize_debit` (full), `move_to_savings`, `move_from_savings`, `withdraw_savings`, `p2p_transfer`, `evaluate_p2p_patterns`
 - Endpoints: policies, product-categories, products, `students/{id}/effective-policy/`, `wallets/{id}/savings/move-in|move-out|withdraw/`, `wallets/transfer/`, `students/{id}/p2p-history/`, `p2p-alerts/`, card freeze/unfreeze/report-lost
