@@ -601,3 +601,38 @@ existing behaviour, so it has been left for the product owner to approve
   which stays with the student's guardians and school.
 - **Nutrition flag**: share of item revenue in categories the school flags
   `is_unhealthy`. Deliberately simple; per-item nutrition data is out of scope.
+
+### Seed data (Section L)
+`seed_demo` keeps everything Part 1 seeded and adds (in
+`core/management/commands/_seed_part2.py`):
+- users `canteen@kampaladps.schooldimes.test` (canteen_staff) and
+  `shop@ntindabookshop.schooldimes.test` (merchant_staff), password `pw123456`;
+- categories Meals / Snacks / Sugary drinks (**unhealthy**) / Stationery;
+  canteen products Rice & beans 3,000, Chapati 500, Mandazi 300, Soda 1,500,
+  Juice 1,000; merchant products Exercise book 1,200 and Pen 500;
+- school policy: daily 6,000, per purchase 5,000, P2P 3,000/day, low
+  balance 2,000; **Amina's override: daily 4,000 and Soda blocked**;
+- merchant "Ntinda Bookshop", approved for the Kampala school, with its staff user;
+- three devices (canteen, merchant, attendance);
+- fee categories Exam fee (6,000, P4/P6), School trip (1,000–20,000), Uniform (25,000);
+- a confirmed 15,000 top-up for Amina, a **pending** 5,000 USSD top-up for
+  Brian (for trying `mock_webhook`), a 5,000 gift voucher from contributor
+  "Jjajja Nalongo" with a message, a pooled fund "P4 trip to Entebbe Zoo"
+  (target 60,000) with two confirmed contributions (17,500), a weekly
+  recurring top-up for Brian, and a contributor link for Amina;
+- four POS sales with line items from yesterday, one open dispute, and the
+  notifications all of the above produced.
+
+**Re-runnable**: every money movement uses a fixed idempotency key and goes
+through the real services, so a second run moves nothing (tested). Device
+tokens are stored hashed and can't be shown again, so **each run rotates the
+three demo devices' tokens and prints the new ones**, together with the top-up
+link token. In non-mock aggregator mode, confirmation-dependent data
+(deposits, voucher, pooled contributions) is skipped.
+
+### Bug found while seeding
+`students.access.user_school_ids()` used `values_list().distinct()` on
+`Student`, whose `Meta.ordering` includes `name`. Django adds ordering
+columns to `SELECT DISTINCT`, so a parent with two children in one school got
+that school twice (and was asked to "choose a school" for a pooled fund).
+Fixed with `.order_by()`; there's a regression test.

@@ -12,6 +12,8 @@ from tenants.models import School, SchoolReferral
 from wallets.models import LedgerEntry, SavingsGoal, Wallet
 from wallets.services import get_system_wallet, post_transfer
 
+from ._seed_part2 import seed_part2
+
 
 class Command(BaseCommand):
     help = "Seeds demo data: two schools, a referral, admins/parents/students, cards, wallets, and tips."
@@ -150,5 +152,8 @@ class Command(BaseCommand):
                 title=title, language=language, defaults={"body": body}
             )
         self.stdout.write(self.style.SUCCESS("Financial literacy tips ready (en x2, lg x1, sw x1)"))
+
+        # Part 2: payments, policy, POS, merchants, fees, pooled funds, disputes...
+        seed_part2(self.stdout, self.style, school_a, school_admin, parent1, parent2, [student1, student2, student3])
 
         self.stdout.write(self.style.SUCCESS("Demo seed complete."))

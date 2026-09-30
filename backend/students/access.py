@@ -27,8 +27,11 @@ def linked_student_ids(user) -> list[int]:
 def user_school_ids(user) -> list[int]:
     """Schools a (non-platform-admin) user may act in."""
     if user.role == User.Role.PARENT:
+        # .order_by() clears Student.Meta.ordering, which would otherwise be
+        # added to the DISTINCT and return one school per sibling
         return list(
             Student.objects.filter(guardian_links__parent=user)
+            .order_by()
             .values_list("school_id", flat=True)
             .distinct()
         )

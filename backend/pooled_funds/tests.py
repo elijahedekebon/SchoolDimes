@@ -113,3 +113,13 @@ class TestPooledFunds:
         assert admin_b_client.get(f"/api/v1/pooled-funds/{fund.pk}/").status_code == 404
         assert admin_b_client.post(f"/api/v1/pooled-funds/{fund.pk}/disburse/", {}, format="json").status_code == 404
         assert client_for(other_parent).get(f"/api/v1/pooled-funds/{fund.pk}/").status_code == 404
+
+
+@pytest.mark.django_db
+def test_parent_with_two_children_in_one_school_needs_no_school(parent_client, guardian_link_a1, parent_user, student_a2):
+    """Regression: user_school_ids() returned one id per sibling (DISTINCT +
+    Student.Meta.ordering), so this parent was asked to pick a school."""
+    from students.models import Guardian
+
+    Guardian.objects.create(parent=parent_user, student=student_a2)
+    assert parent_client.post("/api/v1/pooled-funds/", {"title": "Sports day"}, format="json").status_code == 201
