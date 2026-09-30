@@ -10,7 +10,7 @@ from content.models import FinancialLiteracyTip
 from students.models import Guardian, Student
 from tenants.models import School, SchoolReferral
 from wallets.models import LedgerEntry, SavingsGoal, Wallet
-from wallets.services import post_ledger_entry
+from wallets.services import get_system_wallet, post_transfer
 
 
 class Command(BaseCommand):
@@ -102,33 +102,33 @@ class Command(BaseCommand):
             )
 
             if not main_wallet.ledger_entries.exists():
-                post_ledger_entry(
-                    wallet=main_wallet,
+                # Part 2: every seeded movement is a balanced transfer.
+                clearing = get_system_wallet(student.school, Wallet.WalletType.AGGREGATOR_CLEARING)
+                settlement = get_system_wallet(student.school, Wallet.WalletType.SCHOOL_SETTLEMENT)
+                post_transfer(
+                    debit_wallet=clearing,
+                    credit_wallet=main_wallet,
                     amount=Decimal("20000"),
-                    direction=LedgerEntry.Direction.CREDIT,
                     entry_type=LedgerEntry.EntryType.DEPOSIT,
+                    reference_id=f"seed:{student.pk}:deposit",
                     description="Initial parent top-up",
                 )
-                post_ledger_entry(
-                    wallet=main_wallet,
+                post_transfer(
+                    debit_wallet=main_wallet,
+                    credit_wallet=settlement,
                     amount=Decimal("3500"),
-                    direction=LedgerEntry.Direction.DEBIT,
                     entry_type=LedgerEntry.EntryType.POS_PURCHASE,
+                    reference_id=f"seed:{student.pk}:lunch",
                     description="Canteen lunch",
                 )
-                post_ledger_entry(
-                    wallet=main_wallet,
+                post_transfer(
+                    debit_wallet=main_wallet,
+                    credit_wallet=savings_wallet,
                     amount=Decimal("2000"),
-                    direction=LedgerEntry.Direction.DEBIT,
                     entry_type=LedgerEntry.EntryType.SAVINGS_MOVE_OUT,
+                    credit_entry_type=LedgerEntry.EntryType.SAVINGS_MOVE_IN,
+                    reference_id=f"seed:{student.pk}:savings",
                     description="Moved to savings goal",
-                )
-                post_ledger_entry(
-                    wallet=savings_wallet,
-                    amount=Decimal("2000"),
-                    direction=LedgerEntry.Direction.CREDIT,
-                    entry_type=LedgerEntry.EntryType.SAVINGS_MOVE_IN,
-                    description="Moved from main wallet",
                 )
 
             SavingsGoal.objects.get_or_create(

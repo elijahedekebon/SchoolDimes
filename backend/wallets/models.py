@@ -4,18 +4,38 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 
+STUDENT_WALLET_TYPES = ["main", "savings"]
+SCHOOL_SINGLETON_WALLET_TYPES = ["school_settlement", "aggregator_clearing"]
+
+
 class Wallet(models.Model):
+    """
+    Student wallets (`main`, `savings`) plus, since Part 2, system wallets
+    that are the other side of every double-entry movement (see the chart
+    of wallets in docs/DATA_MODEL.md). System wallets have `student=null`.
+    """
+
     class WalletType(models.TextChoices):
         MAIN = "main", "Main"
         SAVINGS = "savings", "Savings"
+        # --- system wallets (Part 2) ---
+        SCHOOL_SETTLEMENT = "school_settlement", "School settlement"
+        AGGREGATOR_CLEARING = "aggregator_clearing", "Aggregator clearing"
+        POOLED_FUND = "pooled_fund", "Pooled fund"
+        MERCHANT_SETTLEMENT = "merchant_settlement", "Merchant settlement"
 
     school = models.ForeignKey(
         "tenants.School", on_delete=models.CASCADE, related_name="wallets"
     )
     student = models.ForeignKey(
-        "students.Student", on_delete=models.CASCADE, related_name="wallets"
+        "students.Student",
+        on_delete=models.CASCADE,
+        related_name="wallets",
+        null=True,
+        blank=True,
+        help_text="Set for main/savings wallets; null for system wallets.",
     )
-    wallet_type = models.CharField(max_length=10, choices=WalletType.choices)
+    wallet_type = models.CharField(max_length=24, choices=WalletType.choices)
     # Cached/derived from LedgerEntry rows. NEVER written directly outside
     # wallets.services.post_ledger_entry -- see compute_balance() for the
     # source of truth this cache is checked against.
@@ -26,13 +46,36 @@ class Wallet(models.Model):
     class Meta:
         unique_together = ["student", "wallet_type"]
         ordering = ["student", "wallet_type"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(wallet_type__in=STUDENT_WALLET_TYPES, student__isnull=False)
+                    | (
+                        ~models.Q(wallet_type__in=STUDENT_WALLET_TYPES)
+                        & models.Q(student__isnull=True)
+                    )
+                ),
+                name="wallet_student_matches_type",
+            ),
+            models.UniqueConstraint(
+                fields=["school", "wallet_type"],
+                condition=models.Q(wallet_type__in=SCHOOL_SINGLETON_WALLET_TYPES),
+                name="one_school_system_wallet_per_type",
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.student} - {self.wallet_type} wallet"
+        if self.student_id:
+            return f"{self.student} - {self.wallet_type} wallet"
+        return f"{self.school} - {self.wallet_type} wallet #{self.pk}"
 
     @property
     def balance(self) -> Decimal:
         return self.cached_balance
+
+    @property
+    def is_system(self) -> bool:
+        return self.wallet_type not in STUDENT_WALLET_TYPES
 
 
 class LedgerEntry(models.Model):
@@ -53,6 +96,9 @@ class LedgerEntry(models.Model):
         GIFT_VOUCHER = "gift_voucher", "Gift Voucher"
         POOLED_FUND_CONTRIBUTION = "pooled_fund_contribution", "Pooled Fund Contribution"
         POOLED_FUND_DISBURSEMENT = "pooled_fund_disbursement", "Pooled Fund Disbursement"
+        # --- Part 2 ---
+        REVERSAL = "reversal", "Reversal"
+        SHORTFALL_RECOVERY = "shortfall_recovery", "Shortfall Recovery"
 
     school = models.ForeignKey(
         "tenants.School", on_delete=models.CASCADE, related_name="ledger_entries"

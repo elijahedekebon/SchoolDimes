@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     "cards",
     "wallets",
     "content",
+    # Part 2
+    "notifications",
+    "payments",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -120,6 +123,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardResultsSetPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "EXCEPTION_HANDLER": "core.exception_handler.api_exception_handler",
 }
 
 SIMPLE_JWT = {
@@ -138,6 +142,9 @@ CACHES = {
         "LOCATION": env("REDIS_URL", default="redis://localhost:6379/0"),
     }
 }
+# Optional override for running without Redis (e.g. CACHE_URL=locmemcache://).
+if env("CACHE_URL", default=""):
+    CACHES = {"default": env.cache("CACHE_URL")}
 
 # Celery
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
@@ -147,3 +154,46 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
+# Installed into django_celery_beat's DB tables by the DatabaseScheduler on start.
+CELERY_BEAT_SCHEDULE = {
+    "run-recurring-topups": {"task": "payments.tasks.run_recurring_topups", "schedule": 15 * 60},
+    "expire-stale-deposits": {"task": "payments.tasks.expire_stale_deposits", "schedule": 60 * 60},
+    "retry-pending-notifications": {
+        "task": "notifications.tasks.retry_pending_notifications",
+        "schedule": 10 * 60,
+    },
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {"schooldimes": {"handlers": ["console"], "level": "INFO"}},
+}
+
+# ---------------------------------------------------------------------------
+# Part 2 business settings (all overridable from the environment; see
+# backend/.env.example for what each one means).
+# ---------------------------------------------------------------------------
+MAX_TRANSACTION_AMOUNT = env.int("MAX_TRANSACTION_AMOUNT", default=5_000_000)
+
+AGGREGATOR_MODE = env("AGGREGATOR_MODE", default="mock")
+PAYMENT_AGGREGATOR_API_KEY = env("PAYMENT_AGGREGATOR_API_KEY", default="")
+PAYMENT_AGGREGATOR_BASE_URL = env("PAYMENT_AGGREGATOR_BASE_URL", default="")
+PAYMENT_AGGREGATOR_WEBHOOK_SECRET = env(
+    "PAYMENT_AGGREGATOR_WEBHOOK_SECRET", default="dev-only-webhook-secret"
+)
+DEPOSIT_EXPIRY_HOURS = env.int("DEPOSIT_EXPIRY_HOURS", default=24)
+RECURRING_TOPUP_MAX_FAILURES = env.int("RECURRING_TOPUP_MAX_FAILURES", default=3)
+RECURRING_TOPUP_RUN_HOUR = env.int("RECURRING_TOPUP_RUN_HOUR", default=8)
+PUBLIC_TOPUP_BASE_URL = env("PUBLIC_TOPUP_BASE_URL", default="http://localhost:8000/topup")
+PUBLIC_TOPUP_THROTTLE_RATE = env("PUBLIC_TOPUP_THROTTLE_RATE", default="20/min")
+
+SMS_BACKEND = env("SMS_BACKEND", default="log")
+AFRICASTALKING_USERNAME = env("AFRICASTALKING_USERNAME", default="")
+AFRICASTALKING_API_KEY = env("AFRICASTALKING_API_KEY", default="")
+AFRICASTALKING_SENDER_ID = env("AFRICASTALKING_SENDER_ID", default="")
+PUSH_BACKEND = env("PUSH_BACKEND", default="log")
+FCM_PROJECT_ID = env("FCM_PROJECT_ID", default="")
+FCM_SERVICE_ACCOUNT_FILE = env("FCM_SERVICE_ACCOUNT_FILE", default="")

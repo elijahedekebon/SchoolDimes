@@ -7,6 +7,8 @@ from core.permissions import (
     is_platform_admin,
 )
 
+from wallets.services import ensure_student_wallets
+
 from .models import Guardian, Student
 from .serializers import GuardianSerializer, StudentSerializer
 
@@ -40,6 +42,8 @@ class StudentViewSet(viewsets.ModelViewSet):
             serializer.save(school_id=school if isinstance(school, int) else user.school_id)
         else:
             serializer.save(school=user.school)
+        # Part 2: every student gets their main + savings wallets at onboarding.
+        ensure_student_wallets(serializer.instance)
 
 
 class GuardianViewSet(viewsets.ModelViewSet):

@@ -199,3 +199,167 @@ Student 1──2 Wallet (exactly one main + one savings)
 Wallet 1──* LedgerEntry
 Wallet(savings) 1──* SavingsGoal
 ```
+
+---
+
+# Part 2 additions
+
+## Chart of wallets (double entry)
+
+Since Part 2 every money movement is a **transfer between two wallets of the
+same school**, posted by `wallets.services.post_transfer()` as two
+`post_ledger_entry()` calls sharing a `reference_id`. Invariants the tests
+assert (`conftest.assert_books_balanced`): each wallet's `cached_balance`
+equals its ledger re-sum; debits and credits under each `reference_id` are
+equal; **the sum of all wallet balances in a school is exactly 0**.
+
+| `wallet_type` | Owner | Normal balance | Meaning |
+|---|---|---|---|
+| `main` | student | ≥ 0 | spendable pocket money |
+| `savings` | student | ≥ 0 | savings |
+| `aggregator_clearing` | school (exactly one) | **≤ 0** | money the payment aggregator holds for the school. The only wallet allowed to go negative. Deposits debit it, payouts credit it |
+| `school_settlement` | school (exactly one) | ≥ 0 | canteen sales, fee payments, pooled-fund disbursements to the school |
+| `pooled_fund` | one `PooledFund` | ≥ 0 | a group collection pot |
+| `merchant_settlement` | one (merchant, school) pair | ≥ 0 | what a nearby merchant earned from that school's students |
+
+| Movement | Debit | Credit | `entry_type` (debit side / credit side) | `reference_id` |
+|---|---|---|---|---|
+| Deposit confirmed | aggregator_clearing | student main/savings | `deposit` | `deposit:<Deposit.id>` |
+| Gift voucher paid (auto-redeemed) | aggregator_clearing | student main | `gift_voucher` | `deposit:<id>` |
+| Pooled-fund contribution | aggregator_clearing | pooled_fund | `pooled_fund_contribution` | `deposit:<id>` |
+| Payout started (savings withdrawal / external disbursement) | source wallet | aggregator_clearing | `savings_withdrawal` / `pooled_fund_disbursement` | `payout:<Payout.id>` |
+| Payout failed (compensation) | aggregator_clearing | source wallet | `reversal` | `payout:<id>` |
+| Part 1 legacy history (migration `wallets.0003`) | clearing or student | student or settlement | original type | `legacy:<original entry id>` |
+| Seed data | as above | | | `seed:<student>:<what>` |
+
+Later sections add their rows below under "Chart of wallets — continued".
+
+## `core`
+
+### `AuditLog`
+Append-only record of privileged writes; every platform_admin write into a
+school's data goes through `core.audit.audit()` (or the
+`AuditPlatformAdminWritesMixin` viewset mixin).
+
+| Field | Type | Notes |
+|---|---|---|
+| actor | FK → User, null | |
+| actor_role | CharField | role at the time |
+| school | FK → School, null | tenant written into |
+| action | CharField | e.g. `policy.update` |
+| target_type, target_id | CharField | model name + pk |
+| details | JSONField | |
+| created_at | DateTimeField | |
+
+## `wallets` — Part 2 changes (approved, additive)
+
+`Wallet`:
+- `student` is now **nullable** (null ⇔ system wallet).
+- `wallet_type` max_length 10 → 24; new values `school_settlement`,
+  `aggregator_clearing`, `pooled_fund`, `merchant_settlement`.
+- DB check `wallet_student_matches_type`: main/savings ⇔ `student` set.
+- DB unique `one_school_system_wallet_per_type`: one `school_settlement` and
+  one `aggregator_clearing` per school.
+- `is_system` property.
+
+`LedgerEntry.entry_type` adds `reversal`, `shortfall_recovery`.
+
+`post_ledger_entry()` adds `allow_negative=False` (honoured only on
+`aggregator_clearing`, anything else raises `InvalidWalletTypeError`), rejects
+amounts ≤ 0, and fires the signal `wallets.signals.ledger_entry_posted`
+(`entry`, `balance_after`) after each entry. Existing callers are unaffected.
+
+New helpers in `wallets/services.py`: `post_transfer()`, `get_system_wallet()`,
+`get_student_wallet()`, `ensure_student_wallets()` (now called when a
+student is created via the API), `school_books_total()`.
+
+## `payments`
+
+### `Deposit`
+One model for every collection (money in), so there is one confirmation path.
+
+| Field | Type | Notes |
+|---|---|---|
+| school | FK → School | from the target wallet |
+| purpose | choice | `wallet_topup, gift_voucher, pooled_fund_contribution` |
+| wallet | FK → Wallet (PROTECT) | target: student main/savings, or a `pooled_fund` wallet |
+| amount | Decimal(12,2) | > 0 and ≤ `MAX_TRANSACTION_AMOUNT` |
+| channel | choice | `momo, bank, ussd` |
+| payer_phone | CharField | |
+| status | choice | `pending, confirmed, failed, expired` |
+| reference | CharField, **unique** | ours; prefix `SD-DEP-`, `SD-GV-`, `SD-PF-` |
+| aggregator_ref | CharField, **unique**, null | the aggregator's id |
+| instructions | JSON | channel instructions for the payer (see API) |
+| initiated_by | FK → User, null | parent; null for public contributors |
+| contributor | FK → Contributor, null | |
+| recurring_topup | FK → RecurringTopUp, null | set for scheduled runs |
+| idempotency_key | CharField, **unique** | client-supplied; `recurring:<id>:<YYYYmmddTHHMM>` for scheduled runs |
+| failure_reason | CharField | `declined, expired, aggregator_error, …` |
+| created_at, confirmed_at, updated_at | DateTimeField | |
+
+### `Payout`
+Money out to a phone. The source wallet is debited when the payout starts; a
+failure posts a `reversal` transfer back (nothing is deleted).
+
+| Field | Type | Notes |
+|---|---|---|
+| school | FK → School | |
+| purpose | choice | `savings_withdrawal, pooled_fund_disbursement` |
+| source_wallet | FK → Wallet | |
+| amount | Decimal(12,2) | |
+| phone_number | CharField | |
+| description | CharField | |
+| status | choice | `pending, succeeded, failed` |
+| reference | CharField, unique | `SD-PO-…` |
+| aggregator_ref | CharField, unique, null | |
+| idempotency_key | CharField, unique, null | |
+| requested_by | FK → User, null | |
+| failure_reason | CharField | |
+| created_at, completed_at | DateTimeField | |
+
+### `Contributor`
+`name, phone_number, email, relationship_label, created_at`. No account and no
+school FK (reached through its deposits). One row per contribution.
+
+### `StudentTopUpLink`
+`school, student, wallet (main), token (unique; 32 random bytes urlsafe),
+created_by (parent), active, expires_at (null), revoked_at (null), created_at`.
+
+### `GiftVoucher`
+`school, sender_user (null), sender_contributor (null), student, wallet
+(main), amount, message (≤ 280), status (pending_payment | paid | redeemed |
+cancelled), deposit (1:1 → Deposit), redeemed_at, created_at`.
+
+### `RecurringTopUp`
+`school, parent, student, wallet (main), amount, channel, payer_phone,
+frequency (weekly | monthly), day_of_week (0 = Monday … 6), day_of_month
+(1 … 28), next_run_at (UTC, server-computed), active, last_run_at,
+last_status (pending | succeeded | failed | guardian_unlinked),
+consecutive_failures, created_at, updated_at`.
+
+### `UnmatchedWebhook`
+`reference, aggregator_ref, reason (unknown_reference | amount_mismatch |
+late_success_after_failure), payload (JSON), reviewed, received_at`. Reviewed
+in Django admin.
+
+## `notifications`
+
+### `NotificationEvent`
+| Field | Type | Notes |
+|---|---|---|
+| user | FK → User | recipient |
+| event_type | CharField | a key of `notifications/templates.py` |
+| payload | JSON | machine-readable data for clients (ids, amounts, actions) |
+| channel | choice | `in_app, sms, push` |
+| title, body | Char / Text | rendered once, in the recipient's `preferred_language` |
+| status | choice | `pending, sent, logged (stub backend), failed` |
+| error | CharField | |
+| sent_at, read_at, created_at | DateTimeField | |
+
+### `NotificationPreference`
+`user (1:1), in_app_enabled, sms_enabled (default false), push_enabled
+(default true), low_balance_thresholds (JSON {"<student_id>": "2000.00"}),
+updated_at`.
+
+### `DevicePushToken`
+`user, token (unique), platform (android | ios | web), created_at, last_used_at`.

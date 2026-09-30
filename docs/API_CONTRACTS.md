@@ -188,12 +188,202 @@ with three text columns. See `docs/DECISIONS.md`.
 
 ## Deferred to later parts (do not build against these paths yet)
 
-- Deposits (parent MoMo/bank/USSD), P2P transfers, POS purchases, fee
-  top-ups, pooled funds, gift vouchers, scheduled recurring top-ups,
-  attendance tap-in, merchant network, dispute/refund flow — **Part 2/3**.
-  All of these will call `wallets.services.post_ledger_entry()`; none of
-  them get a new ledger model.
-- POS app, sales analytics — **Part 3**.
+- ~~Deposits, P2P, POS purchases, fee top-ups, pooled funds, gift vouchers,
+  recurring top-ups, attendance, merchant network, disputes~~ — **built in
+  Part 2, see below.**
+- POS Android app — **Part 3** (the server side is Part 2 Section D).
 - Parent/admin dashboards, offline mode/sync, biometric matching (the
   `Card.biometric_enrolled` flag exists now; actual capture/matching is a
   client concern) — **Part 4**.
+
+---
+
+## Part 2 — Money movement & operations
+
+### Part 2 conventions (apply to every endpoint below)
+
+- **Paths.** Shown with Part 1's trailing slash. Every Part 2 route also
+  accepts the same path without the slash (`/api/v1/pos/sync` ==
+  `/api/v1/pos/sync/`).
+- **Auth types.**
+  - `JWT` — `Authorization: Bearer <access>` (Part 1 login).
+  - `Device` — `Authorization: Device <raw device token>` (Section D). Used
+    by every `/pos/…` device endpoint and `/attendance/tap/`. Never a JWT.
+  - `Public` — no auth; rate-limited per IP (`PUBLIC_TOPUP_THROTTLE_RATE`,
+    default `20/min`; `429` when exceeded).
+  - `Signature` — the aggregator webhook only.
+- **Amounts** are decimal strings with ≤ 2 dp, UGX (e.g. `"5000.00"`). A
+  request amount must be `> 0` and `≤ MAX_TRANSACTION_AMOUNT` (default
+  5,000,000). Direction always comes from the endpoint, never from a sign.
+- **Business-rule errors** share one body shape:
+  `{"code": "<snake_case_reason>", "detail": "<translated message>"}`, with
+  `400` (bad input), `404` (not found **or not yours** — other tenants' and
+  other families' objects are always 404, never 403), `409` (idempotency or
+  state conflict) or `422` (debit refused). Field validation errors keep
+  DRF's default `{"field": ["msg"]}` with `400`.
+  Common codes: `amount_invalid`, `amount_too_large`,
+  `idempotency_key_required`, `idempotency_conflict`, `not_found`,
+  `channel_invalid`, `phone_number_required`, `schedule_invalid`, plus the
+  debit refusal codes listed under Section C.
+- **Idempotency.** Every create that can be retried over a flaky network takes
+  an `idempotency_key` (client-generated, ≤ 128 chars; use a UUID), unique in
+  the database. Retrying with the same key returns the original object with
+  `200` instead of `201`; reusing a key for a *different* request returns
+  `409 idempotency_conflict`.
+- **Ledger references.** Every `LedgerEntry` created in Part 2 has
+  `reference_id = "<kind>:<id>"`, shared by both sides of the transfer:
+  `deposit:<Deposit.id>`, `payout:<Payout.id>`, `pos:<PosTransaction.id>`,
+  `p2p:<P2PTransfer.id>`, `fee:<FeePayment.id>`, `savings:<id>`,
+  `pooled:<PooledFund.id>:<n>`, `refund:<Dispute.id>`,
+  `recovery:<PosTransaction.id>:<n>`.
+- **Pagination** as in Part 1: `{count, next, previous, results}`, `?page=`,
+  `?page_size=` (≤ 100).
+- **Time.** Timestamps are ISO-8601 UTC. Day-based rules (daily caps,
+  "today", reports) use Africa/Kampala calendar days.
+
+### Payments (`payments` app) — Section A
+
+#### `POST /api/v1/payments/deposits/`
+JWT, **parent** only. Tops up a wallet of one of the caller's linked students.
+NO money moves until the aggregator confirms via the webhook.
+Body:
+```json
+{ "wallet": 12, "amount": "5000", "channel": "momo",
+  "payer_phone": "0772000111", "idempotency_key": "6f1c…uuid" }
+```
+`channel` ∈ `momo | bank | ussd`. `payer_phone` defaults to the parent's
+`phone_number`. `wallet` must be a main or savings wallet of a linked student
+(otherwise `404 not_found`).
+Response `201` (or `200` on idempotent replay) — a Deposit:
+```json
+{ "id": 7, "school": 1, "purpose": "wallet_topup", "wallet": 12, "student": 4,
+  "amount": "5000.00", "channel": "momo", "payer_phone": "0772000111",
+  "status": "pending", "reference": "SD-DEP-9F2A…", "aggregator_ref": "MOCK-1A2B…",
+  "instructions": { "type": "momo_prompt", "phone_number": "0772000111",
+                    "message": "Approve the payment of UGX 5,000 on your phone …" },
+  "initiated_by": 3, "contributor": null, "contributor_name": null,
+  "recurring_topup": null, "idempotency_key": "6f1c…uuid",
+  "failure_reason": "", "created_at": "…", "confirmed_at": null }
+```
+`instructions.type` is one of:
+- `momo_prompt` — `{phone_number, message}`
+- `ussd` — `{ussd_code, message}`
+- `bank_transfer` — `{bank_name, account_name, account_number, narration, message}`
+
+If the aggregator declines at initiation, the deposit comes back with
+`status: "failed"` and a `failure_reason` (e.g. `declined`). In mock mode,
+payer phones ending in `999` are declined.
+
+#### `GET /api/v1/payments/deposits/{id}/`
+JWT. Status polling: the parent app polls until `status` ≠ `pending`.
+Visible to the initiator, guardians of the target student, that school's
+school_admin, and platform_admin. Everyone else gets `404`.
+
+#### `GET /api/v1/payments/deposits/`
+JWT. Parent: deposits into their linked students' wallets, plus any deposit
+they initiated (e.g. pooled-fund contributions). school_admin: their school.
+Filters: `?student=<id>`, `?status=`, `?purpose=`. Paginated Deposits.
+
+#### `GET|POST /api/v1/payments/topup-links/`, `GET /api/v1/payments/topup-links/{id}/`
+JWT, **parent** only; links for their own linked students only.
+Create body: `{ "student": 4, "expires_at": "2026-12-31T00:00:00Z" }` (`expires_at` optional).
+Response `201`:
+```json
+{ "id": 2, "student": 4, "wallet": 12, "token": "Qm9…(43 chars)",
+  "share_url": "http://localhost:8000/topup/Qm9…", "active": true,
+  "expires_at": null, "revoked_at": null, "created_at": "…" }
+```
+A student who isn't linked to the caller → `404`.
+
+#### `POST /api/v1/payments/topup-links/{id}/revoke/`
+JWT, the parent who owns the link. Response `200`: the link with
+`active: false` and `revoked_at` set. The token stops working immediately.
+
+#### `GET /api/v1/public/topup-links/{token}/`
+**Public**, throttled. Response `200` — exactly these two fields and nothing else:
+```json
+{ "student_first_name": "Amina", "school_name": "Kampala Demo Primary School" }
+```
+Unknown, revoked and expired tokens all return the same
+`404 {"code": "not_found", …}`.
+
+#### `POST /api/v1/public/topup-links/{token}/deposits/`
+**Public**, throttled. A contributor tops up the linked student's main wallet.
+```json
+{ "contributor": { "name": "Jjajja Nalongo", "phone_number": "0701000222",
+                   "email": "", "relationship_label": "Grandmother" },
+  "amount": "3000", "channel": "ussd", "payer_phone": "0701000222",
+  "idempotency_key": "uuid" }
+```
+`contributor.name` is required, plus a `phone_number` or an `email`.
+Response `201`/`200` — a restricted Deposit view with no wallet or student ids:
+`{ reference, amount, channel, status, instructions, failure_reason, created_at, confirmed_at }`.
+On confirmation, every guardian of the student gets a
+`contributor_topup_received` notification.
+
+#### `GET /api/v1/public/topup-links/{token}/deposits/{reference}/`
+**Public**, throttled. Polls a contributor deposit made through this link.
+Same restricted shape.
+
+#### `POST /api/v1/public/topup-links/{token}/gift-vouchers/`
+**Public**, throttled. Same body as the contributor deposit, plus
+`"message"` (≤ 280 chars). Response `201`/`200`:
+`{ amount, message, status, deposit: {restricted deposit}, created_at }`.
+
+#### `GET|POST /api/v1/payments/gift-vouchers/`, `GET /api/v1/payments/gift-vouchers/{id}/`
+JWT. Create: **parent**, for a linked student only.
+```json
+{ "student": 4, "amount": "2500", "message": "Happy birthday!",
+  "channel": "momo", "payer_phone": "0772000111", "idempotency_key": "uuid" }
+```
+Response `201`/`200`:
+```json
+{ "id": 1, "school": 1, "student": 4, "wallet": 12, "amount": "2500.00",
+  "message": "Happy birthday!", "status": "pending_payment", "sender_user": 3,
+  "sender_contributor": null, "sender_name": "Moses Parent", "deposit": 9,
+  "deposit_reference": "SD-GV-…", "deposit_status": "pending",
+  "instructions": {…}, "redeemed_at": null, "created_at": "…" }
+```
+`status` goes `pending_payment → redeemed` when payment is confirmed: the
+voucher auto-redeems into the main wallet (`entry_type=gift_voucher`) and
+guardians get a `gift_received` notification that includes the message. It
+goes `→ cancelled` if the payment fails. List: a parent sees vouchers to
+their students and vouchers they sent; school_admin sees their school's.
+
+#### `GET|POST /api/v1/payments/recurring-topups/`, `GET|PATCH|PUT|DELETE /api/v1/payments/recurring-topups/{id}/`
+JWT. Writes: **parent** only, for their own schedules and linked students.
+Reads: the parent (own schedules), school_admin (their school).
+```json
+{ "student": 4, "amount": "4000", "channel": "momo", "payer_phone": "0772000111",
+  "frequency": "weekly", "day_of_week": 0, "day_of_month": null, "active": true }
+```
+Weekly needs `day_of_week` 0 (Mon) … 6 (Sun); monthly needs `day_of_month`
+1 … 28 (otherwise `400 schedule_invalid`). The run time is
+`RECURRING_TOPUP_RUN_HOUR` (default 08:00) Africa/Kampala. Responses also carry
+the read-only fields `id, school, parent, wallet, next_run_at, last_run_at,
+last_status, consecutive_failures, created_at, updated_at`. Changing the
+schedule, or setting `active: true` on a paused schedule, recomputes
+`next_run_at`; re-activating also resets `consecutive_failures`.
+Execution: Celery Beat every 15 min (`payments.tasks.run_recurring_topups`),
+or `manage.py run_recurring_topups`. After `RECURRING_TOPUP_MAX_FAILURES`
+(default 3) consecutive failures, the schedule is set to `active: false` and the
+parent gets `recurring_topup_paused`.
+
+#### `POST /api/v1/payments/webhook/`
+**Signature** auth. In mock mode the header is
+`X-SchoolDimes-Signature: hex(HMAC-SHA256(PAYMENT_AGGREGATOR_WEBHOOK_SECRET, raw body))`;
+a real aggregator's client verifies that provider's own scheme. Normalised body:
+```json
+{ "reference": "SD-DEP-…", "aggregator_ref": "MOCK-…", "status": "successful",
+  "amount": "5000.00", "failure_reason": "" }
+```
+The `reference` prefix routes the event: `SD-DEP-`, `SD-GV-` and `SD-PF-` go to
+the Deposit; `SD-PO-` goes to a Payout. All of them go through one service,
+`payments.services.process_payment_event()`.
+Responses: `401 bad_signature`, `400 bad_payload`; otherwise always `200`
+`{"status": "confirmed" | "failed" | "duplicate" | "unmatched" | "payout_succeeded" | "payout_failed"}`.
+A replay returns `duplicate` and moves no money. Unknown references, amount
+mismatches, and a success after a recorded failure return `unmatched`: they are
+logged in `UnmatchedWebhook` for admin review and answered `200` so the
+aggregator stops retrying. A success for an `expired` deposit still confirms it,
+because the payer was charged.

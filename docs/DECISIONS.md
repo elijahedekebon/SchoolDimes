@@ -126,3 +126,141 @@ The `pos-app/` directory, canteen sale reconciliation, sales analytics
 dashboard UI, offline mode + sync, the parent data/privacy dashboard, and
 actual biometric capture/matching (the `Card.biometric_enrolled` boolean
 flag exists now; the client-side enrollment/matching flow does not).
+
+## Part 2 — Money movement & operations
+
+### Part 1 conflicts resolved with the product owner (approved before any change)
+1. **System wallets extend `Wallet`** rather than a new model: `student` made
+   nullable, four system `wallet_type`s added, and DB constraints keep student
+   and system wallets apart. There is still exactly one ledger.
+2. **`post_ledger_entry(allow_negative=False)`**: a new keyword, honoured only
+   for `aggregator_clearing` wallets, plus a `post_transfer()` helper. The
+   existing signature and behaviour are unchanged.
+3. **Part 1 history was single-sided** (seed deposits and a POS purchase with
+   no other side). Migration `wallets.0003_legacy_counter_entries` *appends*
+   the missing counter-entries (`reference_id=legacy:<id>`). It is the one
+   place that writes ledger rows without calling `post_ledger_entry()`,
+   because migrations must use historical models; it replicates the
+   function's bookkeeping exactly and is re-runnable. It was verified against
+   a copy of the Part 1 dev database: afterwards each school's books sum to
+   exactly 0. `seed_demo` now posts balanced transfers.
+4. **`Policy` model supersedes `School.policy_defaults`** (Section C). The
+   JSON field stays in the schema and the `/schools/` API, but it is no
+   longer read.
+
+### Chart of wallets and why the clearing wallet goes negative
+Money enters and leaves the platform through the payment aggregator. The
+per-school `aggregator_clearing` wallet is the mirror of that outside cash:
+confirming a 5,000 deposit debits clearing (−5,000) and credits the
+student (+5,000). Its negative balance is "cash the aggregator holds for this
+school", and it goes back up as payouts leave. Because every movement is a
+transfer, **the sum of all wallets in a school is always 0**. That is a
+single, cheap invariant for reconciliation (Section K) and for tests.
+A platform-wide clearing wallet was rejected because `LedgerEntry.school` is
+non-nullable (Part 1), and per-school clearing keeps every ledger row inside
+one tenant. For the same reason, merchant settlement wallets exist per
+(merchant, school) pair (Section G).
+
+### One `Deposit` model for all collections
+Deposits, gift-voucher payments and pooled-fund contributions are all the
+same thing to the aggregator: a collection. One `Deposit` row with a
+`purpose` gives a single confirmation service
+(`process_payment_event`), a single idempotency constraint, and a single
+reference namespace (`SD-DEP-`, `SD-GV-`, `SD-PF-`). The webhook "routes by
+reference type" through that one function. `GiftVoucher` and
+`PooledFundContribution` hang off their Deposit. Pooled funds and POS
+shortfall recovery react to confirmations through the
+`payments.signals.deposit_confirmed` signal, so `payments` never imports them.
+
+### Payouts debit first, reverse on failure
+A savings withdrawal or external disbursement debits the source wallet into
+clearing *before* calling the aggregator, so the money can't be spent twice
+while the payout is in flight. If the payout fails (immediately or later by
+webhook), a compensating `reversal` transfer returns it. Ledger rows are
+never deleted.
+
+### Gift vouchers auto-redeem
+As proposed: when the payment is confirmed, the voucher is credited straight
+into the student's main wallet (`entry_type=gift_voucher`), marked
+`redeemed`, and guardians get a `gift_received` notification that includes
+the personal message. Manual redemption would add a step without adding any
+protection: the money is already paid, and the voucher can only ever land in
+one wallet. `paid` exists as a status but is transitional inside the
+confirming transaction. A failed payment marks the voucher `cancelled`.
+
+### Contributor top-up link security model
+- The token is 32 random bytes (`secrets.token_urlsafe`, 43 chars), so it
+  can't be guessed. It is stored in plaintext so the parent can re-share it
+  from the app. It is a low-privilege bearer secret: all it can do is
+  *put money in*.
+- The public GET returns **only** the student's first name and school name,
+  never balances, history, ids or other PII. Deposit responses on the public
+  endpoints omit wallet and student ids.
+- Unknown, revoked and expired tokens return the same 404, so the link can't
+  be used to probe which students exist.
+- Revocation is immediate (`active=false`).
+- All `/public/` endpoints are throttled per client IP through the Redis
+  cache (`PUBLIC_TOPUP_THROTTLE_RATE`, default 20/min).
+- Contributors never get an account. One `Contributor` row is created per
+  contribution, and public retries are answered before any row is created.
+
+### Webhook edge cases
+- A replay is a no-op (`duplicate`), guaranteed by locking the Deposit row
+  and checking its status inside the transaction.
+- Unknown reference, amount mismatch, or a success after a failure →
+  `UnmatchedWebhook`, answered 200 (so the aggregator stops retrying) and
+  left for a human. Crediting a mismatched amount, or silently reviving a
+  failed payment, would be worse than a short delay.
+- A success for an `expired` deposit **is** credited: expiry is our own
+  housekeeping timer, and the payer really was charged.
+
+### Idempotency keys
+`Deposit.idempotency_key` is globally unique, not per user, because public
+contributors have no user. Clients must send UUIDs. A key reused for a
+different wallet, amount, purpose or initiator returns 409.
+
+### Recurring top-ups
+- They run at `RECURRING_TOPUP_RUN_HOUR` (default 08:00) Africa/Kampala. A
+  monthly day is limited to 1–28 so every month has it.
+- Double execution is prevented by the database, not by timing: each run
+  window's Deposit uses `idempotency_key = recurring:<id>:<scheduled time>`.
+  A second Beat fire, a second worker, or `run_recurring_topups` racing Beat
+  all hit the unique constraint.
+- Missed windows (e.g. Beat down for a week) are **not** back-filled:
+  `next_run_at` jumps to the next future slot. Charging a parent several
+  times at once after an outage would be a nasty surprise.
+- In mock mode the created deposit is confirmed immediately, through the same
+  webhook-processing function. With a real aggregator it stays pending until
+  the parent approves the prompt.
+- After `RECURRING_TOPUP_MAX_FAILURES` (default 3) consecutive failures the
+  schedule is paused and the parent is notified. A success resets the
+  counter. If the parent is no longer the student's guardian, the schedule
+  deactivates itself.
+
+### Mock aggregator conventions
+Payer phones ending in `999` are declined at collection; payout phones ending
+in `998` fail. Webhooks are HMAC-SHA256 over the raw body. The Flutterwave,
+Pesapal and DPO clients are **skeletons only**: they raise
+`NotImplementedError` and carry TODOs describing the real calls. No working
+integration has been faked.
+
+### Errors: 404 for "not yours"
+Objects belonging to another family or another school return 404, not 403,
+so ids can't be used to learn what exists elsewhere. 403 is used only when
+the caller's *role* can never perform the action.
+
+### URL style
+New routes accept both `/x/` (Part 1's style, used in the docs) and `/x`
+(the style written in the Part 2 spec), via `core.routers.OptionalSlashRouter`.
+Part 1 routes are unchanged.
+
+### Tests use a fast password hasher
+Django's default PBKDF2 (870k iterations) is applied to every user password
+and card PIN, which made the suite slow. `conftest.py` switches tests to
+the MD5 hasher. Production settings are unchanged.
+
+### Local runs without Docker
+`CACHE_URL=locmemcache://` replaces Redis for the cache, and
+`CELERY_TASK_ALWAYS_EAGER=True` runs tasks inline. SMS/push dispatch
+failures never break a money movement: the event stays `pending`, and
+`retry_pending_notifications` (Beat) retries it later.
