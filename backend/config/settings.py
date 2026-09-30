@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "attendance",
     "merchants",
     "disputes",
+    "privacy",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

@@ -560,3 +560,24 @@ existing behaviour, so it has been left for the product owner to approve
   reminder.
 - Card freeze/unfreeze/lost notify the **other** guardians: the actor
   already knows.
+
+### Privacy (Section J)
+- **Deletion = redaction, never ledger deletion.** The ledger is the audit
+  trail; deleting it would break every balance, the double-entry invariant,
+  and the school's legal records. A completed deletion request strips
+  personal data (names, contact details, date of birth, photo, KYC ID
+  number), deactivates access (unusable password, cards `lost`, schedules and
+  links stopped), and leaves financial rows pointing at a redacted
+  placeholder. This is stated to the parent in `retention_notice` (on the
+  request, and appended to the handler's notes) so there's no surprise.
+- **A child's data can't be deleted while their wallets hold money.** That
+  money belongs to the family; the admin gets `409 balance_not_zero` until it
+  has been withdrawn or spent.
+- On a parent's own deletion, children who have **another guardian** are
+  left intact (that guardian still has a relationship with the school), and
+  only children for whom they were the **sole** guardian are redacted.
+- Handled by the school's school_admin (the data controller for its students)
+  and audit-logged for everyone (`force=True`), not only platform_admin.
+- `my-data` is parent-only in Part 2 (students have no login). It includes
+  the parent's own KYC details: it's their own data, and GDPR-style access
+  rights cover it.

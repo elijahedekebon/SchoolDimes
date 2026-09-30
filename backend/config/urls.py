@@ -21,6 +21,7 @@ urlpatterns = [
     path("api/v1/", include("merchants.urls")),
     path("api/v1/", include("disputes.urls")),
     path("api/v1/", include("notifications.urls")),
+    path("api/v1/", include("privacy.urls")),
 ]
 
 if settings.DEBUG:

@@ -591,3 +591,11 @@ DB-unique: one dispute in `open`/`under_review` per `pos_transaction` and per `l
 ## `notifications` — Section I additions
 No new models (created in Section A). Translations: `backend/locale/{lg,sw}/LC_MESSAGES/django.{po,mo}`,
 generated from `notifications/translations.py` by `manage.py build_locale`.
+
+## `privacy` — Section J
+
+### `DataRequest`
+`requested_by (User), request_type (export | correction | deletion), subject
+(self | student), student (null), school (the handling school), details,
+status (pending | in_progress | completed | rejected), notes, handled_by,
+handled_at, created_at`.

@@ -1111,3 +1111,65 @@ JWT.
 JWT. `POST {"token": "<FCM/APNs token>", "platform": "android" | "ios" | "web"}`
 is an upsert: `201` when new, `200` when the token already existed (it is
 moved to the caller, e.g. a phone that changed hands). Call `DELETE` on logout.
+
+### Privacy dashboard support (`privacy` app) — Section J
+
+#### `GET /api/v1/privacy/my-data/` (`?format=json` default, `?format=csv`)
+JWT, **parents only** (`403` otherwise). JSON:
+```json
+{ "generated_at": "…",
+  "profile": { "id": 3, "email": "…", "full_name": "…", "phone_number": "…", "role": "parent",
+               "preferred_language": "en", "date_joined": "…" },
+  "guardian_verification": { "status": "verified", "full_name": "…", "id_document_type": "national_id",
+                             "id_number": "…", "verified_at": "…" },
+  "students": [ { "id": 12, "name": "Amina Nakato", "class_name": "P4", "date_of_birth": null,
+                  "photo_url": null, "school": { "id": 1, "name": "…" }, "relationship": "mother",
+                  "cards": [ { "card_uid": "04a2…", "status": "active", "biometric_enrolled": false, "issued_at": "…" } ],
+                  "wallets": [ { "id": 31, "wallet_type": "main", "balance": "14500.00",
+                                 "ledger": [ { "id": 9, "created_at": "…", "direction": "credit", "amount": "20000.00",
+                                               "entry_type": "deposit", "reference_id": "deposit:4", "description": "…" } ] } ] } ] }
+```
+Only the caller's own linked students are included. **`pin_hash` is never
+included**, and neither are system wallets. `?format=csv` downloads
+`schooldimes-my-data.csv` (`Content-Disposition: attachment`) with columns
+`section, student, field_or_date, value_or_direction, amount, entry_type, reference_id, description`.
+
+#### `GET|POST /api/v1/privacy/data-requests/`, `GET /api/v1/privacy/data-requests/{id}/`
+JWT. Create: **parents**. List: the requester sees their own; school_admin
+sees requests about their school's students, or from parents of them.
+```json
+{ "request_type": "export" | "correction" | "deletion", "subject": "self" | "student",
+  "student": 12, "details": "Date of birth is wrong" }
+```
+`student` is required when `subject=student` and must be a linked child
+(`404`). Response `201`:
+```json
+{ "id": 2, "requested_by": 3, "request_type": "deletion", "subject": "student", "student": 12,
+  "school": 1, "details": "…", "status": "pending", "notes": "", "handled_by": null,
+  "handled_at": null, "created_at": "…",
+  "retention_notice": "Your personal details have been removed … Financial records (the ledger …) are kept …" }
+```
+`retention_notice` is set on every **deletion** request (null otherwise), so
+the parent sees up front what will be kept.
+
+#### `POST /api/v1/privacy/data-requests/{id}/handle/`
+JWT, **school_admin** (of a school the request concerns). Body
+`{ "status": "in_progress" | "completed" | "rejected", "notes": "…" }`.
+Completing a **deletion** performs an irreversible redaction and appends the
+retention notice to `notes`:
+- `subject=student`: name → "Redacted student <id>", class/date of
+  birth/photo cleared, cards marked `lost`, recurring top-ups stopped,
+  top-up links revoked. Refused with `409 balance_not_zero` while the child's
+  wallets hold money (withdraw or spend it first).
+- `subject=self`: email → `redacted-<id>@redacted.invalid`, name/phone
+  cleared, account deactivated with an unusable password, KYC name/ID
+  number redacted, push tokens and in-app notifications deleted, schedules
+  and links stopped. Children for whom this parent is the **only** guardian
+  are redacted as above.
+- **Ledger entries, deposits, POS sales, fee payments and disputes are never
+  deleted.**
+
+Other transitions notify the requester (`data_request_updated`). Closed
+requests → `409 request_closed`. Export and correction requests are tracked
+here; the export itself is `/privacy/my-data/`, and corrections are made by
+the admin through the normal endpoints.
