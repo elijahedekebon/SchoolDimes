@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "merchants",
     "disputes",
     "privacy",
+    "analytics",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

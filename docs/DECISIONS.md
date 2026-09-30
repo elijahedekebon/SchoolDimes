@@ -581,3 +581,23 @@ existing behaviour, so it has been left for the product owner to approve
 - `my-data` is parent-only in Part 2 (students have no login). It includes
   the parent's own KYC details: it's their own data, and GDPR-style access
   rights cover it.
+
+### Analytics & reconciliation (Section K)
+- **No duplicated storage.** Every figure is an aggregate query over the
+  source rows at request time. At pilot-school volumes (hundreds of sales a
+  day) this is fast. Redis caching of aggregates was allowed by the spec but
+  not added yet, because stale analytics would be worse than slightly slower
+  ones. The natural place to add it is a short-TTL cache in
+  `analytics/views.py`, keyed by (endpoint, school, range).
+- **Sales are bucketed by the device timestamp** (when the student actually
+  bought), while **reconciliation is by sync day** (when the ledger moved),
+  because reconciliation must line up with ledger rows. Both are documented
+  in the API.
+- **gross vs collected**: offline shortfalls make them differ, and both
+  matter (what the canteen handed over vs what it has been paid).
+- **Tenant scoping**: school_admins only ever see their own school.
+  platform_admin sees cross-school **summaries** (sales, best-sellers, peak
+  hours, categories, reconciliation), but **never per-student spending**,
+  which stays with the student's guardians and school.
+- **Nutrition flag**: share of item revenue in categories the school flags
+  `is_unhealthy`. Deliberately simple; per-item nutrition data is out of scope.

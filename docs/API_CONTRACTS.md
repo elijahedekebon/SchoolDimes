@@ -1173,3 +1173,74 @@ Other transitions notify the requester (`data_request_updated`). Closed
 requests → `409 request_closed`. Export and correction requests are tracked
 here; the export itself is `/privacy/my-data/`, and corrections are made by
 the admin through the normal endpoints.
+
+### Analytics & reconciliation (`analytics` app) — Section K
+
+Read-only, computed on request from existing rows (nothing extra stored).
+**Scope**: school_admin gets their own school. platform_admin passes
+`?school=<id>`, or omits it for a **cross-school summary** (sales-summary adds
+`by_school`; reconciliation returns `{"date", "schools": [...]}`). Everyone
+else gets `403`. Date filters `?from=YYYY-MM-DD&to=YYYY-MM-DD` are inclusive
+Africa/Kampala days (default: the last 30 days, max 366). Sales are bucketed by
+the sale's `device_local_timestamp`. **gross** = amount rung up;
+**collected** = amount the ledger actually moved (the difference is
+shortfall). Rejected POS transactions are excluded everywhere.
+
+#### `GET /api/v1/analytics/sales-summary/`
+```json
+{ "from": "2026-09-01", "to": "2026-09-30",
+  "totals": { "transactions": 3, "gross_amount": "7000.00", "collected_amount": "7000.00", "shortfall_amount": "0.00" },
+  "by_day": [ { "date": "2026-09-15", "transactions": 2, "gross_amount": "…", "collected_amount": "…" } ],
+  "by_device": [ { "device_id": 3, "device_name": "Till 1", "transactions": …, "gross_amount": …, "collected_amount": … } ],
+  "by_merchant": [ { "merchant_id": null, "merchant_name": "School canteen", … } ],
+  "by_school": [ { "school_id": 1, "school_name": "…", … } ] }
+```
+(`by_school` appears only in platform_admin's cross-school view.)
+
+#### `GET /api/v1/analytics/best-sellers/?limit=10`
+From `PosTransactionItem`, ordered by quantity:
+`{ from, to, results: [ { product_id, name, quantity, revenue, transactions } ] }`.
+
+#### `GET /api/v1/analytics/peak-hours/`
+All 24 Kampala hours: `{ from, to, timezone, results: [ { hour: 0..23, transactions, gross_amount } ] }`.
+
+#### `GET /api/v1/analytics/category-breakdown/`
+```json
+{ "from": "…", "to": "…", "total_item_revenue": "7000.00", "unhealthy_revenue": "4000.00",
+  "unhealthy_share_percent": 57.1,
+  "results": [ { "category_id": 2, "name": "Sugary drinks", "is_unhealthy": true, "quantity": 4,
+                 "revenue": "4000.00", "share_percent": 57.1 } ] }
+```
+The nutrition flag is the share of item revenue in categories the school
+marks `is_unhealthy`.
+
+#### `GET /api/v1/analytics/students/{id}/spending/`
+JWT, **that school's school_admin and the student's guardians only**
+(platform_admin and everyone else: `404`). From the student's ledger
+(bucketed by entry `created_at`) and POS items:
+`{ student, from, to, purchases_total, fees_total, p2p_sent_total,
+p2p_received_total, topups_total, refunds_total, by_day: [{date, spent}],
+by_category: [{name, is_unhealthy, quantity, revenue}], top_items: [{name, quantity, revenue}] }`.
+
+#### `GET /api/v1/analytics/reconciliation/?date=YYYY-MM-DD`
+One Kampala day (default today). POS figures are for transactions
+**received (synced)** that day, which is when their ledger entries were
+written.
+```json
+{ "school": 1, "date": "2026-09-30", "timezone": "Africa/Kampala",
+  "devices": [ { "device_id": 3, "device_name": "Till 1", "device_role": "canteen", "status": "active",
+                 "last_sync_at": "…", "transactions": 3, "rejected": 0,
+                 "collected_amount": "7000.00", "ledger_amount": "7000.00", "matches": true } ],
+  "stale_devices": [ { "device_id": 5, "device_name": "…", "last_sync_at": null } ],
+  "unresolved_reviews": { "count": 1, "outstanding_shortfall": "2000.00" },
+  "deposits": { "confirmed_count": 4, "confirmed_amount": "…", "ledger_amount": "…", "matches": true,
+                "pending_count": 1, "pending_amount": "…" },
+  "fee_payments": { "count": 2, "amount": "…", "ledger_amount": "…", "matches": true },
+  "pooled_funds": [ { "fund_id": 3, "title": "…", "status": "open", "balance": "…" } ],
+  "system_wallets": { "school_settlement": "…", "aggregator_clearing": "-…" },
+  "books_total": "0.00", "books_balanced": true }
+```
+Every `*_amount` next to a `ledger_amount` is recomputed from the
+`LedgerEntry` rows carrying its `reference_id` (`pos:`, `deposit:`,
+`fee:`), and `matches` shows whether they agree. `books_total` is the sum of
+every wallet in the school, which double-entry keeps at exactly 0.
