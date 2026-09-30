@@ -33,7 +33,7 @@ class StudentViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):
             return [IsSchoolAdminOrPlatformAdmin()]
-        if self.action in ("p2p_history", "effective_policy"):
+        if self.action in ("p2p_history", "effective_policy", "attendance"):
             # Part 2 actions: scoping comes from get_queryset() (parents have
             # school=null, so IsSameSchoolObject would wrongly refuse them).
             return [permissions.IsAuthenticated()]
@@ -88,6 +88,23 @@ class StudentViewSet(viewsets.ModelViewSet):
 
         student = self.get_object()
         return Response({"student": student.pk, **get_effective_policy(student).to_dict()})
+
+    @action(detail=True, methods=["get"], url_path="attendance")
+    def attendance(self, request, pk=None):
+        """Guardians of the student and that school's school_admin.
+        ?date=YYYY-MM-DD or ?from=&to= (Africa/Kampala days), ?direction=."""
+        from attendance.models import AttendanceRecord
+        from attendance.views import AttendanceRecordSerializer, filter_by_date
+        from core.pagination import StandardResultsSetPagination
+
+        student = self._student_for_family_or_admin()
+        qs = filter_by_date(
+            AttendanceRecord.objects.filter(student=student).select_related("student", "device"),
+            request.query_params,
+        )
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(qs, request, view=self)
+        return paginator.get_paginated_response(AttendanceRecordSerializer(page, many=True).data)
 
 
 class GuardianViewSet(viewsets.ModelViewSet):

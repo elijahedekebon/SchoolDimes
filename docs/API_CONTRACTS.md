@@ -887,3 +887,42 @@ Errors: `404 not_found` (not your student / other school's category),
 JWT. Guardians: their students' payments; school_admin: their school's.
 Filters `?student=<id>` and `?fee_category=<id>` give the history per student
 and per category. Paginated, same shape as above.
+
+### Attendance tap-in (`attendance` app) — Section F
+
+#### `POST /api/v1/attendance/tap/`
+**Device** auth. Allowed: `attendance` devices, and `canteen` devices only if
+the school has `attendance_on_canteen_devices = true` (otherwise `403`).
+No money moves. Body is either **one tap**:
+```json
+{ "idempotency_key": "uuid", "card_uid": "04a2…", "direction": "in",
+  "device_local_timestamp": "2026-09-30T07:30:00+03:00" }
+```
+or an **offline queue**: `{ "taps": [ {tap}, {tap}, … ] }` (≤ 500).
+`direction` ∈ `in | out` (default `in`). Response `200`:
+```json
+{ "results": [ { "idempotency_key": "uuid", "status": "created", "record_id": 41,
+                 "student_id": 12, "direction": "in", "reason": null } ],
+  "created": 1 }
+```
+`status`: `created`; `duplicate` (same device + key already recorded; the
+original record is returned); `rejected` with `reason` ∈
+`idempotency_key_required, unknown_card (not a card of the device's own school),
+direction_invalid, timestamp_required, malformed`.
+Naive timestamps are read as Africa/Kampala. If the school enabled
+`attendance_notify_guardians`, a student's **first `in` tap of the day**
+(Kampala) notifies their guardians (`attendance_tap_in`).
+
+#### `GET /api/v1/attendance/`
+JWT. school_admin: their school; parents: their own children only; others:
+empty. Filters: `?date=YYYY-MM-DD` (a Kampala day), or `?from=` / `?to=`
+(inclusive Kampala days), `?student=`, `?direction=`. Paginated:
+```json
+{ "id": 41, "school": 1, "student": 12, "student_name": "Amina Nakato", "card": 7,
+  "device": 5, "device_name": "Main gate", "direction": "in",
+  "device_local_timestamp": "2026-09-30T04:30:00Z", "received_at": "…", "idempotency_key": "uuid" }
+```
+
+#### `GET /api/v1/students/{id}/attendance/`
+JWT, **guardians of the student and that school's school_admin**. Same
+filters and shape.

@@ -528,3 +528,10 @@ Only completed payments are stored; refusals are returned to the caller.
 | Movement | Debit | Credit | entry_type | reference_id |
 |---|---|---|---|---|
 | Fee payment | student main | school_settlement | `fee_payment` | `fee:<id>` |
+
+## `attendance` — Section F
+
+### `AttendanceRecord`
+`school, student, card (null), device (→ pos.Device), direction (in | out),
+device_local_timestamp, received_at, idempotency_key`. Unique
+`(device, idempotency_key)`. Indexed on `(school, device_local_timestamp)`.

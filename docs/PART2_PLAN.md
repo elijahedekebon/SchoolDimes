@@ -85,7 +85,7 @@ updated → commit `Part 2 – Section X: ...`.
 - Tests: idempotent replay, shortfall flagged, per-item isolation, revoked device, cache scoping, frozen in cache
 
 ### [x] E. Fee top-ups — `FeeCategory`, `FeePayment`, `fees/pay/`, CRUD, history
-### [ ] F. Attendance — `AttendanceRecord`, `attendance/tap/`, `attendance/`, `students/{id}/attendance/`
+### [x] F. Attendance — `AttendanceRecord`, `attendance/tap/`, `attendance/`, `students/{id}/attendance/`
 ### [ ] G. Merchant network — `Merchant` (+ approvals M2M, per-school settlement wallets), approve/suspend, `merchants/{id}/statement/`, blocked merchants in policy
 ### [ ] H. Disputes & refunds — `Dispute`, raise/list/resolve, refund ≤ original
 ### [ ] I. Notifications — `NotificationEvent`, `NotificationPreference`, `DevicePushToken`, `notify()`, channel backends, low-balance throttle, endpoints, lg/sw translations

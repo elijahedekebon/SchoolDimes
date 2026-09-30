@@ -455,3 +455,21 @@ existing behaviour, so it has been left for the product owner to approve
   dashboard feature built on `/fees/payments/`.
 - Only completed payments are stored, because a refused payment moved no
   money and there is nothing to audit.
+
+### Attendance tap-in (Section F)
+- Attendance uses the same `Device` model and device-token auth as the POS.
+  Dedicated `attendance` devices always may record taps; **canteen devices
+  may only if the school turns on** `attendance_on_canteen_devices` (off by
+  default: a canteen till at lunchtime shouldn't silently become the
+  register). Attendance devices can't sell (`403` on `/pos/*`).
+- Taps are idempotent per `(device, idempotency_key)`, like POS sales, so an
+  offline queue can be resent safely. Duplicates inside one batch are caught
+  too.
+- Only cards from the device's **own** school are accepted. Attendance is
+  never cross-school, even for merchant-approved schools.
+- "Today" is the Africa/Kampala day of the tap's device timestamp. The
+  first-tap-in guardian notification is **off by default** (per school), to
+  avoid a daily notification nobody asked for.
+- `in`/`out` is recorded as sent. The server doesn't pair them or infer
+  presence; a daily register view is a Part 4A dashboard concern built on
+  these rows.
