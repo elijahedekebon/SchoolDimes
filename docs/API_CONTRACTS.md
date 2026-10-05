@@ -1332,3 +1332,62 @@ platform_admin: `{"school": null, "schools": []}`.
 - `GET /api/v1/students/` gains list filters: `?search=` (case-insensitive
   match on `name` or `class_name`) and `?class_name=` (exact, case-insensitive).
   Scoping is unchanged.
+
+### Section D additions — students, guardians, cards
+
+#### Card UID format (Part 3 must produce exactly this)
+`card_uid` is the NFC tag UID as **lowercase hex, two digits per byte, in the
+order the reader returns the bytes (Android `Tag.getId()` order), no
+separators**. Bytes `04 A2 2B 7C 91 3E 80` → `"04a22b7c913e80"`. 4–32 bytes.
+Server-generated UIDs (32-char uuid hex) already fit. Device endpoints
+(`/pos/sync/`, `/pos/purchase/`, `/attendance/tap/`, `/pos/p2p-transfer/`)
+match `card_uid` **exactly**, so devices must send the normalised form.
+
+#### `POST /api/v1/cards/issue/` and `POST /api/v1/cards/{id}/reissue/` (extended)
+Optional `"card_uid"`: accepts upper case and `:`/`-`/space separators and
+stores the normalised form. Omitted → server-generated (Part 1 behaviour).
+`400 {"card_uid": ["card_uid must be 4-32 bytes of hex…"]}`, or
+`400 {"card_uid": ["A card with this card_uid already exists."]}`.
+
+#### `POST /api/v1/cards/{id}/reset-pin/`
+JWT, school_admin (own school) / platform_admin (audit-logged). Body
+`{ "pin": "4321" }` (4–6 digits). `200`: the Card (never the hash). The card's
+`updated_at` changes, so devices get the new hash on their next `?since=`
+refresh. Does not unfreeze a card. `409 card_lost` for a lost card.
+
+#### `GET /api/v1/cards/` (extended)
+Filters `?student=`, `?status=`, `?card_uid=` (normalised before matching).
+Responses gain read-only `student_name`.
+
+#### `POST /api/v1/guardian-verifications/{id}/review/`
+JWT, school_admin (verifications of parents linked to their school) /
+platform_admin. Body `{ "status": "verified" | "rejected", "review_notes": "…" }`.
+`200`: the verification, which now also carries read-only `review_notes`,
+`reviewed_by`, `reviewed_at`. Rejecting clears `verified_at`. Parents → `403`;
+another school's admin → `404`.
+
+#### `GET /api/v1/users/lookup/?email=<exact>`
+JWT, school_admin / platform_admin. Finds an active **parent** account by
+exact (case-insensitive) email so it can be linked with `POST /guardians/`.
+`200 { id, email, full_name, role, phone_number }`; unknown or not a parent →
+`404 not_found`. No partial search, so admins can't enumerate parents.
+
+#### `GET /api/v1/students/{id}/` — behaviour fix (approved)
+Parents now get `200` for their own linked children (previously `403`, the
+Part 1 quirk) and `404` for anyone else's. Staff scoping is unchanged.
+
+#### `GET /api/v1/students/` (extended)
+Also `?card_status=active|frozen|lost|none` and `?low_balance=true` (main
+wallet below the school default `low_balance_threshold`, else 2,000).
+
+#### `GET|POST /api/v1/guardians/` (extended)
+Read-only `parent_email`, `parent_name`, `parent_phone`, `student_name`,
+`verification_status` (null if never submitted). Filters `?student=`,
+`?parent=`. Linking a non-parent account → `400`; a school_admin linking a
+student of another school → `404` (tenant fix).
+
+#### `GET /api/v1/wallets/`, `GET /api/v1/savings-goals/`, `GET /api/v1/policies/` (extended)
+Filters: wallets `?student=`, `?wallet_type=`; savings goals `?student=`,
+`?wallet=`; policies `?student=`, `?kind=default|override`. Policies gain
+read-only `updated_by_role`, `updated_by_name`, `student_name` (shows which
+overrides a parent set).

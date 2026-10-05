@@ -108,6 +108,14 @@ class PolicyViewSet(AuditPlatformAdminWritesMixin, viewsets.ModelViewSet):
         user = self.request.user
         qs = Policy.objects.prefetch_related("blocked_categories", "allowed_categories", "blocked_items",
                                              "blocked_merchants", "allowed_merchants")
+        # Part 4A list filters: ?student=<id>, ?kind=default|override.
+        params = self.request.query_params
+        if params.get("student"):
+            qs = qs.filter(student_id=params["student"])
+        if params.get("kind") == "default":
+            qs = qs.filter(student__isnull=True)
+        elif params.get("kind") == "override":
+            qs = qs.filter(student__isnull=False)
         if is_platform_admin(user):
             return qs
         if user.role == User.Role.PARENT:

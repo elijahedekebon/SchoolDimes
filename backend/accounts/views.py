@@ -1,4 +1,6 @@
+from django.utils.translation import gettext as _
 from rest_framework import generics, permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
@@ -11,7 +13,9 @@ from core.throttles import AuthThrottle
 from .models import GuardianVerification, User
 from .serializers import (
     CustomTokenObtainPairSerializer,
+    GuardianVerificationReviewSerializer,
     GuardianVerificationSerializer,
+    UserLookupSerializer,
     UserSerializer,
 )
 
@@ -88,3 +92,43 @@ class GuardianVerificationViewSet(viewsets.ModelViewSet):
                 "Cannot edit a verification that has already been reviewed."
             )
         serializer.save()
+
+    @action(detail=True, methods=["post"])
+    def review(self, request, pk=None):
+        """Part 4A: POST /guardian-verifications/{id}/review/
+        {"status": "verified"|"rejected", "review_notes": "..."} -- school_admin
+        (verifications of parents linked to their school) or platform_admin."""
+        from core.exceptions import ServiceError
+
+        from .services import review_guardian_verification
+
+        if not (is_platform_admin(request.user) or is_school_admin(request.user)):
+            raise ServiceError("forbidden", _("Only school or platform admins review verifications."), status=403)
+        verification = self.get_object()
+        s = GuardianVerificationReviewSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        review_guardian_verification(
+            verification, reviewer=request.user, status=s.validated_data["status"],
+            notes=s.validated_data.get("review_notes", ""),
+        )
+        return Response(GuardianVerificationSerializer(verification).data)
+
+
+class UserLookupView(APIView):
+    """Part 4A: GET /users/lookup/?email=<exact> -- school_admin/platform_admin
+    find a parent account by its exact email to link it as a guardian. Exact
+    match only (no listing or partial search), so admins can't enumerate the
+    platform's parents. Unknown or non-parent -> 404."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from core.exceptions import ServiceError
+
+        if not (is_platform_admin(request.user) or is_school_admin(request.user)):
+            raise ServiceError("forbidden", _("Only admins can look up accounts."), status=403)
+        email = (request.query_params.get("email") or "").strip()
+        user = User.objects.filter(email__iexact=email, role=User.Role.PARENT, is_active=True).first() if email else None
+        if user is None:
+            raise ServiceError("not_found", _("No parent account with that email."), status=404)
+        return Response(UserLookupSerializer(user).data)

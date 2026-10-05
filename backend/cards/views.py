@@ -7,13 +7,14 @@ from accounts.models import User
 from core.permissions import IsSchoolAdminOrPlatformAdmin, is_platform_admin, is_school_admin
 
 from .models import Card
-from .serializers import CardSerializer, IssueCardSerializer, ReissueCardSerializer
+from .serializers import CardSerializer, IssueCardSerializer, ReissueCardSerializer, ResetPinSerializer
 from .services import (
     card_status_changed,
     freeze_card,
     issue_card,
     reissue_card,
     report_lost_card,
+    reset_card_pin,
     unfreeze_card,
 )
 
@@ -38,6 +39,19 @@ class CardViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         qs = Card.objects.select_related("student", "school")
+        # Part 4A list filters: ?student=, ?status=, ?card_uid= (normalised).
+        params = self.request.query_params
+        if params.get("student"):
+            qs = qs.filter(student_id=params["student"])
+        if params.get("status"):
+            qs = qs.filter(status=params["status"])
+        if params.get("card_uid"):
+            from .services import normalize_card_uid
+
+            try:
+                qs = qs.filter(card_uid=normalize_card_uid(params["card_uid"]))
+            except ValueError:
+                qs = qs.none()
         if is_platform_admin(user):
             return qs
         if user.role == User.Role.PARENT:
@@ -45,7 +59,7 @@ class CardViewSet(viewsets.ModelViewSet):
         return qs.filter(school_id=user.school_id)
 
     def get_permissions(self):
-        if self.action in ("issue", "reissue"):
+        if self.action in ("issue", "reissue", "reset_pin"):
             return [IsSchoolAdminOrPlatformAdmin()]
         return [permissions.IsAuthenticated()]
 
@@ -59,7 +73,8 @@ class CardViewSet(viewsets.ModelViewSet):
                 {"detail": "Cannot issue a card for a student outside your school."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        card = issue_card(student, serializer.validated_data["pin"])
+        card = issue_card(student, serializer.validated_data["pin"],
+                          card_uid=serializer.validated_data.get("card_uid"))
         return Response(CardSerializer(card).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
@@ -69,7 +84,8 @@ class CardViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_403_FORBIDDEN)
         serializer = ReissueCardSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        new_card = reissue_card(old_card, serializer.validated_data["pin"])
+        new_card = reissue_card(old_card, serializer.validated_data["pin"],
+                                card_uid=serializer.validated_data.get("card_uid"))
         return Response(CardSerializer(new_card).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
@@ -108,4 +124,24 @@ class CardViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_403_FORBIDDEN)
         report_lost_card(card)
         card_status_changed(card, request.user, "card_reported_lost")
+        return Response(CardSerializer(card).data)
+
+    @action(detail=True, methods=["post"], url_path="reset-pin")
+    def reset_pin(self, request, pk=None):
+        """Part 4A: school_admin (own school) / platform_admin (audit-logged)
+        sets a new 4-6 digit PIN. Response: the Card (never the hash)."""
+        from core.audit import audit
+
+        card = self.get_object()
+        if not is_platform_admin(request.user) and card.school_id != request.user.school_id:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        if card.status == Card.Status.LOST:
+            return Response(
+                {"code": "card_lost", "detail": _("A lost card can't get a new PIN; reissue it instead.")},
+                status=status.HTTP_409_CONFLICT,
+            )
+        s = ResetPinSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        reset_card_pin(card, s.validated_data["pin"])
+        audit(request.user, "card.reset_pin", card)
         return Response(CardSerializer(card).data)

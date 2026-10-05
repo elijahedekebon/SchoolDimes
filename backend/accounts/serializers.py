@@ -47,11 +47,30 @@ class GuardianVerificationSerializer(serializers.ModelSerializer):
             "id_number",
             "status",
             "verified_at",
+            "review_notes",
+            "reviewed_by",
+            "reviewed_at",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "status", "verified_at", "created_at", "updated_at"]
+        read_only_fields = [
+            "id", "status", "verified_at", "review_notes", "reviewed_by", "reviewed_at",
+            "created_at", "updated_at",
+        ]
 
     def create(self, validated_data):
         validated_data["parent"] = self.context["request"].user
         return super().create(validated_data)
+
+
+class GuardianVerificationReviewSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=["verified", "rejected"])
+    review_notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)
+
+
+class UserLookupSerializer(serializers.ModelSerializer):
+    """Part 4A: the minimum an admin needs to link a guardian."""
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "full_name", "role", "phone_number"]

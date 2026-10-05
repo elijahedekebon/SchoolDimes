@@ -84,6 +84,12 @@ class GuardianVerification(models.Model):
         max_length=20, choices=Status.choices, default=Status.PENDING
     )
     verified_at = models.DateTimeField(null=True, blank=True)
+    # Part 4A: admin review trail (set by accounts.services.review_guardian_verification).
+    review_notes = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(
+        "accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

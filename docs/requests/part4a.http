@@ -21,3 +21,48 @@ Authorization: Bearer {{token}}
 ### Section C — student search (used by the analytics student picker)
 GET {{base}}/students/?search=amina
 Authorization: Bearer {{token}}
+
+### Section D — issue a card with a physical NFC UID
+POST {{base}}/cards/issue/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "student": 1, "pin": "1234", "card_uid": "04:A2:2B:7C:91:3E:80" }
+
+### Section D — reset a card's PIN
+POST {{base}}/cards/1/reset-pin/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "pin": "4321" }
+
+### Section D — cards filtered by UID / status / student
+GET {{base}}/cards/?card_uid=04:A2:2B:7C:91:3E:80
+Authorization: Bearer {{token}}
+
+### Section D — review a KYC-lite submission
+POST {{base}}/guardian-verifications/1/review/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "status": "verified", "review_notes": "National ID checked at the office" }
+
+### Section D — find a parent account to link as guardian
+GET {{base}}/users/lookup/?email=parent2@schooldimes.test
+Authorization: Bearer {{token}}
+
+### Section D — students with a frozen card / low balance
+GET {{base}}/students/?card_status=frozen&low_balance=true
+Authorization: Bearer {{token}}
+
+### Section D — guardians of one student (with KYC status)
+GET {{base}}/guardians/?student=1
+Authorization: Bearer {{token}}
+
+### Section D — a student's wallets, goals and policy override
+GET {{base}}/wallets/?student=1
+Authorization: Bearer {{token}}
+
+###
+GET {{base}}/policies/?kind=override
+Authorization: Bearer {{token}}

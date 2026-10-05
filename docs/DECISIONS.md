@@ -788,3 +788,32 @@ screen: the nutrition flag only counts sales that were sent **with line items**
 (item-less sales can't be categorised). Per-student spending is picked through
 a server-side student search (`/students/?search=`, added here) so it scales
 past one page of students.
+
+### Section D — students, guardians, cards
+- **Card UID format.** NFC readers report a tag's UID as bytes; tools print
+  them as `04:A2:2B:…`, `04A22B…` or reversed. We store lowercase hex in the
+  reader's byte order with no separators, the same form Android's
+  `Tag.getId()` gives when hex-encoded. The server normalises admin input;
+  device endpoints match exactly, so Part 3 must normalise before sending.
+  Changing sync to normalise as well was considered and rejected: it would
+  change Part 2 behaviour and hide device bugs.
+- **PIN reset** is admin-only, never shows a hash, and doesn't unfreeze a card
+  locked after wrong PINs. Unfreezing stays a separate, deliberate action.
+- **KYC review** didn't actually work before: `status` was read-only in the
+  serializer, so an admin `PATCH` silently did nothing. Added a dedicated
+  `review` action with notes and an audit trail instead of changing PATCH.
+- **Linking guardians** uses exact-email lookup of an existing parent account
+  (parents self-register in the app). Partial search was rejected: it would
+  let any school admin enumerate every parent on the platform.
+- **Fixed: parents got 403 on their own child's `GET /students/{id}/`.** This
+  was the Part 1 quirk Part 2 left for approval; the product owner asked us
+  to fix everything outstanding. Reads now rely on queryset scoping, as every
+  Part 2 route does.
+- **Tenant gap closed:** Part 1 let a school_admin create a `Guardian` row for
+  another school's student. Now `404`.
+- `?low_balance=true` compares to the school default threshold, not each
+  student's override. It is a triage filter; the exact per-guardian rule
+  stays in notifications.
+- The dashboard generates a 10-shade palette from the school's
+  `primary_color`. With identical shades, Mantine's light variants rendered
+  text in the background colour.

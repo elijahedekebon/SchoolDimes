@@ -60,7 +60,7 @@ docs updated → commit `Part 4A – Section X: ...`.
 ### [x] C. School admin — analytics
 - `/school/analytics`: `best-sellers`, `peak-hours`, `category-breakdown`, `students/{id}/spending`
 
-### [ ] D. Students, guardians & cards
+### [x] D. Students, guardians & cards
 - `/school/students` (+ create/edit), `/school/students/{id}` (profile, guardians, wallets, goals, cards, ledger, P2P, attendance, disputes, effective policy)
 - `/school/guardians` (links + KYC review)
 - Card issue/reissue/freeze/unfreeze/lost/reset-pin with UID entry

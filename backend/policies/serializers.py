@@ -33,6 +33,14 @@ class PolicySerializer(serializers.ModelSerializer):
     blocked_items = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=Product.objects.all())
     blocked_merchants = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=Merchant.objects.all())
     allowed_merchants = serializers.PrimaryKeyRelatedField(many=True, required=False, queryset=Merchant.objects.all())
+    # Part 4A read-only display fields (additive): who last set it, and for whom.
+    updated_by_role = serializers.CharField(source="updated_by.role", read_only=True, default=None)
+    updated_by_name = serializers.SerializerMethodField()
+    student_name = serializers.CharField(source="student.name", read_only=True, default=None)
+
+    def get_updated_by_name(self, obj):
+        u = obj.updated_by
+        return (u.full_name or u.email) if u else None
 
     class Meta:
         model = Policy
@@ -41,6 +49,7 @@ class PolicySerializer(serializers.ModelSerializer):
             "p2p_daily_cap", "p2p_enabled", "low_balance_threshold", "blocked_categories",
             "allowed_categories", "blocked_items", "blocked_merchants", "allowed_merchants",
             "updated_by", "created_at", "updated_at",
+            "updated_by_role", "updated_by_name", "student_name",
         ]
         read_only_fields = ["id", "school", "updated_by", "created_at", "updated_at"]
         extra_kwargs = {"student": {"required": False, "allow_null": True}}

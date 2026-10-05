@@ -216,6 +216,7 @@ export function ConfirmAction({
   children,
   canConfirm = true,
   successMessage,
+  testId,
 }: {
   label: ReactNode;
   title: ReactNode;
@@ -229,6 +230,7 @@ export function ConfirmAction({
   children?: ReactNode;
   canConfirm?: boolean;
   successMessage?: string;
+  testId?: string;
 }) {
   const t = useTranslations("common");
   const [open, setOpen] = useState(false);
@@ -250,7 +252,7 @@ export function ConfirmAction({
   };
   return (
     <>
-      <Button size="xs" variant="light" color={color} disabled={disabled} onClick={() => setOpen(true)} {...buttonProps}>
+      <Button size="xs" variant="light" color={color} disabled={disabled} onClick={() => setOpen(true)} data-testid={testId} {...buttonProps}>
         {label}
       </Button>
       <Modal opened={open} onClose={() => !busy && setOpen(false)} title={title} centered>

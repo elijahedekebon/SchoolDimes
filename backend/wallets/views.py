@@ -39,7 +39,14 @@ class WalletViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.G
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return wallets_visible_to(self.request.user)
+        qs = wallets_visible_to(self.request.user)
+        # Part 4A list filters: ?student=, ?wallet_type=.
+        params = self.request.query_params
+        if params.get("student"):
+            qs = qs.filter(student_id=params["student"])
+        if params.get("wallet_type"):
+            qs = qs.filter(wallet_type=params["wallet_type"])
+        return qs
 
     @action(detail=True, methods=["get"])
     def balance(self, request, pk=None):
@@ -180,6 +187,13 @@ class SavingsGoalViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return SavingsGoal.objects.filter(
+        qs = SavingsGoal.objects.filter(
             wallet__in=wallets_visible_to(self.request.user)
         ).select_related("wallet")
+        # Part 4A list filters: ?student=, ?wallet=.
+        params = self.request.query_params
+        if params.get("student"):
+            qs = qs.filter(wallet__student_id=params["student"])
+        if params.get("wallet"):
+            qs = qs.filter(wallet_id=params["wallet"])
+        return qs

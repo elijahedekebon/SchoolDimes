@@ -623,3 +623,17 @@ AuditLog: actor, school, target (any)
 ```
 Every money movement: two `LedgerEntry` rows (one debit, one credit) sharing
 a `reference_id`, on two wallets of the same school.
+
+## Part 4A changes (additive)
+
+### `accounts.GuardianVerification`
+| Field | Type | Notes |
+|---|---|---|
+| review_notes | TextField, blank | admin's notes on the decision |
+| reviewed_by | FK → User, null, SET_NULL | the admin who reviewed |
+| reviewed_at | DateTimeField, null | |
+Set only by `accounts.services.review_guardian_verification()`.
+
+### `cards.Card.card_uid` — canonical format
+Lowercase hex, two digits per byte, reader byte order, no separators,
+4–32 bytes (`cards.services.normalize_card_uid()`). No schema change.
