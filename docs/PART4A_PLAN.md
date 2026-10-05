@@ -67,7 +67,7 @@ docs updated → commit `Part 4A – Section X: ...`.
 - Backend: `card_uid` on issue/reissue, `reset-pin`, KYC `review`, `users/lookup`, student detail fix
 - Tests: UID normalisation, reset-pin perms, KYC review perms + tenant isolation
 
-### [ ] E. Devices, merchants, products & policy
+### [x] E. Devices, merchants, products & policy
 - `/school/devices` (register → one-time token + QR, rotate, revoke, stale)
 - `/school/merchants` (approve/suspend, statement, staff link, merchant devices)
 - `/school/products` (categories + products)

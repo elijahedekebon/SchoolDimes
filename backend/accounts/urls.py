@@ -2,12 +2,13 @@ from django.urls import path, re_path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .views import GuardianVerificationViewSet, LoginView, LogoutView, MeView, UserLookupView
+from .views import GuardianVerificationViewSet, LoginView, LogoutView, MeView, StaffUserViewSet, UserLookupView
 
 router = DefaultRouter()
 router.register(
     r"guardian-verifications", GuardianVerificationViewSet, basename="guardianverification"
 )
+router.register(r"users", StaffUserViewSet, basename="staffuser")  # Part 4A
 
 urlpatterns = [
     path("auth/login", LoginView.as_view(), name="login"),

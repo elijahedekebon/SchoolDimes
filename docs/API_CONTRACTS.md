@@ -1391,3 +1391,35 @@ Filters: wallets `?student=`, `?wallet_type=`; savings goals `?student=`,
 `?wallet=`; policies `?student=`, `?kind=default|override`. Policies gain
 read-only `updated_by_role`, `updated_by_name`, `student_name` (shows which
 overrides a parent set).
+
+### Section E additions — staff accounts, device provisioning QR
+
+#### `GET|POST /api/v1/users/`, `GET|PATCH /api/v1/users/{id}/`, `POST /api/v1/users/{id}/set-password/`
+JWT, **school_admin** (own school) / platform_admin (`?school=`; audit-logged).
+Everyone else `403`. Lists the school's `canteen_staff`, `school_admin` and
+`student` (portal) accounts plus `merchant_staff` of merchants approved for the
+school. Parents are never listed. Filters `?role=`, `?search=` (email or name).
+```json
+{ "id": 9, "email": "till@school.test", "full_name": "Peter", "phone_number": "",
+  "role": "canteen_staff", "school": 1, "is_active": true, "preferred_language": "en",
+  "date_joined": "…", "merchant_id": null, "merchant_name": null }
+```
+Create body: `{ email, password (≥ 8), role: canteen_staff | merchant_staff | school_admin,
+full_name?, phone_number?, merchant? }`. The school is always the admin's own
+(platform_admin passes `school`). `merchant_staff` need `merchant` (approved for the
+school; created and linked in one transaction, `school: null`).
+Errors: `400 role_invalid`, `400 merchant_required`, `400 password_required`,
+`403 forbidden` (merchant not approved for your school), `400 {"email": [...]}` (taken).
+PATCH accepts only `full_name`, `phone_number`, `preferred_language`, `is_active`
+(`409 cannot_deactivate_self`). `set-password` body `{ "password": "…" }`.
+
+#### Device provisioning QR (consumed by the POS app, Part 3)
+At registration and token rotation the dashboard shows the raw `device_token`
+once, as text and as a QR code whose content is this JSON (UTF-8):
+```json
+{ "type": "schooldimes_device", "v": 1,
+  "api_base_url": "http://192.168.1.20:8000", "device_token": "<raw token>" }
+```
+`api_base_url` is the backend **origin** (no `/api/v1`) that the device should
+use. The admin can edit it before the QR is shown; it defaults to
+`NEXT_PUBLIC_DEVICE_API_BASE_URL`, else `NEXT_PUBLIC_API_BASE_URL`.

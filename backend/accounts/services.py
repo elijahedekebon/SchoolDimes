@@ -25,3 +25,63 @@ def review_guardian_verification(verification, *, reviewer, status, notes=""):
     verification.save(update_fields=["verified_at", "review_notes", "reviewed_by", "reviewed_at", "updated_at"])
     audit(reviewer, "guardian_verification.review", verification, details={"status": status})
     return verification
+
+
+STAFF_CREATABLE_ROLES = ("canteen_staff", "merchant_staff", "school_admin")
+
+
+def staff_users_visible_to(user):
+    """Part 4A: accounts a school admin manages -- their school's canteen
+    staff, school admins and student-portal logins, plus merchant staff of
+    merchants approved for their school. platform_admin sees all staff."""
+    from django.db.models import Q
+
+    from core.permissions import is_platform_admin
+
+    from .models import User
+
+    qs = User.objects.exclude(role=User.Role.PARENT).select_related("merchant_link__merchant")
+    if is_platform_admin(user):
+        return qs
+    return qs.filter(
+        Q(school_id=user.school_id, role__in=["canteen_staff", "school_admin", "student"])
+        | Q(role="merchant_staff", merchant_link__merchant__approvals__school_id=user.school_id,
+            merchant_link__merchant__approvals__status="approved")
+    ).distinct()
+
+
+def create_staff_user(actor, *, email, password, role, full_name="", phone_number="",
+                      school_id=None, merchant=None, preferred_language="en"):
+    """Part 4A: school_admin creates staff for their own school; platform_admin
+    for any school (school_id required). merchant_staff have no school (a
+    merchant can serve several) and are linked to `merchant` in the same step."""
+    from django.db import transaction
+    from django.utils.translation import gettext as _
+
+    from core.audit import audit
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin
+
+    from .models import User
+
+    if role not in STAFF_CREATABLE_ROLES:
+        raise ServiceError("role_invalid", _("Staff accounts can be canteen_staff, merchant_staff or school_admin."))
+    if not is_platform_admin(actor):
+        school_id = actor.school_id
+    if role != "merchant_staff" and not school_id:
+        raise ServiceError("school_required", _("A school is required for this role."))
+    if role == "merchant_staff" and merchant is None:
+        raise ServiceError("merchant_required", _("Merchant staff must be linked to a merchant."))
+    if User.objects.filter(email__iexact=email).exists():
+        raise ServiceError("email_taken", _("An account with this email already exists."), status=409)
+    with transaction.atomic():
+        user = User.objects.create_user(
+            email=email, password=password, role=role, full_name=full_name, phone_number=phone_number,
+            school_id=None if role == "merchant_staff" else school_id, preferred_language=preferred_language,
+        )
+        if role == "merchant_staff":
+            from merchants.services import link_staff
+
+            link_staff(actor, merchant, user)  # checks the merchant is approved for the actor's school
+        audit(actor, "user.create", user, school_id=school_id, details={"role": role}, force=True)
+    return user

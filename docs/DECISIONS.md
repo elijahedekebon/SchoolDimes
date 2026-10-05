@@ -817,3 +817,19 @@ past one page of students.
 - The dashboard generates a 10-shade palette from the school's
   `primary_color`. With identical shades, Mantine's light variants rendered
   text in the background colour.
+
+### Section E — devices, merchants, products, policy, staff
+- **Device token shown once** in a modal that can't be dismissed by clicking
+  outside, with a copy button and a QR code. The QR holds JSON with
+  `type`/`v` so the POS app can reject unrelated codes and the format can
+  evolve. It also includes the backend address, because a phone on the
+  school Wi-Fi can't use `localhost`.
+- **Staff accounts** (`/users/`) were missing: without them a school couldn't
+  give canteen or merchant staff a login, or add a second admin, without
+  engineering help. Merchant staff are created and linked to the merchant in
+  one transaction; the existing `link_staff()` rule (merchant approved for
+  your school) is reused. The account is rolled back if the link is refused.
+- The policy page edits the school default through the existing
+  `PATCH /policies/{id}/` and `PATCH /school-settings/`. Overrides show who
+  set them (`updated_by_role`), so admins can see which limits came from
+  parents.

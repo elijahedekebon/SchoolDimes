@@ -74,3 +74,24 @@ class UserLookupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "full_name", "role", "phone_number"]
+
+
+class StaffUserSerializer(serializers.ModelSerializer):
+    """Part 4A: staff accounts managed by admins."""
+
+    password = serializers.CharField(write_only=True, min_length=8, required=False)
+    merchant = serializers.IntegerField(write_only=True, required=False)
+    merchant_id = serializers.IntegerField(source="merchant_link.merchant_id", read_only=True, default=None)
+    merchant_name = serializers.CharField(source="merchant_link.merchant.name", read_only=True, default=None)
+
+    class Meta:
+        model = User
+        fields = [
+            "id", "email", "full_name", "phone_number", "role", "school", "is_active",
+            "preferred_language", "date_joined", "password", "merchant", "merchant_id", "merchant_name",
+        ]
+        read_only_fields = ["id", "date_joined"]
+
+
+class SetPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(min_length=8, write_only=True)

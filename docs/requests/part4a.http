@@ -66,3 +66,21 @@ Authorization: Bearer {{token}}
 ###
 GET {{base}}/policies/?kind=override
 Authorization: Bearer {{token}}
+
+### Section E — staff accounts
+GET {{base}}/users/?role=canteen_staff
+Authorization: Bearer {{token}}
+
+###
+POST {{base}}/users/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "email": "till2@kampaladps.schooldimes.test", "password": "changeme123", "role": "canteen_staff", "full_name": "Second till" }
+
+###
+POST {{base}}/users/1/set-password/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "password": "newpassword123" }

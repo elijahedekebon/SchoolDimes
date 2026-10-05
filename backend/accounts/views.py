@@ -15,6 +15,8 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     GuardianVerificationReviewSerializer,
     GuardianVerificationSerializer,
+    SetPasswordSerializer,
+    StaffUserSerializer,
     UserLookupSerializer,
     UserSerializer,
 )
@@ -132,3 +134,86 @@ class UserLookupView(APIView):
         if user is None:
             raise ServiceError("not_found", _("No parent account with that email."), status=404)
         return Response(UserLookupSerializer(user).data)
+
+
+class StaffUserViewSet(viewsets.ModelViewSet):
+    """Part 4A: GET/POST /users/, GET/PATCH /users/{id}/,
+    POST /users/{id}/set-password/ -- school_admin (own school) and
+    platform_admin (audit-logged). Parents are never listed here."""
+
+    serializer_class = StaffUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["get", "post", "patch", "head", "options"]
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        from core.exceptions import ServiceError
+
+        if not (is_platform_admin(request.user) or is_school_admin(request.user)):
+            raise ServiceError("forbidden", _("Only admins manage staff accounts."), status=403)
+
+    def get_queryset(self):
+        from .services import staff_users_visible_to
+
+        qs = staff_users_visible_to(self.request.user)
+        params = self.request.query_params
+        if params.get("role"):
+            qs = qs.filter(role=params["role"])
+        if params.get("school") and is_platform_admin(self.request.user):
+            qs = qs.filter(school_id=params["school"])
+        if params.get("search"):
+            from django.db.models import Q
+
+            qs = qs.filter(Q(email__icontains=params["search"]) | Q(full_name__icontains=params["search"]))
+        return qs.order_by("role", "email")
+
+    def create(self, request, *args, **kwargs):
+        from core.exceptions import ServiceError
+        from merchants.models import Merchant
+
+        from .services import create_staff_user
+
+        s = self.get_serializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        d = s.validated_data
+        if not d.get("password"):
+            raise ServiceError("password_required", _("Set an initial password (at least 8 characters)."))
+        merchant = None
+        if d.get("merchant"):
+            merchant = Merchant.objects.filter(pk=d["merchant"]).first()
+            if merchant is None:
+                raise ServiceError("not_found", _("Merchant not found."), status=404)
+        user = create_staff_user(
+            request.user, email=d["email"], password=d["password"], role=d["role"],
+            full_name=d.get("full_name", ""), phone_number=d.get("phone_number", ""),
+            school_id=(d["school"].pk if d.get("school") else None), merchant=merchant,
+            preferred_language=d.get("preferred_language", "en"),
+        )
+        return Response(self.get_serializer(user).data, status=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Editable: full_name, phone_number, preferred_language, is_active."""
+        from core.audit import audit
+        from core.exceptions import ServiceError
+
+        user = self.get_object()
+        allowed = {k: v for k, v in request.data.items() if k in ("full_name", "phone_number", "preferred_language", "is_active")}
+        if user.pk == request.user.pk and allowed.get("is_active") is False:
+            raise ServiceError("cannot_deactivate_self", _("You can't deactivate your own account."), status=409)
+        s = self.get_serializer(user, data=allowed, partial=True)
+        s.is_valid(raise_exception=True)
+        s.save()
+        audit(request.user, "user.update", user, school_id=user.school_id, details=allowed, force=True)
+        return Response(s.data)
+
+    @action(detail=True, methods=["post"], url_path="set-password")
+    def set_password(self, request, pk=None):
+        from core.audit import audit
+
+        user = self.get_object()
+        s = SetPasswordSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        user.set_password(s.validated_data["password"])
+        user.save(update_fields=["password"])
+        audit(request.user, "user.set_password", user, school_id=user.school_id, force=True)
+        return Response({"detail": _("Password updated.")})
