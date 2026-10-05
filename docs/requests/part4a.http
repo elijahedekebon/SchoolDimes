@@ -84,3 +84,34 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "password": "newpassword123" }
+
+### Section G — log in as the platform admin, put the token in @platformToken
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "platform@schooldimes.test", "password": "pw123456" }
+
+### Section G — onboard a school (one transaction)
+POST {{base}}/platform/schools/onboard/
+Authorization: Bearer {{platformToken}}
+Content-Type: application/json
+
+{ "name": "Mbale Hill Primary", "branding": { "primary_color": "#0E7C66" }, "supported_languages": ["en", "sw"],
+  "policy": { "daily_spend_cap": "5000.00" }, "settings": { "offline_spend_ceiling": "1500.00" },
+  "admin": { "email": "head@mbalehill.test", "password": "longpassword1", "full_name": "Head Teacher" } }
+
+### Section G — per-school stats
+GET {{base}}/platform/schools/stats/
+Authorization: Bearer {{platformToken}}
+
+### Section G — audit log
+GET {{base}}/audit-logs/?action=school.
+Authorization: Bearer {{platformToken}}
+
+### Section G — unmatched webhooks to review
+GET {{base}}/payments/unmatched-webhooks/?reviewed=false
+Authorization: Bearer {{platformToken}}
+
+### Section G — support: one school's devices
+GET {{base}}/pos/devices/?school=1
+Authorization: Bearer {{platformToken}}

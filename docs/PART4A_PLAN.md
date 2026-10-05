@@ -77,7 +77,7 @@ docs updated → commit `Part 4A – Section X: ...`.
 ### [x] F. Fees, attendance, pooled funds, disputes, P2P alerts, privacy, tips, payment issues
 - `/school/fees`, `/school/attendance`, `/school/pooled-funds`, `/school/disputes`, `/school/p2p-alerts`, `/school/privacy`, `/school/tips`, `/school/payment-issues` (`payments/deposits?status=failed|expired`)
 
-### [ ] G. Platform back-office
+### [x] G. Platform back-office
 - `/platform/schools` (+ onboarding wizard), `/platform/referrals`, `/platform/support` (students/devices/transactions by school), `/platform/audit-log`, `/platform/payment-issues`, `/platform/tips`
 - Backend: `POST /platform/schools/onboard/`, `GET /platform/schools/stats/`, `GET /audit-logs/`, `GET /payments/unmatched-webhooks/`
 - Test: a school onboarded purely via endpoints registers a device, issues a card and takes a simulated sale

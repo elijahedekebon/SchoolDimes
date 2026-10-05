@@ -28,8 +28,12 @@ class IsSchoolAdminOrPlatformAdmin(permissions.BasePermission):
         return is_school_admin(request.user) or is_platform_admin(request.user)
 
 
-def _admin_scope(qs, user):
-    return qs if is_platform_admin(user) else qs.filter(school_id=user.school_id)
+def _admin_scope(qs, user, params=None):
+    if is_platform_admin(user):
+        # Part 4A: platform_admin support views narrow to one school with ?school=.
+        school = (params or {}).get("school")
+        return qs.filter(school_id=school) if school else qs
+    return qs.filter(school_id=user.school_id)
 
 
 # ---------------------------------------------------------------------------
@@ -48,7 +52,7 @@ class DeviceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.G
                 raise ServiceError("school_required", _("platform_admin must pass ?school=<id>."))
             school_id = params.get("school") if is_platform_admin(user) else user.school_id
             return services.stale_devices(int(school_id))
-        qs = _admin_scope(Device.objects.all(), user)
+        qs = _admin_scope(Device.objects.all(), user, params)
         for f in ("device_role", "status"):
             if params.get(f):
                 qs = qs.filter(**{f: params[f]})
@@ -163,7 +167,7 @@ class PosTransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vi
 
     def get_queryset(self):
         qs = _admin_scope(PosTransaction.objects.select_related("device", "student").prefetch_related("items"),
-                          self.request.user)
+                          self.request.user, self.request.query_params)
         params = self.request.query_params
         for f in ("device", "student", "sync_status", "review_status"):
             if params.get(f):

@@ -53,7 +53,7 @@ class CardViewSet(viewsets.ModelViewSet):
             except ValueError:
                 qs = qs.none()
         if is_platform_admin(user):
-            return qs
+            return qs.filter(school_id=params["school"]) if params.get("school") else qs
         if user.role == User.Role.PARENT:
             return qs.filter(student__guardian_links__parent=user).distinct()
         return qs.filter(school_id=user.school_id)

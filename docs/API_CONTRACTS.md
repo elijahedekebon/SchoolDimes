@@ -1423,3 +1423,46 @@ once, as text and as a QR code whose content is this JSON (UTF-8):
 `api_base_url` is the backend **origin** (no `/api/v1`) that the device should
 use. The admin can edit it before the QR is shown; it defaults to
 `NEXT_PUBLIC_DEVICE_API_BASE_URL`, else `NEXT_PUBLIC_API_BASE_URL`.
+
+### Section G additions — platform back-office (`backoffice` app, platform_admin only)
+
+Everyone else gets `403`. Every write is audit-logged.
+
+#### `POST /api/v1/platform/schools/onboard/`
+Creates a ready-to-use school in **one transaction**: `School`,
+`SchoolSettings`, the default `Policy`, both system wallets
+(`school_settlement`, `aggregator_clearing`) and the first `school_admin`.
+```json
+{ "name": "Mbale Hill Primary", "address": "Mbale",
+  "branding": { "logo_url": "https://…/logo.png", "primary_color": "#0E7C66" },
+  "supported_languages": ["en", "sw"],
+  "policy": { "daily_spend_cap": "5000.00", "weekly_spend_cap": null, "per_transaction_cap": "3000.00",
+              "p2p_daily_cap": null, "p2p_enabled": false, "low_balance_threshold": "2000.00" },
+  "settings": { "offline_spend_ceiling": "1500.00", "pin_lockout_threshold": 4,
+                "device_stale_after_hours": 24, "attendance_notify_guardians": false,
+                "attendance_on_canteen_devices": false },
+  "admin": { "email": "head@mbalehill.test", "password": "≥ 8 chars", "full_name": "…", "phone_number": "…" } }
+```
+Only `name` and `admin.email`/`admin.password` are required. Response `201`:
+`{ "school": {School}, "admin": {staff user} }`. An admin email that already
+exists → `400 {"admin": {"email": [...]}}` and nothing is created.
+
+#### `GET /api/v1/platform/schools/stats/`
+`{ "results": [ { id, name, branding, supported_languages, created_at, students,
+school_admins, active_cards, active_devices, student_balances_total,
+sales_30d_count, sales_30d_collected } ] }` (balances from the wallets, which
+equal the ledger; sales exclude rejected POS rows).
+
+#### `GET /api/v1/audit-logs/`, `GET /api/v1/audit-logs/{id}/`
+Filters `?school=`, `?action=` (contains), `?actor=`. Newest first.
+`{ id, actor, actor_email, actor_role, school, school_name, action, target_type, target_id, details, created_at }`.
+
+#### `GET /api/v1/payments/unmatched-webhooks/`, `POST /api/v1/payments/unmatched-webhooks/{id}/mark-reviewed/`
+`?reviewed=true|false`. `{ id, reference, aggregator_ref, reason, payload, reviewed, received_at }`.
+Marking reviewed moves no money.
+
+#### Cross-tenant support reads (extended)
+platform_admin may narrow these existing lists with `?school=<id>`:
+`/pos/devices/`, `/pos/transactions/`, `/cards/`, `/payments/deposits/`
+(`/students/` already supported it). They remain read-mostly; platform_admin
+writes are audit-logged by the existing mixins.

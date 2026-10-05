@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     "disputes",
     "privacy",
     "analytics",
+    # Part 4A
+    "backoffice",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

@@ -851,3 +851,23 @@ No backend changes: every page uses the Part 2 endpoints as documented.
 - Fee payments, pooled-fund disbursements and other money-moving forms carry
   a client-generated idempotency key that's only renewed after success, so a
   double click or retry can't pay twice.
+
+### Section G — platform back-office
+- **One onboarding endpoint, one transaction.** Creating a school used to
+  mean four separate calls (school, settings, policy, admin) plus lazily
+  created system wallets, and a half-finished school was possible.
+  `POST /platform/schools/onboard/` does it all atomically, so a platform
+  admin can onboard a school without engineering. A test proves that a school
+  created only this way can log in its admin, add a student, issue a card,
+  register a device, take a mock-confirmed top-up and complete a POS sale.
+- The back-office reuses `/schools/`, `/school-referrals/` and the
+  `?school=`-scoped support reads rather than duplicating them under
+  `/platform/`. Only things that had no endpoint were added.
+- **Unknown webhook references** have no school, so they are reviewed only in
+  the platform back-office. Marking one reviewed moves no money; fixing a
+  payment stays a deliberate reconciliation with the aggregator.
+- `seed_demo` now also creates `platform@schooldimes.test` and
+  `admin@jinjadss.schooldimes.test` (password `pw123456`), plus a pending KYC
+  submission for parent2.
+- The Playwright onboarding test creates a new "E2E School <timestamp>" in
+  the dev database on every run; that's intentional (it's the real flow).

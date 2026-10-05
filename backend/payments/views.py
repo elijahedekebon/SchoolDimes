@@ -63,7 +63,8 @@ class DepositViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         user = self.request.user
         qs = Deposit.objects.select_related("wallet", "contributor")
         if is_platform_admin(user):
-            pass
+            if self.request.query_params.get("school"):  # Part 4A support filter
+                qs = qs.filter(school_id=self.request.query_params["school"])
         elif user.role == User.Role.PARENT:
             qs = qs.filter(Q(wallet__student__guardian_links__parent=user) | Q(initiated_by=user)).distinct()
         elif user.role == User.Role.SCHOOL_ADMIN:

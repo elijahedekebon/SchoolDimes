@@ -23,6 +23,8 @@ urlpatterns = [
     path("api/v1/", include("notifications.urls")),
     path("api/v1/", include("privacy.urls")),
     path("api/v1/", include("analytics.urls")),
+    # Part 4A
+    path("api/v1/", include("backoffice.urls")),
 ]
 
 if settings.DEBUG:

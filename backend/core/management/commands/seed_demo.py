@@ -13,6 +13,7 @@ from wallets.models import LedgerEntry, SavingsGoal, Wallet
 from wallets.services import get_system_wallet, post_transfer
 
 from ._seed_part2 import seed_part2
+from ._seed_part4a import seed_part4a
 
 
 class Command(BaseCommand):
@@ -155,5 +156,8 @@ class Command(BaseCommand):
 
         # Part 2: payments, policy, POS, merchants, fees, pooled funds, disputes...
         seed_part2(self.stdout, self.style, school_a, school_admin, parent1, parent2, [student1, student2, student3])
+
+        # Part 4A: platform admin, second school's admin, KYC submission, student portal
+        seed_part4a(self.stdout)
 
         self.stdout.write(self.style.SUCCESS("Demo seed complete."))
