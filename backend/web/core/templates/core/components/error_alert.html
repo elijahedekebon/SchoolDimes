@@ -1,0 +1,5 @@
+{% load i18n %}{% if error %}<div class="alert c-red" data-testid="error-alert" role="alert">
+  <div class="alert-title">{{ title }}</div>
+  <div class="sm">{{ error.display|default:error }}</div>
+  {% if error.code %}<div class="xs dimmed">{% translate "Code" %}: {{ error.codes }}</div>{% endif %}
+</div>{% endif %}

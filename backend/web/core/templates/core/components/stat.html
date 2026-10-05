@@ -1,0 +1,5 @@
+{% if href %}<a href="{{ href }}" class="plain-link">{% endif %}<div class="stack gap-2">
+  <span class="xs dimmed upper fw-600">{{ label }}</span>
+  <span class="xl fw-700{% if color %} c-{{ color }} text{% endif %}">{{ value }}</span>
+  {% if hint %}<span class="xs dimmed">{{ hint }}</span>{% endif %}
+</div>{% if href %}</a>{% endif %}

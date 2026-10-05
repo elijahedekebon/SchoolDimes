@@ -1,0 +1,10 @@
+{% load i18n web %}<div class="dialog-header"><h3 class="dialog-title">{% block title %}{{ title }}{% endblock %}</h3><button type="button" class="close-btn" data-close aria-label="{% translate 'Close' %}">×</button></div>
+<form class="stack" hx-post="{{ action_url }}" hx-target="closest .dialog-slot" {% block form_attrs %}{% endblock %}>
+  <div class="sm">{% block description %}{{ description }}{% endblock %}</div>
+  {% block fields %}{% endblock %}
+  {% error_alert error %}
+  <div class="group justify-end">
+    <button type="button" class="btn btn-default" data-close>{% translate "Cancel" %}</button>
+    <button type="submit" class="btn{% block confirm_color %}{% if color %} c-{{ color }}{% endif %}{% endblock %}" data-testid="{% block confirm_testid %}confirm-button{% endblock %}">{% block confirm_label %}{{ confirm_label|default:_("Confirm") }}{% endblock %}</button>
+  </div>
+</form>

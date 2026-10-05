@@ -1,0 +1,14 @@
+{% load i18n web %}<div class="group justify-between mb-xs">
+  <span class="fw-600">{% translate "Notifications" %}</span>
+  <button type="button" class="btn btn-subtle btn-compact" hx-post="/notifications/read-all" hx-target="#bell-body" {% if not unread %}disabled{% endif %}>{% translate "Mark all read" %}</button>
+</div>
+<div class="stack gap-xs scroll" style="max-height:400px">
+  {% for n in notifications %}
+  <button type="button" class="unstyled" hx-post="/notifications/{{ n.id }}/read" hx-target="#bell-body">
+    <div class="sm{% if not n.read_at %} fw-700{% endif %}">{{ n.title }}</div>
+    <div class="xs dimmed">{{ n.body }}</div>
+    <div class="xs dimmed">{{ n.created_at|dt }}</div>
+  </button>
+  {% empty %}<p class="sm dimmed">{% translate "No notifications." %}</p>{% endfor %}
+</div>
+<span hx-swap-oob="innerHTML:#bell-count">{% if unread %}<span class="indicator">{{ unread }}</span>{% endif %}</span>

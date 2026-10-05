@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Sign in" %} · SchoolDimes{% endblock %}
+{% block body %}
+<div class="center-page bg-gray-0">
+  <div class="paper" style="width:380px;max-width:100%">
+    <form method="post" class="stack" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+      <h2>SchoolDimes</h2>
+      <p class="dimmed sm">{% translate "Sign in to the school dashboard" %}</p>
+      {% if refused %}<div class="alert c-orange">{% translate "This account can't use the web dashboard. Canteen and merchant staff use the POS app; parents use the mobile app." %}</div>{% endif %}
+      {% if expired %}<div class="alert c-yellow">{% translate "Your session ended. Please sign in again." %}</div>{% endif %}
+      {% if error %}<div class="alert c-red" data-testid="login-error">{{ error }}</div>{% endif %}
+      <label class="field"><span class="label">{% translate "Email" %} <span class="req">*</span></span>
+        <input class="input" type="email" name="email" value="{{ email }}" required autocomplete="username"></label>
+      <label class="field"><span class="label">{% translate "Password" %} <span class="req">*</span></span>
+        <input class="input" type="password" name="password" required autocomplete="current-password"></label>
+      <button type="submit" class="btn">{% translate "Sign in" %}</button>
+      <p class="dimmed xs">{% translate "For school administrators, platform staff and students (student portal)." %}</p>
+    </form>
+  </div>
+</div>
+{% endblock %}

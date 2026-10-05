@@ -1,0 +1,29 @@
+"""The one tenant-scoping helper every web view uses.
+
+Each name maps to the SAME queryset function the API viewset's
+`get_queryset()` calls, so the web sees exactly what the API would show the
+signed-in user -- scoped from `request.user`, never from a school id in the
+URL or form. Filters are the API's query parameters (same names)."""
+from django.http import Http404
+from django.utils.module_loading import import_string
+
+SCOPES = {
+    "notifications": "notifications.services.inbox",
+}
+
+
+def scoped(user, name, params=None):
+    return import_string(SCOPES[name])(user, params or {})
+
+
+def scoped_object(user, name, pk, params=None):
+    """An object visible to `user`, or 404 (another school's object included)."""
+    try:
+        pk = int(pk)
+    except (TypeError, ValueError):
+        raise Http404
+    qs = scoped(user, name, params)
+    obj = qs.filter(pk=pk).first() if hasattr(qs, "filter") else next((o for o in qs if o.pk == pk), None)
+    if obj is None:
+        raise Http404
+    return obj

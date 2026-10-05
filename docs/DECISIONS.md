@@ -954,3 +954,96 @@ recorded here. No existing response changed shape:
 - **Weekly cap couldn't be checked offline.** Added `week_spend` per card,
   computed exactly like `today_spend`, so offline decisions match
   `debit_violations()` for every reason code.
+
+## Web migration — Django templates + HTMX (supersedes the Part 4A dashboard stack)
+
+### The switch
+The four web surfaces (school admin dashboard, platform back-office, student
+portal, public contributor page) move from the Next.js + React + TypeScript
+app in `admin-dashboard/` to **server-rendered Django templates + HTMX inside
+`backend/`**. This **supersedes "Part 4A — Dashboard stack"** and "Tokens live
+in httpOnly cookies behind a server-side proxy" above. The repo ends up with
+two languages only: Python (backend + web) and Dart/Flutter (the two mobile
+apps, built later). No Node.js, npm, TypeScript or React.
+
+It is a **like-for-like port**: same pages, same URL paths, same navigation,
+same layout, forms, tables, filters, actions, dialogs and empty/error states.
+Nothing is redesigned, added or dropped. The route and component mapping is
+in `docs/WEB_MIGRATION_PLAN.md`.
+
+Why:
+- **One language with the backend.** Web views call the same
+  `<app>/services.py` functions the API calls, in-process. There is no second
+  data layer (typed API client, proxy, token refresh) to keep in step with
+  the backend.
+- **Fewer moving parts.** No Node process, no build step, no `node_modules`,
+  no cookie-to-Bearer proxy. `docker compose up` serves the API and every web
+  page from the existing `web` container.
+- **Faster public page on slow connections.** `/give/{token}` arrives as
+  ready HTML (a few KB plus a cached stylesheet and HTMX) instead of a React
+  bundle that must download and run before anything shows. That matters on
+  2G/3G phones, which is who uses that page.
+
+### Shape
+- `backend/web/` holds one Django app per Next.js route group: `web.school`,
+  `web.platform`, `web.student`, `web.give`, plus `web.core` (base layout,
+  auth, scoping mixin, template tags, static assets). The packages are nested
+  under `web/` because a top-level `platform` package would shadow Python's
+  standard-library `platform` module. App labels are `web_core`, `web_school`,
+  `web_platform`, `web_student`, `web_give`.
+- **Views never hold business logic and never call `/api/v1/` over HTTP.**
+  Where a web action needed logic that lived only inside an API view (query
+  scoping in `get_queryset`, checks in `perform_create`, etc.), the logic was
+  moved into a service function first and the API view now calls it too; the
+  unchanged API test suite proves the API still behaves identically.
+- **One scoping helper.** `web.core.scoping` maps a name ("students",
+  "cards", …) to the same queryset function the API viewset uses, so every
+  web list and every object lookup is scoped from `request.user`, never from
+  a school id in the URL or form. An object of another school is `404`.
+- **HTMX** for partial updates (filters, paging, tabs, dialogs, polling).
+  Native `<dialog>` for modals and drawers. One small vanilla-JS file
+  (`web/core/static/web/js/app.js`) opens/closes dialogs, shows toasts, copies
+  text and runs the onboarding stepper; Alpine.js wasn't needed.
+- **CSS**: one hand-written stylesheet that reproduces the Mantine look the
+  dashboard had (teal default primary, the school's `primary_color` as a
+  10-shade palette with the same formula, 8 px radius, system font stack).
+  No CSS framework, no build step.
+- **Vendored assets**: `htmx.min.js` 2.0.4 and `chart.umd.min.js` 4.4.1 are
+  committed under `web/core/static/web/vendor/` (no CDN at runtime).
+- **Static files: WhiteNoise.** `whitenoise.middleware.WhiteNoiseMiddleware`
+  serves `/static/` from the `web` container in dev and production alike, so
+  no extra service (nginx) is needed. `collectstatic` runs at container start.
+- **QR codes** are drawn server-side as SVG by `segno` (pure Python).
+
+### Auth, sessions, CSRF
+- Staff and student web pages use **Django session auth** (the API keeps JWT
+  for the POS and parent apps; DRF doesn't accept the session cookie, so the
+  API has no CSRF exposure). Every POST is CSRF-protected.
+- Same role routing as before: `school_admin` → `/school`, `platform_admin`
+  → `/platform`, `student` → `/student`; a signed-in user who opens another
+  area is sent to their home. Parents, canteen staff and merchant staff are
+  refused at login with the same messages (parents use the mobile app; canteen
+  and merchant staff use the POS app) and no session is created.
+- Login is rate-limited per IP with the same `AuthThrottle`
+  (`AUTH_THROTTLE_RATE`) as `POST /auth/login`.
+- Session cookie: `HttpOnly`, `SameSite=Lax`, `Secure` when
+  `SESSION_COOKIE_SECURE=true` (set it in production), sliding expiry of
+  `SESSION_COOKIE_AGE` seconds (default 8 h, renewed on activity). The session
+  id is rotated at login. An HTMX request whose session has ended gets
+  `HX-Redirect: /login?expired=1`, which shows "Your session ended".
+- platform_admin cross-tenant writes stay audit-logged by the services.
+
+### Language
+`LocaleMiddleware` + Django's language cookie. At login the cookie is set from
+the user's `preferred_language`; the switcher sets the cookie and saves
+`preferred_language`. All 858 dashboard strings became Django msgids (the
+English text). The Next.js `lg.json`/`sw.json` were empty, so there were no
+Luganda/Kiswahili UI translations to carry over; `manage.py build_locale` now
+also collects the web msgids into the lg/sw `.po` files with empty `msgstr`
+(English fallback), and `docs/TRANSLATIONS_TODO.md` lists them.
+
+### Money and time
+Money stays a decimal string/`Decimal` end to end; the `ugx` template filter
+formats it exactly as `formatUGX` did ("UGX 15,000", "UGX 15,000.50",
+"-UGX 500" → "-UGX 500", "—" for none). Chart bar heights use whole shillings
+only. "Today" and every date shown are Africa/Kampala.

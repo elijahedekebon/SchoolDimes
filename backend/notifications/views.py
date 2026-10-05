@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from students.access import linked_student_ids
 
 from .models import DevicePushToken, NotificationEvent, NotificationPreference
+from . import services
 from .services import get_preferences
 
 
@@ -26,32 +27,20 @@ class NotificationViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, view
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
-        qs = NotificationEvent.objects.filter(user=self.request.user, channel=NotificationEvent.Channel.IN_APP)
-        if self.request.query_params.get("unread") == "true":
-            qs = qs.filter(read_at__isnull=True)
-        if self.request.query_params.get("event_type"):
-            qs = qs.filter(event_type=self.request.query_params["event_type"])
-        return qs
+        return services.inbox(self.request.user, self.request.query_params)
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
-        response.data["unread_count"] = NotificationEvent.objects.filter(
-            user=request.user, channel=NotificationEvent.Channel.IN_APP, read_at__isnull=True
-        ).count()
+        response.data["unread_count"] = services.unread_count(request.user)
         return response
 
     @action(detail=True, methods=["post"])
     def read(self, request, pk=None):
-        event = self.get_object()
-        if event.read_at is None:
-            event.read_at = timezone.now()
-            event.save(update_fields=["read_at"])
-        return Response(NotificationSerializer(event).data)
+        return Response(NotificationSerializer(services.mark_read(self.get_object())).data)
 
     @action(detail=False, methods=["post"], url_path="read-all")
     def read_all(self, request):
-        updated = self.get_queryset().filter(read_at__isnull=True).update(read_at=timezone.now())
-        return Response({"marked_read": updated})
+        return Response({"marked_read": services.mark_all_read(request.user, request.query_params)})
 
 
 class PreferenceSerializer(serializers.ModelSerializer):

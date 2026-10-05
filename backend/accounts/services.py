@@ -85,3 +85,19 @@ def create_staff_user(actor, *, email, password, role, full_name="", phone_numbe
             link_staff(actor, merchant, user)  # checks the merchant is approved for the actor's school
         audit(actor, "user.create", user, school_id=school_id, details={"role": role}, force=True)
     return user
+
+
+def set_preferred_language(user, language):
+    """Web language switcher (the API does the same through PATCH /me)."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+
+    from .models import User
+
+    if language not in User.Language.values:
+        raise ServiceError("locale_invalid", _("Unknown language."))
+    if user.preferred_language != language:
+        user.preferred_language = language
+        user.save(update_fields=["preferred_language"])
+    return user

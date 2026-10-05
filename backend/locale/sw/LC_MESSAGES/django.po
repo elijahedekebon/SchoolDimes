@@ -227,3 +227,152 @@ msgstr "inakaguliwa"
 
 msgid "weekly spending limit exceeded"
 msgstr "kikomo cha matumizi ya wiki kimepitwa"
+
+# --- Web surfaces (web/**): untranslated entries fall back to English ---
+
+msgid "All"
+msgstr ""
+
+msgid "Analytics"
+msgstr ""
+
+msgid "Attendance"
+msgstr ""
+
+msgid "Audit log"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Cards"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "Code"
+msgstr ""
+
+msgid "Confirm"
+msgstr ""
+
+msgid "Data requests"
+msgstr ""
+
+msgid "Devices"
+msgstr ""
+
+msgid "Disputes"
+msgstr ""
+
+msgid "Done"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Fees"
+msgstr ""
+
+msgid "Financial tips"
+msgstr ""
+
+msgid "For school administrators, platform staff and students (student portal)."
+msgstr ""
+
+msgid "Guardians & KYC"
+msgstr ""
+
+msgid "Insufficient funds."
+msgstr ""
+
+msgid "Mark all read"
+msgstr ""
+
+msgid "Merchants"
+msgstr ""
+
+msgid "My SchoolDimes"
+msgstr ""
+
+msgid "No notifications."
+msgstr ""
+
+msgid "Nothing here yet."
+msgstr ""
+
+msgid "Notifications"
+msgstr ""
+
+msgid "Onboard a school"
+msgstr ""
+
+msgid "Overview"
+msgstr ""
+
+msgid "P2P alerts"
+msgstr ""
+
+msgid "Parents use the SchoolDimes mobile app, not this dashboard."
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Payment issues"
+msgstr ""
+
+msgid "Policy & settings"
+msgstr ""
+
+msgid "Pooled funds"
+msgstr ""
+
+msgid "Products"
+msgstr ""
+
+msgid "Reconciliation"
+msgstr ""
+
+msgid "Referrals"
+msgstr ""
+
+msgid "Review queue"
+msgstr ""
+
+msgid "Sales"
+msgstr ""
+
+msgid "SchoolDimes back-office"
+msgstr ""
+
+msgid "Schools"
+msgstr ""
+
+msgid "Sign in"
+msgstr ""
+
+msgid "Sign in to the school dashboard"
+msgstr ""
+
+msgid "Sign out"
+msgstr ""
+
+msgid "Something went wrong"
+msgstr ""
+
+msgid "Staff accounts"
+msgstr ""
+
+msgid "Students"
+msgstr ""
+
+msgid "Support"
+msgstr ""
+
+msgid "This account can't use the web dashboard. Canteen and merchant staff use the POS app; parents use the mobile app."
+msgstr ""
+
+msgid "Your session ended. Please sign in again."
+msgstr ""

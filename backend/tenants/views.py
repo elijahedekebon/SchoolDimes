@@ -91,25 +91,7 @@ class MySchoolView(generics.GenericAPIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
-    @staticmethod
-    def _public(school):
-        return {
-            "id": school.pk,
-            "name": school.name,
-            "branding": school.branding or {},
-            "supported_languages": school.supported_languages or [],
-        }
-
     def get(self, request):
-        from accounts.models import User
-        from students.access import user_school_ids
+        from .services import my_school
 
-        user = request.user
-        if user.role == User.Role.PARENT:
-            schools = School.objects.filter(pk__in=user_school_ids(user)).order_by("name")
-            return Response({"school": None, "schools": [self._public(s) for s in schools]})
-        school = user.school if user.school_id else None
-        return Response({
-            "school": self._public(school) if school else None,
-            "schools": [self._public(school)] if school else [],
-        })
+        return Response(my_school(request.user))

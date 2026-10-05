@@ -9,6 +9,8 @@ django-celery-beat==2.7.0
 Pillow==11.0.0
 django-filter==24.3
 django-cors-headers==4.6.0
+whitenoise==6.12.0
+segno==1.6.6
 
 pytest==8.3.4
 pytest-django==4.9.0

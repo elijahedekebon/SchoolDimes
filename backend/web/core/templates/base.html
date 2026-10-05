@@ -1,0 +1,19 @@
+{% load static i18n %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SchoolDimes{% endblock %}</title>
+  <meta name="description" content="SchoolDimes school dashboard">
+  <link rel="stylesheet" href="{% static 'web/css/app.css' %}">
+  {% block brand %}{% if frame_palette %}<style>:root{ {% for c in frame_palette %}--primary-{{ forloop.counter0 }}:{{ c }};{% endfor %} }</style>{% endif %}{% endblock %}
+  <script src="{% static 'web/vendor/htmx.min.js' %}" defer></script>
+  <script src="{% static 'web/js/app.js' %}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' {% block body_attrs %}{% endblock %}>
+{% block body %}{% endblock %}
+<div id="sd-toasts" aria-live="polite"></div>
+</body>
+</html>

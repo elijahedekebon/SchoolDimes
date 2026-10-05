@@ -26,6 +26,12 @@ urlpatterns = [
     # Part 4A
     path("api/v1/", include("backoffice.urls")),
     path("api/v1/", include("parents.urls")),
+    # Web surfaces (Django templates + HTMX), same paths as the old Next.js app
+    path("", include("web.core.urls")),
+    path("", include("web.school.urls")),
+    path("", include("web.platform.urls")),
+    path("", include("web.student.urls")),
+    path("", include("web.give.urls")),
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,8 @@
+<form method="post" action="/locale" class="lang-switch">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+  <input type="hidden" name="next" value="{{ next }}">
+  <select class="input input-xs" name="locale" aria-label="Language" onchange="this.form.submit()" style="width:120px">
+    {% for code, name in languages %}<option value="{{ code }}"{% if code == current %} selected{% endif %}>{{ name }}</option>{% endfor %}
+  </select>
+  <noscript><button class="btn btn-xs">OK</button></noscript>
+</form>

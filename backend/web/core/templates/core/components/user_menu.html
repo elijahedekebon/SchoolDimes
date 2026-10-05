@@ -1,0 +1,7 @@
+{% load i18n %}<details class="menu">
+  <summary class="action-icon" aria-label="account"><span class="avatar avatar-sm">{{ request.user.full_name|default:request.user.email|first|upper }}</span></summary>
+  <div class="menu-dropdown">
+    <div class="menu-label">{{ request.user.email }}</div>
+    <form method="post" action="/logout">{% csrf_token %}<button type="submit" class="menu-item" data-testid="logout">⎋ {% translate "Sign out" %}</button></form>
+  </div>
+</details>

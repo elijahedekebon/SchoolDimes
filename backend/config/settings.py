@@ -55,12 +55,19 @@ INSTALLED_APPS = [
     # Part 4A
     "backoffice",
     "parents",
+    # Web surfaces (Django templates + HTMX; see docs/WEB_MIGRATION_PLAN.md)
+    "web.core",
+    "web.school",
+    "web.platform",
+    "web.student",
+    "web.give",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
@@ -84,6 +91,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "web.core.context_processors.app_frame",
             ],
         },
     },
@@ -120,6 +128,12 @@ LANGUAGES = [
 LOCALE_PATHS = [BASE_DIR / "locale"]
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+# WhiteNoise serves /static/ from the web container (no extra service).
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -202,7 +216,7 @@ PAYMENT_AGGREGATOR_WEBHOOK_SECRET = env(
 DEPOSIT_EXPIRY_HOURS = env.int("DEPOSIT_EXPIRY_HOURS", default=24)
 RECURRING_TOPUP_MAX_FAILURES = env.int("RECURRING_TOPUP_MAX_FAILURES", default=3)
 RECURRING_TOPUP_RUN_HOUR = env.int("RECURRING_TOPUP_RUN_HOUR", default=8)
-PUBLIC_TOPUP_BASE_URL = env("PUBLIC_TOPUP_BASE_URL", default="http://localhost:3000/give")  # Part 4A: the dashboard page
+PUBLIC_TOPUP_BASE_URL = env("PUBLIC_TOPUP_BASE_URL", default="http://localhost:8000/give")  # the /give/{token} web page
 PUBLIC_TOPUP_THROTTLE_RATE = env("PUBLIC_TOPUP_THROTTLE_RATE", default="20/min")
 
 SMS_BACKEND = env("SMS_BACKEND", default="log")
@@ -234,3 +248,19 @@ CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localho
 CORS_ALLOW_CREDENTIALS = False
 # Per-IP rate limit for credential endpoints (login, register).
 AUTH_THROTTLE_RATE = env("AUTH_THROTTLE_RATE", default="10/min")
+
+
+# ---------------------------------------------------------------------------
+# Web surfaces (Django templates + HTMX) -- sessions for staff/student pages.
+# The REST API keeps JWT; DRF does not accept the session cookie.
+# ---------------------------------------------------------------------------
+LOGIN_URL = "/login"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=False)
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+SESSION_COOKIE_AGE = env.int("SESSION_COOKIE_AGE", default=8 * 3600)
+SESSION_SAVE_EVERY_REQUEST = True  # sliding expiry: renewed on activity
+# Backend address written into device-provisioning QR codes (a LAN address
+# for phones on the school Wi-Fi). Blank = the address the admin browses on.
+DEVICE_API_BASE_URL = env("DEVICE_API_BASE_URL", default="")

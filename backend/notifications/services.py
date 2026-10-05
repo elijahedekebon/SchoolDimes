@@ -114,3 +114,39 @@ def notify_school_admins(school_id, event_type: str, payload: dict):
     ):
         events += notify(admin, event_type, payload)
     return events
+
+
+# ---------------------------------------------------------------------------
+# In-app inbox (shared by the API's NotificationViewSet and the web bell)
+# ---------------------------------------------------------------------------
+
+def inbox(user, params=None):
+    """The caller's in-app notifications. ?unread=true, ?event_type=."""
+    params = params or {}
+    qs = NotificationEvent.objects.filter(user=user, channel=NotificationEvent.Channel.IN_APP)
+    if params.get("unread") == "true":
+        qs = qs.filter(read_at__isnull=True)
+    if params.get("event_type"):
+        qs = qs.filter(event_type=params["event_type"])
+    return qs
+
+
+def unread_count(user) -> int:
+    return NotificationEvent.objects.filter(
+        user=user, channel=NotificationEvent.Channel.IN_APP, read_at__isnull=True
+    ).count()
+
+
+def mark_read(event):
+    from django.utils import timezone
+
+    if event.read_at is None:
+        event.read_at = timezone.now()
+        event.save(update_fields=["read_at"])
+    return event
+
+
+def mark_all_read(user, params=None) -> int:
+    from django.utils import timezone
+
+    return inbox(user, params).filter(read_at__isnull=True).update(read_at=timezone.now())
