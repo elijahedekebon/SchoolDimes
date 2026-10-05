@@ -1,0 +1,25 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### My data (JSON)
+GET {{base}}/privacy/my-data/
+Authorization: Bearer {{token}}
+
+### My data (CSV download)
+GET {{base}}/privacy/my-data/?format=csv
+Authorization: Bearer {{token}}
+
+### Data request (export | correction | deletion; subject self | student)
+POST {{base}}/privacy/data-requests/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "request_type": "correction", "subject": "student", "student": {{student}}, "details": "Date of birth is wrong" }
+
+### My requests and their status
+GET {{base}}/privacy/data-requests/
+Authorization: Bearer {{token}}

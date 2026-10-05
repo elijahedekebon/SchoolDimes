@@ -1,0 +1,35 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### List schedules
+GET {{base}}/payments/recurring-topups/
+Authorization: Bearer {{token}}
+
+### Create a weekly top-up (Mondays)
+POST {{base}}/payments/recurring-topups/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "student": {{student}}, "amount": "4000", "channel": "momo", "payer_phone": "0772000111", "frequency": "weekly", "day_of_week": 0, "active": true }
+
+### Pause
+PATCH {{base}}/payments/recurring-topups/1/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "active": false }
+
+### Resume / re-activate an auto-paused one (resets consecutive_failures)
+PATCH {{base}}/payments/recurring-topups/1/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "active": true }
+
+### Cancel
+DELETE {{base}}/payments/recurring-topups/1/
+Authorization: Bearer {{token}}

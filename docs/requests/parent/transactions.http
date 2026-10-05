@@ -1,0 +1,18 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### Itemized history (filters: wallet, entry_type, direction, from, to)
+GET {{base}}/students/{{student}}/transactions/?wallet=main&page_size=20
+Authorization: Bearer {{token}}
+
+### Only purchases in a date range
+GET {{base}}/students/{{student}}/transactions/?entry_type=pos_purchase&from=2026-10-01&to=2026-10-31
+Authorization: Bearer {{token}}
+
+### Spending summary for the child
+GET {{base}}/analytics/students/{{student}}/spending/
+Authorization: Bearer {{token}}

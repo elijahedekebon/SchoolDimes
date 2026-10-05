@@ -1,0 +1,28 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### Funds at my children's schools
+GET {{base}}/pooled-funds/?status=open
+Authorization: Bearer {{token}}
+
+### Detail with the transparent contribution log
+GET {{base}}/pooled-funds/1/
+Authorization: Bearer {{token}}
+
+### Contribute (a normal collection; poll the returned deposit)
+POST {{base}}/pooled-funds/1/contribute/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "amount": "5000", "channel": "momo", "payer_phone": "0772000111", "idempotency_key": "fund-0001" }
+
+### Create a fund (parents may)
+POST {{base}}/pooled-funds/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "title": "P4 class party", "purpose": "Snacks and decorations", "group_label": "P4", "target_amount": "50000" }

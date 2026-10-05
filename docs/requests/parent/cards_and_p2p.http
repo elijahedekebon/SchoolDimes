@@ -1,0 +1,33 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### The child's cards
+GET {{base}}/cards/?student={{student}}
+Authorization: Bearer {{token}}
+
+### Freeze (immediate; POS refuses it after its next cache refresh)
+POST {{base}}/cards/{{card}}/freeze/
+Authorization: Bearer {{token}}
+
+### Unfreeze
+POST {{base}}/cards/{{card}}/unfreeze/
+Authorization: Bearer {{token}}
+
+### Report lost (permanent; the school issues a replacement)
+POST {{base}}/cards/{{card}}/report-lost/
+Authorization: Bearer {{token}}
+
+### P2P history (oversight)
+GET {{base}}/students/{{student}}/p2p-history/
+Authorization: Bearer {{token}}
+
+### Send to a classmate on the child's behalf (guardian of the sender)
+POST {{base}}/wallets/transfer/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "sender_student": {{student}}, "recipient_student": 3, "amount": "500", "note": "lunch" }

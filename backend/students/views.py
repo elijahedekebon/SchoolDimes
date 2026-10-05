@@ -160,6 +160,42 @@ class StudentViewSet(viewsets.ModelViewSet):
         return paginator.get_paginated_response(AttendanceRecordSerializer(page, many=True).data)
 
 
+    # ---- Part 4A: parent-app reads ---------------------------------------
+
+    @action(detail=True, methods=["get"], url_path="transactions")
+    def transactions(self, request, pk=None):
+        """GET /students/{id}/transactions/ -- guardians and that school's
+        school_admin. Itemized ledger history (see students.history)."""
+        from core.pagination import StandardResultsSetPagination
+
+        from .history import history_queryset, serialize_history
+
+        student = self._student_for_family_or_admin()
+        paginator = StandardResultsSetPagination()
+        page = paginator.paginate_queryset(history_queryset(student, request.query_params), request, view=self)
+        return paginator.get_paginated_response(serialize_history(page))
+
+    @action(detail=True, methods=["get"], url_path="spending-controls")
+    def spending_controls(self, request, pk=None):
+        """GET /students/{id}/spending-controls/ -- the school's limits, the
+        student's override (if any) and the effective result in one call."""
+        from policies.models import Policy
+        from policies.serializers import PolicySerializer
+        from policies.services import get_effective_policy, get_school_policy
+
+        from .access import is_guardian
+
+        student = self._student_for_family_or_admin()
+        override = Policy.objects.filter(student=student).first()
+        return Response({
+            "student": student.pk,
+            "school_default": PolicySerializer(get_school_policy(student.school_id)).data,
+            "override": PolicySerializer(override).data if override else None,
+            "effective": get_effective_policy(student).to_dict(),
+            "can_edit_override": is_guardian(request.user, student) or self.request.user.role == "school_admin",
+            "rule": "parents_can_only_tighten",
+        })
+
     # ---- Part 4A: student portal login ---------------------------------
 
     @action(detail=True, methods=["get", "post", "delete"], url_path="portal-account")

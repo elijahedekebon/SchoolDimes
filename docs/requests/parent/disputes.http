@@ -1,0 +1,21 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### Raise a dispute — body = the transaction row's "dispute_target" + reason
+POST {{base}}/disputes/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "pos_transaction": 1, "reason_category": "wrong_amount", "description": "Only bought one chapati" }
+
+### Track my disputes
+GET {{base}}/disputes/
+Authorization: Bearer {{token}}
+
+###
+GET {{base}}/disputes/1/
+Authorization: Bearer {{token}}

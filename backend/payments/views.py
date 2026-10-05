@@ -18,8 +18,9 @@ from wallets.services import get_student_wallet
 
 from . import services
 from .aggregator_client import get_aggregator_client
-from .models import Deposit, GiftVoucher, RecurringTopUp, StudentTopUpLink
+from .models import Deposit, GiftVoucher, Payout, RecurringTopUp, StudentTopUpLink
 from .serializers import (
+    PayoutSerializer,
     DepositCreateSerializer,
     DepositSerializer,
     GiftVoucherCreateSerializer,
@@ -78,6 +79,9 @@ class DepositViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
             qs = qs.filter(status=params["status"])
         if params.get("purpose"):
             qs = qs.filter(purpose=params["purpose"])
+        # Part 4A: ?from_contributor=true -> money sent by relatives via top-up links
+        if params.get("from_contributor") in ("true", "false"):
+            qs = qs.filter(contributor__isnull=params["from_contributor"] == "false")
         return qs
 
     def create(self, request):
@@ -293,3 +297,33 @@ class PublicGiftVoucherView(_PublicView):
             sender_contributor=contributor,
         )
         return Response(PublicGiftVoucherOutSerializer(voucher).data, status=201 if created else 200)
+
+
+
+class PayoutViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """Part 4A: GET /payments/payouts/, GET /payments/payouts/{id}/ -- payout
+    status (savings withdrawals, pooled-fund payouts). Parents: payouts from
+    their linked students' wallets or that they requested; school_admin: their
+    school; platform_admin: all (?school=). ?status=, ?purpose=, ?student=."""
+
+    serializer_class = PayoutSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Payout.objects.select_related("source_wallet").order_by("-created_at")
+        p = self.request.query_params
+        if is_platform_admin(user):
+            qs = qs.filter(school_id=p["school"]) if p.get("school") else qs
+        elif user.role == User.Role.PARENT:
+            qs = qs.filter(Q(source_wallet__student__guardian_links__parent=user) | Q(requested_by=user)).distinct()
+        elif user.role == User.Role.SCHOOL_ADMIN:
+            qs = qs.filter(school_id=user.school_id)
+        else:
+            qs = qs.none()
+        for f in ("status", "purpose"):
+            if p.get(f):
+                qs = qs.filter(**{f: p[f]})
+        if p.get("student"):
+            qs = qs.filter(source_wallet__student_id=p["student"])
+        return qs

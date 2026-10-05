@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "analytics",
     # Part 4A
     "backoffice",
+    "parents",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

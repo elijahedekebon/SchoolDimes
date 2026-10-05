@@ -1,0 +1,32 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### Send a gift voucher with a message
+POST {{base}}/payments/gift-vouchers/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "student": {{student}}, "amount": "2500", "message": "Well done on your exams!", "channel": "momo", "payer_phone": "0772000111", "idempotency_key": "gift-0001" }
+
+### Gift vouchers sent / received
+GET {{base}}/payments/gift-vouchers/
+Authorization: Bearer {{token}}
+
+### Create a top-up link for relatives; share "share_url" as-is (WhatsApp, SMS…)
+POST {{base}}/payments/topup-links/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "student": {{student}} }
+
+### My links
+GET {{base}}/payments/topup-links/
+Authorization: Bearer {{token}}
+
+### Revoke a link
+POST {{base}}/payments/topup-links/1/revoke/
+Authorization: Bearer {{token}}

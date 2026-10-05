@@ -1,0 +1,22 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### Multi-child dashboard (one call)
+GET {{base}}/parent/dashboard/
+Authorization: Bearer {{token}}
+
+### A child's profile
+GET {{base}}/students/{{student}}/
+Authorization: Bearer {{token}}
+
+### Financial literacy tips in my language
+GET {{base}}/financial-literacy-tips/?language=en
+Authorization: Bearer {{token}}
+
+### Schools of my children (name, branding)
+GET {{base}}/my-school/
+Authorization: Bearer {{token}}

@@ -15,6 +15,7 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     GuardianVerificationReviewSerializer,
     GuardianVerificationSerializer,
+    RegisterSerializer,
     SetPasswordSerializer,
     StaffUserSerializer,
     UserLookupSerializer,
@@ -217,3 +218,27 @@ class StaffUserViewSet(viewsets.ModelViewSet):
         user.save(update_fields=["password"])
         audit(request.user, "user.set_password", user, school_id=user.school_id, force=True)
         return Response({"detail": _("Password updated.")})
+
+
+class RegisterView(APIView):
+    """Part 4A: POST /api/v1/auth/register -- public, throttled. Creates a
+    **parent** account (the only self-service role) and logs it in.
+    Children are linked by their school (POST /guardians/)."""
+
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+    throttle_classes = [AuthThrottle]
+
+    def post(self, request):
+        s = RegisterSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        d = s.validated_data
+        user = User.objects.create_user(
+            email=d["email"], password=d["password"], role=User.Role.PARENT, full_name=d["full_name"],
+            phone_number=d.get("phone_number", ""), preferred_language=d.get("preferred_language", "en"),
+        )
+        refresh = CustomTokenObtainPairSerializer.get_token(user)
+        return Response(
+            {"user": UserSerializer(user).data, "access": str(refresh.access_token), "refresh": str(refresh)},
+            status=status.HTTP_201_CREATED,
+        )

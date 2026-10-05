@@ -1,0 +1,53 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### Register a new parent (public, throttled)
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "email": "new.parent@example.com", "password": "a-long-pass-123", "full_name": "New Parent", "phone_number": "0772000123", "preferred_language": "en" }
+
+### Log in as the seeded parent -> copy "access" into @token
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "parent1@schooldimes.test", "password": "pw123456" }
+
+### Refresh (refresh tokens rotate: store the new one)
+POST {{base}}/auth/refresh
+Content-Type: application/json
+
+{ "refresh": "paste-refresh-token" }
+
+### Log out (blacklists the refresh token)
+POST {{base}}/auth/logout
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "refresh": "paste-refresh-token" }
+
+### Profile
+GET {{base}}/me
+Authorization: Bearer {{token}}
+
+### Update profile / language
+PATCH {{base}}/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "full_name": "Moses Parent", "phone_number": "0772000111", "preferred_language": "sw" }
+
+### KYC-lite: submit
+POST {{base}}/guardian-verifications/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "full_name": "Moses Okello", "id_document_type": "national_id", "id_number": "CM12345678XYZ" }
+
+### KYC-lite: status
+GET {{base}}/guardian-verifications/
+Authorization: Bearer {{token}}

@@ -95,3 +95,24 @@ class StaffUserSerializer(serializers.ModelSerializer):
 
 class SetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(min_length=8, write_only=True)
+
+
+class RegisterSerializer(serializers.Serializer):
+    """Part 4A: parent self-registration."""
+
+    email = serializers.EmailField()
+    password = serializers.CharField(min_length=8, write_only=True)
+    full_name = serializers.CharField(max_length=255)
+    phone_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    preferred_language = serializers.ChoiceField(choices=["en", "lg", "sw"], required=False)
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value.lower()
+
+    def validate_password(self, value):
+        from django.contrib.auth.password_validation import validate_password
+
+        validate_password(value)
+        return value

@@ -1509,3 +1509,78 @@ The page calls the Part 2 public endpoints **directly from the browser**
 (`/public/topup-links/{token}/`, `…/deposits/`, `…/deposits/{reference}/`,
 `…/gift-vouchers/`), so the backend's per-IP throttle sees each contributor's
 own IP. The dashboard origin must be in `CORS_ALLOWED_ORIGINS`.
+
+### Section J additions — parent-app readiness
+See `docs/PARENT_APP_READINESS.md` for every parent-app screen → endpoint.
+
+#### `POST /api/v1/auth/register`
+**Public**, throttled (`AUTH_THROTTLE_RATE`). Creates a **parent** account (the
+only self-service role; a `role` in the body is ignored) and logs it in.
+```json
+{ "email": "mum@example.com", "password": "≥ 8 chars, Django validators",
+  "full_name": "Grace N.", "phone_number": "0772…", "preferred_language": "lg" }
+```
+`201 { "user": {…/me shape…}, "access": "…", "refresh": "…" }`. Email is stored
+lower-cased; taken email or weak password → `400` field errors. Children are
+linked by the school (`POST /guardians/`), after which they appear in the
+dashboard.
+
+#### `GET /api/v1/parent/dashboard/`
+JWT, **parent** only (`403` otherwise). Everything the home screen needs in
+one call: only the caller's own linked students.
+```json
+{ "user": { "id": 3, "email": "…", "full_name": "…", "phone_number": "…", "preferred_language": "en" },
+  "verification_status": "verified" | "pending" | "rejected" | null,
+  "unread_notifications": 2,
+  "students": [ {
+    "id": 1, "name": "Amina Nakato", "first_name": "Amina", "class_name": "P4", "photo_url": null,
+    "school": { "id": 1, "name": "…", "branding": {…} },
+    "relationship": "mother", "is_primary_contact": true,
+    "main_wallet": { "id": 1, "balance": "25300.00" },
+    "savings_wallet": { "id": 2, "balance": "2000.00", "withdrawal_window_start": null,
+                        "withdrawal_window_end": null, "withdrawal_window_open": false },
+    "savings_goals": [ {SavingsGoal with current_amount, progress_percent, is_reached} ],
+    "card": { "id": 3, "card_uid": "…", "status": "active", "updated_at": "…" } | null,
+    "low_balance_threshold": "2000.00", "is_low_balance": false,
+    "recent_transactions": [ {transaction row, see below — the 5 newest} ] } ],
+  "tip": { "id": 1, "title": "…", "body": "…", "language": "en", "target_age_range": "" } | null }
+```
+`card` is the newest non-lost card (else the newest). `low_balance_threshold`
+is the parent's own per-child setting, else the effective policy's.
+
+#### `GET /api/v1/students/{id}/transactions/`
+JWT, **guardians of the student and that school's school_admin** (others
+`404`). Paginated, newest first. Filters: `?wallet=main|savings`,
+`?entry_type=pos_purchase,deposit` (comma list), `?direction=credit|debit`,
+`?from=&to=` (inclusive Kampala days). Each row:
+```json
+{ "id": 812, "wallet": 1, "wallet_type": "main", "direction": "debit", "amount": "1500.00",
+  "entry_type": "pos_purchase", "reference_id": "pos:88", "description": "…", "created_at": "…",
+  "pos": { "transaction_id": 88, "device_name": "Canteen till 1", "merchant_id": null, "merchant_name": null,
+           "sale_time": "…", "sync_status": "applied", "flags": [], "amount": "1500.00",
+           "items": [ { "product": 5, "description": "Chapati", "category": 1, "quantity": 3,
+                        "unit_price": "500.00", "line_total": "1500.00" } ] } | null,
+  "dispute_target": { "pos_transaction": 88 } | { "ledger_entry": 812 } | null,
+  "open_dispute": 4 | null }
+```
+`dispute_target` is exactly the body field to send to `POST /disputes/`
+(`null` = not disputable: credits, P2P, savings moves…). `open_dispute` is
+set while a dispute on it is open or under review.
+
+#### `GET /api/v1/students/{id}/spending-controls/`
+JWT, guardians and that school's school_admin. The school's limits next to
+the child's override, plus the result:
+`{ student, school_default: {Policy}, override: {Policy} | null, effective: {effective-policy shape},
+can_edit_override, rule: "parents_can_only_tighten" }`. Edit the override with
+`POST /policies/` (`student`) or `PATCH /policies/{override id}/`; loosening →
+`400 policy_cannot_loosen`.
+
+#### `GET /api/v1/payments/payouts/`, `GET /api/v1/payments/payouts/{id}/`
+JWT. Payout status for savings withdrawals (and pooled-fund payouts). Parents:
+payouts from their linked students' wallets or that they requested;
+school_admin: their school; platform_admin: all (`?school=`). Filters
+`?status=pending|succeeded|failed`, `?purpose=`, `?student=`. Section C Payout shape.
+
+#### `GET /api/v1/payments/deposits/` (extended)
+`?from_contributor=true` → only money sent by relatives through top-up links
+(the "contributions received" list); `false` → only the family's own.

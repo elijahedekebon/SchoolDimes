@@ -25,6 +25,7 @@ urlpatterns = [
     path("api/v1/", include("analytics.urls")),
     # Part 4A
     path("api/v1/", include("backoffice.urls")),
+    path("api/v1/", include("parents.urls")),
 ]
 
 if settings.DEBUG:

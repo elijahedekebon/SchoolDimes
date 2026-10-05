@@ -1,0 +1,40 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### Inbox (?unread=true) — response includes unread_count
+GET {{base}}/notifications/?unread=true
+Authorization: Bearer {{token}}
+
+### Mark one read
+POST {{base}}/notifications/1/read/
+Authorization: Bearer {{token}}
+
+### Mark all read
+POST {{base}}/notifications/read-all/
+Authorization: Bearer {{token}}
+
+### Preferences
+GET {{base}}/notifications/preferences/
+Authorization: Bearer {{token}}
+
+###
+PATCH {{base}}/notifications/preferences/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "sms_enabled": false, "push_enabled": true, "low_balance_thresholds": { "{{student}}": "2500.00" } }
+
+### Register a push token (upsert)
+POST {{base}}/notifications/push-tokens/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "token": "fcm-device-token-from-firebase", "platform": "android" }
+
+### Delete it on logout
+DELETE {{base}}/notifications/push-tokens/fcm-device-token-from-firebase/
+Authorization: Bearer {{token}}

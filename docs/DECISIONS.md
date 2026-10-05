@@ -910,3 +910,25 @@ No backend changes: every page uses the Part 2 endpoints as documented.
 - Status is polled every 3 s for up to ~3 minutes; after that the page says
   it's safe to close (money is only credited on the aggregator's
   confirmation).
+
+### Section J — parent-app readiness
+- **Registration is parent-only.** `POST /auth/register` ignores any `role`;
+  staff accounts come from admins (`/users/`) and student logins from the
+  school. Throttled like login; Django's password validators apply.
+- **One dashboard call** (`/parent/dashboard/`): the home screen previously
+  needed per child 6+ calls (wallets, goals, cards, policy, history,
+  notifications). On slow mobile data that's the difference between a usable
+  and an unusable app. A fixed number of queries per child; recent history
+  is capped at 5.
+- **History rows carry their dispute target.** The app sends a row's
+  `dispute_target` straight to `POST /disputes/`, so it never has to know
+  which entry types are disputed by POS transaction vs ledger entry.
+  `open_dispute` prevents a second dispute on the same sale in the UI (the
+  DB constraint remains the authority).
+- **Spending controls** returns the school default next to the override, so
+  the app can show "school limit: 5,000 · your limit: 3,000" and grey out
+  loosening. The backend still rejects loosening (`policy_cannot_loosen`).
+- **KYC-lite** is shown but not enforced: nothing in Parts 1–2 restricts an
+  unverified parent, and inventing restrictions in the app was ruled out.
+- `docs/PARENT_APP_READINESS.md` maps every 4B screen to its endpoints;
+  `docs/requests/parent/` has a runnable file per area.

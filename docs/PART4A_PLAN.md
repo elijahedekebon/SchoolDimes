@@ -91,7 +91,7 @@ docs updated → commit `Part 4A – Section X: ...`.
 - `/give/[token]` public page (link info, deposit or gift voucher, instructions, status polling)
 - `PUBLIC_TOPUP_BASE_URL` default → dashboard; security model confirmed in DECISIONS.md
 
-### [ ] J. Parent-app backend readiness
+### [x] J. Parent-app backend readiness
 - `POST /auth/register`, `GET /parent/dashboard/`, `GET /students/{id}/transactions/`, `GET /payments/payouts/`
 - `docs/PARENT_APP_READINESS.md`, `docs/requests/parent/*.http`
 - Tests for every new endpoint incl. tenant isolation

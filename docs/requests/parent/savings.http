@@ -1,0 +1,49 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### Move main -> savings
+POST {{base}}/wallets/{{main}}/savings/move-in/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "amount": "1000" }
+
+### Move savings -> main
+POST {{base}}/wallets/{{main}}/savings/move-out/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "amount": "500" }
+
+### Goals
+GET {{base}}/savings-goals/?student={{student}}
+Authorization: Bearer {{token}}
+
+###
+POST {{base}}/savings-goals/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "wallet": {{savings}}, "goal_name": "Football boots", "target_amount": "60000", "target_date": "2026-12-15" }
+
+### Withdrawal window (guardians set it; both null = closed)
+PUT {{base}}/wallets/{{savings}}/savings/withdrawal-window/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "withdrawal_window_start": "2026-12-01T00:00:00Z", "withdrawal_window_end": "2027-01-31T00:00:00Z" }
+
+### Request a withdrawal (window must be open)
+POST {{base}}/wallets/{{savings}}/savings/withdraw/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "amount": "1000", "phone_number": "0772000111", "idempotency_key": "withdraw-0001" }
+
+### Payout status
+GET {{base}}/payments/payouts/?student={{student}}
+Authorization: Bearer {{token}}

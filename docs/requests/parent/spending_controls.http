@@ -1,0 +1,36 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### School limits + my override + effective result
+GET {{base}}/students/{{student}}/spending-controls/
+Authorization: Bearer {{token}}
+
+### Product catalogue (to choose blocked items / categories)
+GET {{base}}/product-categories/
+Authorization: Bearer {{token}}
+
+###
+GET {{base}}/products/?page_size=100
+Authorization: Bearer {{token}}
+
+### Merchants I can block
+GET {{base}}/merchants/
+Authorization: Bearer {{token}}
+
+### Create an override (tighten only; loosening -> 400 policy_cannot_loosen)
+POST {{base}}/policies/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "student": {{student}}, "daily_spend_cap": "3000", "blocked_categories": [], "blocked_items": [], "blocked_merchants": [], "p2p_enabled": false }
+
+### Change it (use the override's id from spending-controls)
+PATCH {{base}}/policies/4/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "daily_spend_cap": "2500" }

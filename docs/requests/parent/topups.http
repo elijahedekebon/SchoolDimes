@@ -1,0 +1,26 @@
+@base = http://localhost:8000/api/v1
+@token = paste-parent-access-token
+@student = 1
+@main = 1
+@savings = 2
+@card = 1
+
+### Start a top-up (idempotent: reuse the key on retry)
+POST {{base}}/payments/deposits/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "wallet": {{main}}, "amount": "5000", "channel": "momo", "payer_phone": "0772000111", "idempotency_key": "11111111-2222-3333-4444-555555555555" }
+
+### Poll its status (pending -> confirmed / failed / expired)
+# confirm in mock mode: docker compose exec web python manage.py mock_webhook <reference>
+GET {{base}}/payments/deposits/1/
+Authorization: Bearer {{token}}
+
+### Deposit history for one child
+GET {{base}}/payments/deposits/?student={{student}}
+Authorization: Bearer {{token}}
+
+### Money received from relatives (top-up links)
+GET {{base}}/payments/deposits/?from_contributor=true
+Authorization: Bearer {{token}}

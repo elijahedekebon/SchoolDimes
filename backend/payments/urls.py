@@ -9,6 +9,7 @@ router.register(r"payments/deposits", views.DepositViewSet, basename="deposit")
 router.register(r"payments/topup-links", views.TopUpLinkViewSet, basename="topuplink")
 router.register(r"payments/gift-vouchers", views.GiftVoucherViewSet, basename="giftvoucher")
 router.register(r"payments/recurring-topups", views.RecurringTopUpViewSet, basename="recurringtopup")
+router.register(r"payments/payouts", views.PayoutViewSet, basename="payout")  # Part 4A
 
 urlpatterns = [
     re_path(r"^payments/webhook/?$", views.PaymentWebhookView.as_view(), name="payment-webhook"),
