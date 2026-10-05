@@ -833,3 +833,21 @@ past one page of students.
   `PATCH /policies/{id}/` and `PATCH /school-settings/`. Overrides show who
   set them (`updated_by_role`), so admins can see which limits came from
   parents.
+
+### Section F — fees, attendance, pooled funds, disputes, P2P alerts, privacy, tips, payment issues
+No backend changes: every page uses the Part 2 endpoints as documented.
+- **Daily attendance register** is built in the browser from
+  `/students/?class_name=` plus `/attendance/?date=` (all pages). Present = at
+  least one `in` tap that Kampala day. A server-side register endpoint isn't
+  needed at current school sizes; revisit if classes grow past a few hundred.
+- **Refund limits are shown and enforced in the UI** (remaining =
+  `original_amount − refunded_total`, in integer cents), but the backend's
+  locked check (`422 refund_exceeds_original`) remains the authority.
+- **Deletion requests** show the retention notice before an admin completes
+  one, because completing is irreversible.
+- **Payment issues** for a school are failed, expired or still-pending
+  collections (`/payments/deposits/?status=`). Unknown webhook references
+  aren't tied to a school, so they live in the platform back-office (Section G).
+- Fee payments, pooled-fund disbursements and other money-moving forms carry
+  a client-generated idempotency key that's only renewed after success, so a
+  double click or retry can't pay twice.

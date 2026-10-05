@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { expectRendered, login, PARENT, SCHOOL_ADMIN } from "./helpers";
 
-const SCHOOL_PAGES = ["/school", "/school/sales", "/school/reconciliation", "/school/shortfalls", "/school/analytics", "/school/students", "/school/students/1", "/school/guardians", "/school/cards", "/school/devices", "/school/merchants", "/school/products", "/school/policy", "/school/staff"];
+const SCHOOL_PAGES = ["/school", "/school/sales", "/school/reconciliation", "/school/shortfalls", "/school/analytics", "/school/students", "/school/students/1", "/school/guardians", "/school/cards", "/school/devices", "/school/merchants", "/school/products", "/school/policy", "/school/staff", "/school/fees", "/school/attendance", "/school/pooled-funds", "/school/disputes", "/school/p2p-alerts", "/school/privacy", "/school/tips", "/school/payment-issues"];
 
 test("parents are refused at login", async ({ page }) => {
   await login(page, PARENT);

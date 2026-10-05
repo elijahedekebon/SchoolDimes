@@ -74,7 +74,7 @@ docs updated → commit `Part 4A – Section X: ...`.
 - `/school/policy` (school default, school settings, overrides list)
 - Backend: `GET/POST /users/` (school_admin creates staff in own school; lists own school's staff) so merchant_staff can be created and linked
 
-### [ ] F. Fees, attendance, pooled funds, disputes, P2P alerts, privacy, tips, payment issues
+### [x] F. Fees, attendance, pooled funds, disputes, P2P alerts, privacy, tips, payment issues
 - `/school/fees`, `/school/attendance`, `/school/pooled-funds`, `/school/disputes`, `/school/p2p-alerts`, `/school/privacy`, `/school/tips`, `/school/payment-issues` (`payments/deposits?status=failed|expired`)
 
 ### [ ] G. Platform back-office
