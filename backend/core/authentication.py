@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 import re
 
 from rest_framework.exceptions import PermissionDenied
@@ -19,5 +20,5 @@ class SchoolDimesJWTAuthentication(JWTAuthentication):
         if result is not None:
             user, _token = result
             if getattr(user, "role", None) == "student" and not STUDENT_ALLOWED_PATHS.match(request.path):
-                raise PermissionDenied("Student portal accounts can only use the student portal.")
+                raise PermissionDenied(_("Student portal accounts can only use the student portal."))
         return result

@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from students.models import Student
@@ -36,12 +37,12 @@ class CardUidField(serializers.CharField):
         try:
             return normalize_card_uid(value)
         except ValueError as exc:
-            raise serializers.ValidationError(str(exc))
+            raise serializers.ValidationError(_("card_uid must be 4-32 bytes of hex, e.g. 04:A2:2B:7C:91:3E:80")) from exc
 
 
 def _uid_unused(value):
     if value and Card.objects.filter(card_uid=value).exists():
-        raise serializers.ValidationError("A card with this card_uid already exists.", code="card_uid_taken")
+        raise serializers.ValidationError(_("A card with this card_uid already exists."), code="card_uid_taken")
     return value
 
 

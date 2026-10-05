@@ -240,7 +240,8 @@
     "card_frozen": "Frozen card",
     "card_lost": "Only lost cards",
     "card_none": "No card",
-    "lowBalance": "Low balance only"
+    "lowBalance": "Low balance only",
+    "classRequired": "Class is required"
   },
   "student": {
     "born": "born",

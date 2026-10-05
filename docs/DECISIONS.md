@@ -932,3 +932,8 @@ No backend changes: every page uses the Part 2 endpoints as documented.
   unverified parent, and inventing restrictions in the app was ruled out.
 - `docs/PARENT_APP_READINESS.md` maps every 4B screen to its endpoints;
   `docs/requests/parent/` has a runnable file per area.
+
+### Part 4A — local testing note
+`backend/.env` (not committed) sets `AUTH_THROTTLE_RATE=100/min` on the dev
+machine because the Playwright suite signs in many times a minute. The
+default stays `10/min`.

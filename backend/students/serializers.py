@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from .models import Guardian, Student
@@ -52,5 +53,5 @@ class GuardianSerializer(serializers.ModelSerializer):
         # Part 4A: only parent accounts can be linked as guardians.
         parent = attrs.get("parent") or getattr(self.instance, "parent", None)
         if parent is not None and parent.role != "parent":
-            raise serializers.ValidationError({"parent": ["Only parent accounts can be linked as guardians."]})
+            raise serializers.ValidationError({"parent": [_("Only parent accounts can be linked as guardians.")]})
         return attrs

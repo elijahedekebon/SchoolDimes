@@ -24,7 +24,10 @@ export function StudentFormButton({ student, onDone }: { student?: Student; onDo
       class_name: student?.class_name ?? "",
       date_of_birth: student?.date_of_birth ?? "",
     },
-    validate: { name: (v) => (v.trim() ? null : t("nameRequired")) },
+    validate: {
+      name: (v) => (v.trim() ? null : t("nameRequired")),
+      class_name: (v) => (v.trim() ? null : t("classRequired")),
+    },
   });
   const submit = form.onSubmit(async (v) => {
     setBusy(true);
@@ -51,7 +54,7 @@ export function StudentFormButton({ student, onDone }: { student?: Student; onDo
         <form onSubmit={submit}>
           <Stack>
             <TextInput label={t("name")} required {...form.getInputProps("name")} />
-            <TextInput label={t("className")} placeholder="P4" {...form.getInputProps("class_name")} />
+            <TextInput label={t("className")} placeholder="P4" required {...form.getInputProps("class_name")} />
             <TextInput label={t("dob")} type="date" {...form.getInputProps("date_of_birth")} />
             <ErrorAlert error={error} />
             <Group justify="flex-end">

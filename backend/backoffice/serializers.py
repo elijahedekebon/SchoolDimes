@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from decimal import Decimal
 
 from rest_framework import serializers
@@ -50,7 +51,7 @@ class OnboardSerializer(serializers.Serializer):
         from accounts.models import User
 
         if User.objects.filter(email__iexact=value["email"]).exists():
-            raise serializers.ValidationError({"email": ["An account with this email already exists."]})
+            raise serializers.ValidationError({"email": [_("An account with this email already exists.")]})
         return value
 
 
