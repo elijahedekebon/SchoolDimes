@@ -1323,3 +1323,7 @@ headers and theming (`/schools/` stays platform-only).
 Staff and students: `school` is their school, `schools` = `[school]`.
 Parents: `school: null`, `schools` = the schools of their linked children.
 platform_admin: `{"school": null, "schools": []}`.
+
+### Section B additions
+- `GET /api/v1/privacy/data-requests/` gains `?status=pending|in_progress|completed|rejected`
+  and `?request_type=export|correction|deletion` filters (same scoping).

@@ -101,7 +101,7 @@ const STATUS_COLORS: Record<string, string> = {
 export function StatusBadge({ status }: { status: string | null | undefined }) {
   if (!status) return <Text span c="dimmed">—</Text>;
   return (
-    <Badge color={STATUS_COLORS[status] ?? "gray"} variant="light">
+    <Badge color={STATUS_COLORS[status] ?? "gray"} variant="light" styles={{ root: { overflow: "visible" }, label: { overflow: "visible" } }}>
       {status.replace(/_/g, " ")}
     </Badge>
   );
@@ -147,7 +147,7 @@ export function DataTable<T extends { id?: number | string }>({
   return (
     <Stack gap="sm" data-testid={testId}>
       <ScrollArea>
-        <Table striped highlightOnHover={!!onRowClick} verticalSpacing="xs" miw={600}>
+        <Table striped highlightOnHover={!!onRowClick} verticalSpacing="xs" miw={columns.length > 4 ? columns.length * 110 : undefined}>
           <Table.Thead>
             <Table.Tr>
               {columns.map((c) => (

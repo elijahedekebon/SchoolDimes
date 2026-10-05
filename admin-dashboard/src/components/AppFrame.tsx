@@ -74,7 +74,7 @@ export function AppFrame({ nav, area, children }: { nav: NavItem[]; area: "schoo
           {nav.map((item) => {
             const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
             return (
-              <NavLink key={item.href} component={Link} href={item.href} label={t(item.key)} active={active} onClick={close} />
+              <NavLink key={item.href} component={Link} href={item.href} label={t(item.key)} active={active} onClick={close} variant="filled" />
             );
           })}
         </ScrollArea>

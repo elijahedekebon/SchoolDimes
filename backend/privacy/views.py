@@ -71,6 +71,10 @@ class DataRequestViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
     def get_queryset(self):
         user = self.request.user
         qs = DataRequest.objects.all()
+        # Part 4A: ?status= / ?request_type= filters for the admin queue.
+        for f in ("status", "request_type"):
+            if self.request.query_params.get(f):
+                qs = qs.filter(**{f: self.request.query_params[f]})
         if is_platform_admin(user):
             return qs
         if is_school_admin(user):

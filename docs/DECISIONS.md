@@ -769,3 +769,14 @@ no `parseFloat` on money. Day pickers and "today" use Africa/Kampala.
   the dashboard and parent app expose a password form to the internet.
 - `GET /my-school/`: staff couldn't read their own school's name/branding
   (`/schools/` is platform-only and also exposes policy JSON).
+
+### Section B — overview, sales, reconciliation, review queue
+- The overview is composed client-side from existing endpoints (sales
+  summary, reconciliation, and `page_size=1` counts of the review queue, open
+  disputes/P2P alerts, stale devices and pending data requests) rather than a
+  new aggregate endpoint: every number then links to the page that explains it.
+  The only backend change is a `?status=` filter on data requests.
+- Reconciliation CSV is generated in the browser from the reconciliation
+  response, so the exported figures are exactly the ones on screen.
+- Charts convert decimal strings to whole shillings only for bar heights;
+  every amount shown as text is the API's string.

@@ -13,3 +13,7 @@ Content-Type: application/json
 ### Section A — my school's name and branding
 GET {{base}}/my-school/
 Authorization: Bearer {{token}}
+
+### Section B — pending data requests (overview count)
+GET {{base}}/privacy/data-requests/?status=pending&page_size=1
+Authorization: Bearer {{token}}

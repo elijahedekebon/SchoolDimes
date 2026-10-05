@@ -51,7 +51,7 @@ docs updated → commit `Part 4A – Section X: ...`.
 - Backend: `django-cors-headers` (`CORS_ALLOWED_ORIGINS`), login throttle, `GET /my-school/`
 - Tests: route protection unit tests, proxy refresh unit test, backend `my-school` + CORS tests
 
-### [ ] B. School admin — overview, sales, reconciliation, shortfalls
+### [x] B. School admin — overview, sales, reconciliation, shortfalls
 - `/school` overview: `analytics/sales-summary`, `analytics/reconciliation`, `pos/shortfalls?page_size=1`, `disputes?status=open`, `p2p-alerts?status=open`, `pos/devices?stale=true`, `privacy/data-requests?status=pending`
 - `/school/sales`: `analytics/sales-summary`, `pos/transactions`, `pos/transactions/{id}`
 - `/school/reconciliation`: `analytics/reconciliation?date=` + CSV
