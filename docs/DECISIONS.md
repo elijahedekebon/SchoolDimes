@@ -780,3 +780,11 @@ no `parseFloat` on money. Day pickers and "today" use Africa/Kampala.
   response, so the exported figures are exactly the ones on screen.
 - Charts convert decimal strings to whole shillings only for bar heights;
   every amount shown as text is the API's string.
+
+### Section C — analytics
+Charts and tables come straight from the four Part 2 analytics endpoints; the
+page invents no numbers. What Part 2 documented as simplified is labelled on
+screen: the nutrition flag only counts sales that were sent **with line items**
+(item-less sales can't be categorised). Per-student spending is picked through
+a server-side student search (`/students/?search=`, added here) so it scales
+past one page of students.

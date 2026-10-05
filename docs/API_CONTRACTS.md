@@ -1327,3 +1327,8 @@ platform_admin: `{"school": null, "schools": []}`.
 ### Section B additions
 - `GET /api/v1/privacy/data-requests/` gains `?status=pending|in_progress|completed|rejected`
   and `?request_type=export|correction|deletion` filters (same scoping).
+
+### Section C additions
+- `GET /api/v1/students/` gains list filters: `?search=` (case-insensitive
+  match on `name` or `class_name`) and `?class_name=` (exact, case-insensitive).
+  Scoping is unchanged.

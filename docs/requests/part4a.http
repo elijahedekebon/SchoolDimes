@@ -17,3 +17,7 @@ Authorization: Bearer {{token}}
 ### Section B — pending data requests (overview count)
 GET {{base}}/privacy/data-requests/?status=pending&page_size=1
 Authorization: Bearer {{token}}
+
+### Section C — student search (used by the analytics student picker)
+GET {{base}}/students/?search=amina
+Authorization: Bearer {{token}}

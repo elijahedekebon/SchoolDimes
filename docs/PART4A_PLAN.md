@@ -57,7 +57,7 @@ docs updated → commit `Part 4A – Section X: ...`.
 - `/school/reconciliation`: `analytics/reconciliation?date=` + CSV
 - `/school/shortfalls`: `pos/shortfalls`, `pos/shortfalls/{id}/resolve`
 
-### [ ] C. School admin — analytics
+### [x] C. School admin — analytics
 - `/school/analytics`: `best-sellers`, `peak-hours`, `category-breakdown`, `students/{id}/spending`
 
 ### [ ] D. Students, guardians & cards

@@ -15,6 +15,21 @@ from .models import Guardian, Student
 from .serializers import GuardianSerializer, StudentSerializer
 
 
+def filter_students(qs, params):
+    """Part 4A list filters: ?search= (name or class, case-insensitive),
+    ?class_name= (exact), ?card_status=active|frozen|lost|none (current card),
+    ?low_balance=true (main wallet below the student's effective
+    low_balance_threshold)."""
+    from django.db.models import Q
+
+    search = (params.get("search") or "").strip()
+    if search:
+        qs = qs.filter(Q(name__icontains=search) | Q(class_name__icontains=search))
+    if params.get("class_name"):
+        qs = qs.filter(class_name__iexact=params["class_name"])
+    return qs
+
+
 class StudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     permission_classes = [permissions.IsAuthenticated, IsSameSchoolObject]
@@ -24,11 +39,15 @@ class StudentViewSet(viewsets.ModelViewSet):
         qs = Student.objects.select_related("school")
         if is_platform_admin(user):
             school_id = self.request.query_params.get("school")
-            return qs.filter(school_id=school_id) if school_id else qs
-        if user.role == User.Role.PARENT:
-            return qs.filter(guardian_links__parent=user).distinct()
-        # school_admin / canteen_staff / merchant_staff: scoped to own school
-        return qs.filter(school_id=user.school_id)
+            qs = qs.filter(school_id=school_id) if school_id else qs
+        elif user.role == User.Role.PARENT:
+            qs = qs.filter(guardian_links__parent=user).distinct()
+        else:
+            # school_admin / canteen_staff / merchant_staff: scoped to own school
+            qs = qs.filter(school_id=user.school_id)
+        if self.action == "list":
+            qs = filter_students(qs, self.request.query_params)
+        return qs
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):
