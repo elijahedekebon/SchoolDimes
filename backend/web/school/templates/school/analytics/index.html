@@ -1,0 +1,8 @@
+{% extends "school/layout.html" %}{% load i18n web static %}
+{% block head %}<script src="{% static 'web/vendor/chart.umd.min.js' %}" defer></script><script src="{% static 'web/js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+{% pageheader _("Analytics") _("Computed on request from POS line items and the ledger. Rejected sales are excluded.") %}
+  <form id="analytics-range" hx-get="{{ request.path }}" hx-target="#analytics_body" hx-swap="outerHTML" hx-include="#student-form" hx-trigger="change">{% include "core/components/date_range.html" %}</form>
+{% endpageheader %}
+{% include "school/analytics/_body.html" %}
+{% endblock %}

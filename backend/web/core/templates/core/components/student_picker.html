@@ -1,0 +1,10 @@
+{% comment %}StudentPicker: server-side search (GET /school/_picker/students?q=, 300 ms debounce).
+Picking a student fills the hidden field `name` and fires `change` (filter forms refresh).{% endcomment %}
+<div class="picker field field-xs" style="width:{{ width|default:'260px' }}">
+  <span class="label">{{ label }}{% if required %} <span class="req">*</span>{% endif %}</span>
+  <input type="hidden" name="{{ name|default:'student' }}" value="{{ value|default:'' }}">
+  <input type="search" class="input" name="q" value="{{ value_label|default:'' }}" autocomplete="off" aria-label="{{ label }}"
+    hx-get="/school/_picker/students" hx-trigger="input changed delay:300ms, focus" hx-params="q"
+    hx-target="next .picker-results" hx-swap="innerHTML">
+  <div class="picker-results"></div>
+</div>

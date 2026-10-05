@@ -178,3 +178,75 @@ class ResolveReviewView(ActionView):
         return pos_services.resolve_review(self.request.user, self.txn, s.validated_data["resolution"],
                                            s.validated_data.get("review_notes", ""))
 
+
+
+class StudentPickerView(PageView):
+    """Results for the StudentPicker (GET /students/?search=, 25 rows)."""
+
+    def get(self, request):
+        students = self.scoped("students", {"search": request.GET.get("q", "")})[:25]
+        return render(request, "core/components/student_picker_results.html", {"students": students})
+
+
+def student_label(view, student_id):
+    """'Name (Class)' for a picked student id, scoped (blank if not visible)."""
+    if not student_id:
+        return ""
+    s = view.scoped("student").filter(pk=student_id).first() if str(student_id).isdigit() else None
+    return f"{s.name} ({s.class_name or '—'})" if s else ""
+
+
+# ---------------------------------------------------------------------------
+# Section C -- analytics
+# ---------------------------------------------------------------------------
+
+TEAL_SHADES = ["#38d9a9", "#20c997", "#12b886", "#0ca678"]  # Mantine teal 4..7
+RED_5 = "#ff6b6b"
+
+
+class AnalyticsView(PageView):
+    """/school/analytics: best-sellers, peak hours, categories (nutrition flag),
+    per-student spending -- straight from the Part 2 analytics services."""
+
+    template_name = "school/analytics/index.html"
+    regions = {
+        "analytics_body": ("school/analytics/_body.html", "body"),
+        "student_spending": ("school/analytics/_student.html", "student"),
+    }
+    page_regions = ("analytics_body",)  # the body already contains student_spending
+
+    def body(self):
+        return {**self.main(), **self.student()}
+
+    def page_context(self):
+        rng = _range(self.params, 29)
+        student = self.params.get("student", "")
+        return {"range": rng, "student_id": student, "student_label": student_label(self, student)}
+
+    def main(self):
+        rng = _range(self.params, 29)
+        school_ids, _cross = analytics.school_scope(self.request.user, {})
+        day_from, day_to = analytics.date_range(rng)
+        best = analytics.best_sellers(school_ids, day_from, day_to, limit=10)
+        peak = analytics.peak_hours(school_ids, day_from, day_to)
+        cats = analytics.category_breakdown(school_ids, day_from, day_to)
+        return {
+            "best": best, "peak": peak, "cats": cats,
+            "peak_rows": [r for r in peak["results"] if r["transactions"] > 0],
+            "best_chart": {"type": "bar", "horizontal": True, "labels": [r["name"] for r in best["results"]],
+                           "values": [r["quantity"] for r in best["results"]], "label": str(_("Quantity"))},
+            "peak_chart": {"type": "bar", "labels": [r["hour"] for r in peak["results"]],
+                           "values": [r["transactions"] for r in peak["results"]], "color": "--orange",
+                           "label": str(_("Transactions"))},
+            "cat_chart": {"type": "pie", "labels": [r["name"] for r in cats["results"]],
+                          "values": [shillings(r["revenue"]) for r in cats["results"]], "money": True,
+                          "colors": [RED_5 if r["is_unhealthy"] else TEAL_SHADES[i % 4]
+                                     for i, r in enumerate(cats["results"])]},
+        }
+
+    def student(self):
+        student = self.params.get("student")
+        if not student:
+            return {"spend": None}
+        rng = _range(self.params, 29)
+        return {"spend": analytics.student_spending_for(self.request.user, student, rng)}

@@ -69,19 +69,9 @@ class StudentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsSameSchoolObject]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = Student.objects.select_related("school")
-        if is_platform_admin(user):
-            school_id = self.request.query_params.get("school")
-            qs = qs.filter(school_id=school_id) if school_id else qs
-        elif user.role == User.Role.PARENT:
-            qs = qs.filter(guardian_links__parent=user).distinct()
-        else:
-            # school_admin / canteen_staff / merchant_staff: scoped to own school
-            qs = qs.filter(school_id=user.school_id)
-        if self.action == "list":
-            qs = filter_students(qs, self.request.query_params)
-        return qs
+        from .access import students_for
+
+        return students_for(self.request.user, self.request.query_params, for_list=self.action == "list")
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy", "portal_account"):

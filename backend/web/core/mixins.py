@@ -46,6 +46,8 @@ class PageView(AreaRequiredMixin, TenantScopedMixin, View):
     template_name = None
     # region id (the HTML id HTMX targets) -> (partial template, method name)
     regions: dict = {}
+    # regions computed for a full page (default: all of them)
+    page_regions = None
 
     def page_context(self):
         return {}
@@ -65,7 +67,7 @@ class PageView(AreaRequiredMixin, TenantScopedMixin, View):
             return render(request, self.regions[target][0], ctx)
         ctx = {"view": self, **self.page_context()}
         errors = {}
-        for region_id in self.regions:
+        for region_id in self.page_regions or self.regions:
             data = self._region(region_id)
             errors.update(data.pop("errors", {}))
             ctx.update(data)

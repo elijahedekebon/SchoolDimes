@@ -247,6 +247,9 @@ msgstr[1] ""
 msgid "%(count)s total"
 msgstr ""
 
+msgid "%(pct)s%% on unhealthy categories"
+msgstr ""
+
 msgid "Accept (acknowledge the flag)"
 msgstr ""
 
@@ -277,6 +280,9 @@ msgstr ""
 msgid "Balanced"
 msgstr ""
 
+msgid "Best-sellers"
+msgstr ""
+
 msgid "Books NOT balanced — investigate"
 msgstr ""
 
@@ -298,10 +304,16 @@ msgstr ""
 msgid "Cards"
 msgstr ""
 
+msgid "Category"
+msgstr ""
+
 msgid "Channel"
 msgstr ""
 
 msgid "Charge the guardian"
+msgstr ""
+
+msgid "Choose a student to see their spending in this period."
 msgstr ""
 
 msgid "Close"
@@ -311,6 +323,9 @@ msgid "Code"
 msgstr ""
 
 msgid "Collected"
+msgstr ""
+
+msgid "Computed on request from POS line items and the ledger. Rejected sales are excluded."
 msgstr ""
 
 msgid "Confirm"
@@ -382,6 +397,9 @@ msgstr ""
 msgid "Guardians & KYC"
 msgstr ""
 
+msgid "Hour"
+msgstr ""
+
 msgid "Insufficient funds."
 msgstr ""
 
@@ -451,6 +469,9 @@ msgstr ""
 msgid "Notifications"
 msgstr ""
 
+msgid "Nutrition flag: share of item revenue in categories this school marks as unhealthy (Products page). Sales sent without line items aren't in this breakdown."
+msgstr ""
+
 msgid "Offline sales that synced with a shortfall or broke a policy rule. Nothing is dropped: decide what happens here."
 msgstr ""
 
@@ -481,6 +502,12 @@ msgstr ""
 msgid "P2P alerts"
 msgstr ""
 
+msgid "P2P received"
+msgstr ""
+
+msgid "P2P sent"
+msgstr ""
+
 msgid "POS collected"
 msgstr ""
 
@@ -493,7 +520,13 @@ msgstr ""
 msgid "Payment issues"
 msgstr ""
 
+msgid "Peak hours (%(tz)s)"
+msgstr ""
+
 msgid "Pending data requests"
+msgstr ""
+
+msgid "Per-student spending"
 msgstr ""
 
 msgid "Policy & settings"
@@ -508,10 +541,19 @@ msgstr ""
 msgid "Pooled funds"
 msgstr ""
 
+msgid "Product"
+msgstr ""
+
 msgid "Products"
 msgstr ""
 
+msgid "Purchases"
+msgstr ""
+
 msgid "Qty"
+msgstr ""
+
+msgid "Quantity"
 msgstr ""
 
 msgid "Received by server"
@@ -529,6 +571,9 @@ msgstr ""
 msgid "Referrals"
 msgstr ""
 
+msgid "Refunds"
+msgstr ""
+
 msgid "Reject reason"
 msgstr ""
 
@@ -542,6 +587,9 @@ msgid "Resolve"
 msgstr ""
 
 msgid "Resolve transaction #%(id)s"
+msgstr ""
+
+msgid "Revenue"
 msgstr ""
 
 msgid "Review"
@@ -577,6 +625,9 @@ msgstr ""
 msgid "Schools"
 msgstr ""
 
+msgid "Share"
+msgstr ""
+
 msgid "Shortfall"
 msgstr ""
 
@@ -593,6 +644,12 @@ msgid "Sign out"
 msgstr ""
 
 msgid "Something went wrong"
+msgstr ""
+
+msgid "Spending by category"
+msgstr ""
+
+msgid "Spent"
 msgstr ""
 
 msgid "Staff accounts"
@@ -634,6 +691,9 @@ msgstr ""
 msgid "Today, %(date)s (Africa/Kampala)"
 msgstr ""
 
+msgid "Top-ups"
+msgstr ""
+
 msgid "Transaction"
 msgstr ""
 
@@ -662,4 +722,7 @@ msgid "Your session ended. Please sign in again."
 msgstr ""
 
 msgid "matches ledger"
+msgstr ""
+
+msgid "unhealthy"
 msgstr ""

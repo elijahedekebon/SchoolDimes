@@ -1,0 +1,44 @@
+{% load i18n web %}<div id="analytics_body" class="stack">
+{% error_alert errors.analytics_body %}
+<div class="grid lg-2">
+  <div class="card">
+    <p class="fw-600">{% translate "Best-sellers" %}</p>
+    {% if best %}<div class="chart-box" style="height:260px"><canvas data-chart="#best-chart"></canvas></div>{{ best_chart|json_script:"best-chart" }}{% endif %}
+    <div class="table-wrap"><table class="table striped">
+      <thead><tr><th>{% translate "Product" %}</th><th>{% translate "Quantity" %}</th><th>{% translate "Transactions" %}</th><th>{% translate "Revenue" %}</th></tr></thead>
+      <tbody>{% for r in best.results %}<tr><td>{{ r.name }}</td><td>{{ r.quantity }}</td><td>{{ r.transactions }}</td><td>{{ r.revenue|money }}</td></tr>{% empty %}{% empty_row 4 %}{% endfor %}</tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <p class="fw-600">{% blocktranslate trimmed with tz=peak.timezone|default:"Africa/Kampala" %}Peak hours ({{ tz }}){% endblocktranslate %}</p>
+    {% if peak %}<div class="chart-box" style="height:260px"><canvas data-chart="#peak-chart"></canvas></div>{{ peak_chart|json_script:"peak-chart" }}{% endif %}
+    <div class="table-wrap"><table class="table striped">
+      <thead><tr><th>{% translate "Hour" %}</th><th>{% translate "Transactions" %}</th><th>{% translate "Gross" %}</th></tr></thead>
+      <tbody>{% for r in peak_rows %}<tr><td>{{ r.hour|stringformat:"02d" }}:00</td><td>{{ r.transactions }}</td><td>{{ r.gross_amount|money }}</td></tr>{% empty %}{% empty_row 3 %}{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+<div class="card">
+  <div class="group justify-between">
+    <span class="fw-600">{% translate "Spending by category" %}</span>
+    {% if cats %}<span class="badge badge-light badge-lg c-orange">{% blocktranslate trimmed with pct=cats.unhealthy_share_percent|default:0 %}{{ pct }}% on unhealthy categories{% endblocktranslate %}</span>{% endif %}
+  </div>
+  <p class="xs dimmed">{% translate "Nutrition flag: share of item revenue in categories this school marks as unhealthy (Products page). Sales sent without line items aren't in this breakdown." %}</p>
+  <div class="grid md-2 mt-sm">
+    <div class="chart-box" style="height:240px">{% if cats %}<canvas data-chart="#cat-chart"></canvas>{% endif %}</div>{% if cats %}{{ cat_chart|json_script:"cat-chart" }}{% endif %}
+    <div class="table-wrap"><table class="table striped">
+      <thead><tr><th>{% translate "Category" %}</th><th>{% translate "Quantity" %}</th><th>{% translate "Revenue" %}</th><th>{% translate "Share" %}</th></tr></thead>
+      <tbody>{% for r in cats.results %}<tr><td><span class="group gap-4">{{ r.name }}{% if r.is_unhealthy %}<span class="badge badge-filled badge-xs c-red">{% translate "unhealthy" %}</span>{% endif %}</span></td><td>{{ r.quantity }}</td><td>{{ r.revenue|money }}</td><td>{% if r.share_percent is None %}—{% else %}{{ r.share_percent }}%{% endif %}</td></tr>{% empty %}{% empty_row 4 %}{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+<div class="card">
+  <div class="group justify-between align-end">
+    <span class="fw-600">{% translate "Per-student spending" %}</span>
+    <form id="student-form" hx-get="{{ request.path }}" hx-target="#student_spending" hx-swap="outerHTML" hx-include="#analytics-range" hx-trigger="change">
+      {% translate "Student" as picker_label %}{% include "core/components/student_picker.html" with label=picker_label value=student_id value_label=student_label %}
+    </form>
+  </div>
+  {% include "school/analytics/_student.html" %}
+</div>
+</div>

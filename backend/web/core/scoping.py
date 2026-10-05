@@ -17,7 +17,17 @@ SCOPES = {
     "disputes": "disputes.services.disputes_for",
     "p2p_alerts": "wallets.p2p.alerts_for",
     "data_requests": "privacy.services.data_requests_for",
+    # Section C/D
+    "students": "students.access.students_for",
+    "student": "web.core.scoping.student_detail",
 }
+
+
+def student_detail(user, params):
+    """A single student as GET /students/{id}/ sees it (no list filters)."""
+    from students.access import students_for
+
+    return students_for(user, params, for_list=False)
 
 
 def review_items(user, params):

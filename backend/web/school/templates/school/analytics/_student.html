@@ -1,0 +1,21 @@
+{% load i18n web %}<div id="student_spending">
+{% error_alert errors.student_spending %}
+{% if not spend %}{% if not errors.student_spending %}<div class="alert c-gray mt-sm">{% translate "Choose a student to see their spending in this period." %}</div>{% endif %}
+{% else %}
+<div class="stack mt-sm">
+  <div class="grid base-2 md-6">
+    {% stat _("Purchases") spend.purchases_total|ugx %}{% stat _("Fees") spend.fees_total|ugx %}
+    {% stat _("P2P sent") spend.p2p_sent_total|ugx %}{% stat _("P2P received") spend.p2p_received_total|ugx %}
+    {% stat _("Top-ups") spend.topups_total|ugx %}{% stat _("Refunds") spend.refunds_total|ugx %}
+  </div>
+  <div class="grid md-2">
+    <div class="table-wrap"><table class="table striped">
+      <thead><tr><th>{% translate "Category" %}</th><th>{% translate "Quantity" %}</th><th>{% translate "Spent" %}</th></tr></thead>
+      <tbody>{% for r in spend.by_category %}<tr><td>{{ r.name }}</td><td>{{ r.quantity }}</td><td>{{ r.revenue|money }}</td></tr>{% empty %}{% empty_row 3 %}{% endfor %}</tbody></table></div>
+    <div class="table-wrap"><table class="table striped">
+      <thead><tr><th>{% translate "Product" %}</th><th>{% translate "Quantity" %}</th><th>{% translate "Spent" %}</th></tr></thead>
+      <tbody>{% for r in spend.top_items %}<tr><td>{{ r.name }}</td><td>{{ r.quantity }}</td><td>{{ r.revenue|money }}</td></tr>{% empty %}{% empty_row 3 %}{% endfor %}</tbody></table></div>
+  </div>
+</div>
+{% endif %}
+</div>

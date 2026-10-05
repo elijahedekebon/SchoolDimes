@@ -41,6 +41,12 @@
     });
   }
 
+  // CSRF on every HTMX request (attribute inheritance is off, see base.html).
+  document.addEventListener("htmx:configRequest", function (evt) {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta) evt.detail.headers["X-CSRFToken"] = meta.content;
+  });
+
   document.addEventListener("htmx:afterSwap", function (evt) {
     openDialogFor(evt.detail.target);
     applyShowIf(evt.detail.target);
@@ -101,6 +107,8 @@
       document.getElementById("shell-navbar").classList.toggle("open");
       return;
     }
+    // close picker result lists when clicking elsewhere
+    document.querySelectorAll(".picker-results").forEach(function (r) { if (!r.closest(".picker").contains(t)) r.innerHTML = ""; });
     // close open menus when clicking elsewhere
     document.querySelectorAll("details.menu[open]").forEach(function (m) { if (!m.contains(t)) m.removeAttribute("open"); });
     // clicking the backdrop of a modal does not close it (Mantine default for these dialogs)

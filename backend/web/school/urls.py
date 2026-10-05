@@ -11,4 +11,7 @@ urlpatterns = [
     path("school/reconciliation/export", views.ReconciliationExportView.as_view(), name="school-reconciliation-csv"),
     path("school/shortfalls", views.ShortfallsView.as_view(), name="school-shortfalls"),
     path("school/shortfalls/<int:pk>/resolve", views.ResolveReviewView.as_view(), name="school-shortfall-resolve"),
+    path("school/_picker/students", views.StudentPickerView.as_view(), name="school-student-picker"),
+    # C
+    path("school/analytics", views.AnalyticsView.as_view(), name="school-analytics"),
 ]

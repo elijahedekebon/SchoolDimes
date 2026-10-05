@@ -56,3 +56,24 @@ def can_view_student(user, student) -> bool:
     if is_school_admin(user):
         return student.school_id == user.school_id
     return is_guardian(user, student)
+
+
+
+def students_for(user, params, *, for_list=True):
+    """The API's StudentViewSet queryset: platform_admin all (?school=),
+    parents their linked students, everyone else their own school. List
+    filters (?search=, ?class_name=, ?card_status=, ?low_balance=) on lists."""
+    from .views import filter_students
+
+    qs = Student.objects.select_related("school")
+    if is_platform_admin(user):
+        school_id = params.get("school")
+        qs = qs.filter(school_id=school_id) if school_id else qs
+    elif user.role == User.Role.PARENT:
+        qs = qs.filter(guardian_links__parent=user).distinct()
+    else:
+        # school_admin / canteen_staff / merchant_staff: scoped to own school
+        qs = qs.filter(school_id=user.school_id)
+    if for_list:
+        qs = filter_students(qs, params)
+    return qs
