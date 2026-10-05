@@ -1,0 +1,10 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Review queue") _("Offline sales that synced with a shortfall or broke a policy rule. Nothing is dropped: decide what happens here.") %}{% endpageheader %}
+<div class="alert c-gray mb-md"><p class="sm">{% translate "Until real devices exist, this queue is filled by the backend's simulate_pos command." %}</p></div>
+<form id="review-filters" class="group mb-sm" hx-get="{{ request.path }}" hx-target="#review_table" hx-swap="outerHTML" hx-trigger="change">
+  {% choice_filter "type" _("Type") filters.type type_options %}
+  {% choice_filter "review_status" _("Review status") filters.review_status review_options %}
+</form>
+{% include "school/shortfalls/_table.html" %}
+{% endblock %}

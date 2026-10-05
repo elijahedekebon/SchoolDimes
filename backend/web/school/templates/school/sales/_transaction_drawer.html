@@ -1,0 +1,26 @@
+{% load i18n web %}<div class="dialog-header"><h3 class="dialog-title">{% translate "Transaction" %} #{{ t.id }}</h3><button type="button" class="close-btn" data-close>×</button></div>
+<div class="stack gap-xs">
+  {% include "school/sales/_row.html" with label=_("Student") value=t.student_name|dash %}
+  {% include "school/sales/_row.html" with label=_("Device") value=t.device_name %}
+  {% include "school/sales/_row.html" with label=_("Sale time") value=t.device_local_timestamp|dt %}
+  {% include "school/sales/_row.html" with label=_("Received by server") value=t.received_at|dt %}
+  {% include "school/sales/_row.html" with label=_("Channel") value=t.channel|human %}
+  <div class="group justify-between nowrap align-start"><span class="sm dimmed">{% translate "Sync status" %}</span><div class="right">{% status_badge t.sync_status %}</div></div>
+  <div class="group justify-between nowrap align-start"><span class="sm dimmed">{% translate "Amount" %}</span><div class="right">{{ t.amount|money }}</div></div>
+  <div class="group justify-between nowrap align-start"><span class="sm dimmed">{% translate "Collected" %}</span><div class="right">{{ t.applied_amount|money }}</div></div>
+  {% if t.shortfall_amount != "0.00" %}<div class="group justify-between nowrap align-start"><span class="sm dimmed">{% translate "Shortfall" %}</span><div class="right">{{ t.shortfall_amount|money:"orange" }}</div></div>{% endif %}
+  {% if t.recovered_amount != "0.00" %}<div class="group justify-between nowrap align-start"><span class="sm dimmed">{% translate "Recovered" %}</span><div class="right">{{ t.recovered_amount|money }}</div></div>{% endif %}
+  <div class="group justify-between nowrap align-start"><span class="sm dimmed">{% translate "Flags" %}</span><div class="right">{% if t.flags %}{% flags t.flags %}{% else %}—{% endif %}</div></div>
+  {% if t.reject_reason %}{% include "school/sales/_row.html" with label=_("Reject reason") value=t.reject_reason %}{% endif %}
+  <div class="group justify-between nowrap align-start"><span class="sm dimmed">{% translate "Ledger reference" %}</span><div class="right"><span class="mono">{{ t.ledger_reference|dash }}</span></div></div>
+  <div class="group justify-between nowrap align-start"><span class="sm dimmed">{% translate "Review" %}</span><div class="right">{% status_badge t.review_status %}</div></div>
+  {% if t.review_notes %}{% include "school/sales/_row.html" with label=_("Review notes") value=t.review_notes %}{% endif %}
+  <p class="fw-600 mt-md">{% translate "Line items" %}</p>
+  <table class="table">
+    <thead><tr><th>{% translate "Item" %}</th><th>{% translate "Qty" %}</th><th>{% translate "Unit price" %}</th><th>{% translate "Line total" %}</th></tr></thead>
+    <tbody>
+    {% for i in t.items %}<tr><td>{{ i.description }}</td><td>{{ i.quantity }}</td><td>{{ i.unit_price|money }}</td><td>{{ i.line_total|money }}</td></tr>
+    {% empty %}<tr><td colspan="4"><p class="dimmed sm">{% translate "No line items were sent with this sale." %}</p></td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>

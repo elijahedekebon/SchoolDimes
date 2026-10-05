@@ -14,33 +14,16 @@ from tenants.models import School
 from . import services
 
 
-def _date(value, name):
-    parsed = parse_date(value) if value else None
-    if value and parsed is None:
-        raise ServiceError("date_invalid", _("%(name)s must be YYYY-MM-DD.") % {"name": name})
-    return parsed
-
-
 def _range(request):
-    default_from, default_to = services.default_range()
-    day_from = _date(request.query_params.get("from"), "from") or default_from
-    day_to = _date(request.query_params.get("to"), "to") or default_to
-    if day_to < day_from or (day_to - day_from).days > 366:
-        raise ServiceError("range_invalid", _("from must be before to, and the range at most a year."))
-    return day_from, day_to
+    return services.date_range(request.query_params)
+
+
+def _date(value, name):
+    return services.parse_day(value, name)
 
 
 def _school_scope(request):
-    """school_admin: their own school only. platform_admin: ?school=<id>, or
-    all schools as a cross-school summary. Everyone else: 403."""
-    user = request.user
-    if is_school_admin(user):
-        return [user.school_id], False
-    if is_platform_admin(user):
-        if request.query_params.get("school"):
-            return [int(request.query_params["school"])], False
-        return list(School.objects.values_list("pk", flat=True)), True
-    raise ServiceError("forbidden", _("Analytics are for school administrators."), status=403)
+    return services.school_scope(request.user, request.query_params)
 
 
 class SalesSummaryView(APIView):
@@ -73,13 +56,7 @@ class StudentSpendingView(APIView):
     platform_admin (per-student data is never cross-tenant)."""
 
     def get(self, request, student_id):
-        student = Student.objects.filter(pk=student_id).first()
-        user = request.user
-        allowed = student is not None and (
-            is_guardian(user, student) or (is_school_admin(user) and user.school_id == student.school_id))
-        if not allowed:
-            raise ServiceError("not_found", _("Student not found."), status=404)
-        return Response(services.student_spending(student, *_range(request)))
+        return Response(services.student_spending_for(request.user, student_id, request.query_params))
 
 
 class ReconciliationView(APIView):

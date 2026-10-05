@@ -1,0 +1,16 @@
+{% load i18n web %}<div id="review_table" class="table-region" data-testid="review-table" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#review-filters" hx-swap="outerHTML">
+{% if errors.review_table %}{% error_alert errors.review_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>#</th><th>{% translate "Sale time" %}</th><th>{% translate "Student" %}</th><th>{% translate "Device" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Outstanding" %}</th><th>{% translate "Flags" %}</th><th>{% translate "Review status" %}</th><th></th></tr></thead>
+  <tbody>
+  {% for r in rows %}<tr>
+    <td><a href="#" hx-get="/school/sales/transactions/{{ r.id }}" hx-target="#sd-drawer-body">#{{ r.id }}</a></td>
+    <td>{{ r.device_local_timestamp|dt }}</td><td>{{ r.student_name|dash }}</td><td>{{ r.device_name }}</td><td>{{ r.amount|money }}</td>
+    <td>{% if r.outstanding_amount != "0.00" %}{{ r.outstanding_amount|money:"orange" }}{% else %}{{ r.outstanding_amount|money }}{% endif %}</td>
+    <td>{% flags r.flags %}</td><td>{% status_badge r.review_status %}</td>
+    <td>{% if r.review_status == "pending" %}<button type="button" class="btn btn-xs btn-light" hx-get="/school/shortfalls/{{ r.id }}/resolve" hx-target="#sd-modal-body">{% translate "Resolve" %}</button>{% endif %}</td>
+  </tr>{% empty %}{% empty_row 9 _("Nothing waiting for review.") %}{% endfor %}
+  </tbody></table></div>
+{% pagination page "review_table" "#review-filters" %}
+{% endif %}
+</div>

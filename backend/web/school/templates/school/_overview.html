@@ -1,0 +1,21 @@
+{% load i18n web %}<div id="overview">
+{% blocktranslate trimmed asvar subtitle with date=today %}Today, {{ date }} (Africa/Kampala){% endblocktranslate %}
+{% pageheader _("Overview") subtitle %}{% endpageheader %}
+{% error_alert errors.overview %}
+{% if sales %}
+<div class="grid sm-2 lg-4 mt-md">
+  {% blocktranslate trimmed count count=sales.totals.transactions asvar sales_hint %}{{ count }} sale{% plural %}{{ count }} sales{% endblocktranslate %}
+  <div class="card">{% stat _("Sales today (collected)") sales.totals.collected_amount|ugx sales_hint "/school/sales" %}</div>
+  {% blocktranslate trimmed asvar dep_hint with confirmed=recon.deposits.confirmed_count pending=recon.deposits.pending_count %}{{ confirmed }} confirmed · {{ pending }} pending{% endblocktranslate %}
+  <div class="card">{% stat _("Deposits confirmed today") recon.deposits.confirmed_amount|ugx dep_hint "/school/reconciliation" %}</div>
+  <div class="card">{% stat _("Needs review") reviews _("Offline shortfalls and policy flags") "/school/shortfalls" reviews|yesno:"orange," %}</div>
+  <div class="card">{% stat _("Open disputes") disputes None "/school/disputes" disputes|yesno:"orange," %}</div>
+  <div class="card">{% stat _("Open P2P alerts") alerts None "/school/p2p-alerts" alerts|yesno:"orange," %}</div>
+  <div class="card">{% stat _("Devices not syncing") stale _("No sync within the school's stale limit") "/school/devices" stale|yesno:"red," %}</div>
+  <div class="card">{% stat _("Pending data requests") requests None "/school/privacy" %}</div>
+  {% if recon.books_balanced %}{% translate "Balanced" as books %}{% else %}{% translate "NOT balanced" as books %}{% endif %}
+  <div class="card">{% stat _("Ledger books") books _("Every wallet in the school sums to zero") "/school/reconciliation" recon.books_balanced|yesno:"green,red" %}</div>
+</div>
+{% endif %}
+<div class="alert c-gray mt-lg"><p class="sm">{% translate "Until real POS devices are in use, sales, shortfalls and attendance come from the backend's simulate_pos command." %}</p></div>
+</div>

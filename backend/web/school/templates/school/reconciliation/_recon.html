@@ -1,0 +1,52 @@
+{% load i18n web %}<div id="recon" class="stack">
+{% error_alert errors.recon %}
+{% if data %}
+  <div class="alert {% if data.books_balanced %}c-green{% else %}c-red{% endif %}">
+    <div class="alert-title">{% if data.books_balanced %}{% translate "Books balanced" %}{% else %}{% translate "Books NOT balanced — investigate" %}{% endif %}</div>
+    {% translate "Every amount next to a ledger amount is recomputed from the ledger entries carrying its reference. Sum of every wallet in the school:" %} {{ data.books_total|money }}
+  </div>
+  <div class="card">
+    <p class="fw-600 mb-xs">{% translate "Devices" %}</p>
+    <div class="table-wrap"><table class="table striped wide">
+      <thead><tr><th>{% translate "Device" %}</th><th>{% translate "Role" %}</th><th>{% translate "Status" %}</th><th>{% translate "Last sync" %}</th><th>{% translate "Transactions" %}</th><th>{% translate "Rejected" %}</th><th>{% translate "POS collected" %}</th><th>{% translate "Ledger" %}</th><th></th></tr></thead>
+      <tbody>
+      {% for d in data.devices %}<tr><td>{{ d.device_name }}</td><td>{{ d.device_role }}</td><td>{% status_badge d.status %}</td><td>{{ d.last_sync_at|dt }}</td><td>{{ d.transactions }}</td><td>{{ d.rejected }}</td><td>{{ d.collected_amount|money }}</td><td>{{ d.ledger_amount|money }}</td><td>{% include "school/reconciliation/_match.html" with ok=d.matches %}</td></tr>
+      {% empty %}{% empty_row 9 %}{% endfor %}
+      </tbody></table></div>
+  </div>
+  <div class="grid md-3">
+    <div class="card">
+      <div class="group justify-between"><span class="fw-600">{% translate "Deposits" %}</span>{% include "school/reconciliation/_match.html" with ok=data.deposits.matches %}</div>
+      <p class="sm">{% blocktranslate trimmed with count=data.deposits.confirmed_count %}{{ count }} confirmed{% endblocktranslate %}: {{ data.deposits.confirmed_amount|money }}</p>
+      <p class="sm">{% translate "Ledger" %}: {{ data.deposits.ledger_amount|money }}</p>
+      <p class="sm dimmed">{% blocktranslate trimmed with count=data.deposits.pending_count %}{{ count }} pending{% endblocktranslate %}: {{ data.deposits.pending_amount|money }}</p>
+    </div>
+    <div class="card">
+      <div class="group justify-between"><span class="fw-600">{% translate "Fee payments" %}</span>{% include "school/reconciliation/_match.html" with ok=data.fee_payments.matches %}</div>
+      <p class="sm">{% blocktranslate trimmed with count=data.fee_payments.count %}{{ count }} total{% endblocktranslate %}: {{ data.fee_payments.amount|money }}</p>
+      <p class="sm">{% translate "Ledger" %}: {{ data.fee_payments.ledger_amount|money }}</p>
+    </div>
+    <div class="card">
+      <p class="fw-600">{% translate "Unresolved reviews" %}</p>
+      <p class="sm">{% blocktranslate trimmed with count=data.unresolved_reviews.count %}{{ count }} total{% endblocktranslate %}</p>
+      <p class="sm">{% translate "Outstanding shortfall" %}: {{ data.unresolved_reviews.outstanding_shortfall|money }}</p>
+    </div>
+  </div>
+  <div class="grid md-3">
+    <div class="card">
+      <p class="fw-600 mb-xs">{% translate "Stale / unsynced devices" %}</p>
+      {% for d in data.stale_devices %}<p class="sm">{{ d.device_name }} — {{ d.last_sync_at|dt }}</p>
+      {% empty %}<p class="sm dimmed">{% translate "All devices synced recently." %}</p>{% endfor %}
+    </div>
+    <div class="card">
+      <p class="fw-600 mb-xs">{% translate "Pooled fund balances" %}</p>
+      {% for f in data.pooled_funds %}<div class="group justify-between"><span class="sm">{{ f.title }}</span><span class="sm">{{ f.balance|money }}</span></div>{% endfor %}
+    </div>
+    <div class="card">
+      <p class="fw-600 mb-xs">{% translate "System wallets" %}</p>
+      {% for k, v in data.system_wallets.items %}<div class="group justify-between"><span class="sm">{{ k|human }}</span><span class="sm">{{ v|money }}</span></div>{% endfor %}
+      <p class="xs dimmed mt-xs">{% translate "The aggregator clearing wallet is normally negative: it is money the payment aggregator owes the school." %}</p>
+    </div>
+  </div>
+{% endif %}
+</div>

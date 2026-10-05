@@ -163,16 +163,7 @@ class P2PAlertViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     serializer_class = P2PAlertSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        qs = P2PAlert.objects.select_related("student")
-        if is_platform_admin(user):
-            return qs
-        if is_school_admin(user):
-            qs = qs.filter(school_id=user.school_id)
-            if self.request.query_params.get("status"):
-                qs = qs.filter(status=self.request.query_params["status"])
-            return qs
-        return qs.none()
+        return p2p.alerts_for(self.request.user, self.request.query_params)
 
     @action(detail=True, methods=["post"])
     def review(self, request, pk=None):

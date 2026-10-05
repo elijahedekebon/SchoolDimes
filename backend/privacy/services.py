@@ -179,3 +179,23 @@ def handle_request(actor, request: DataRequest, *, status, notes=""):
             })
     audit(actor, f"data_request.{status}", request, force=True)
     return request
+
+
+
+def data_requests_for(user, params):
+    """Parents: their own requests. school_admin: requests about the school's
+    students or from their parents. platform_admin: all. ?status=, ?request_type=."""
+    from django.db.models import Q
+
+    from core.permissions import is_platform_admin, is_school_admin
+
+    qs = DataRequest.objects.all()
+    for f in ("status", "request_type"):
+        if params.get(f):
+            qs = qs.filter(**{f: params[f]})
+    if is_platform_admin(user):
+        return qs
+    if is_school_admin(user):
+        return qs.filter(Q(school_id=user.school_id)
+                         | Q(requested_by__guardian_links__student__school_id=user.school_id)).distinct()
+    return qs.filter(requested_by=user)

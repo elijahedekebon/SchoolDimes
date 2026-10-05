@@ -1,0 +1,16 @@
+{% extends "school/layout.html" %}{% load i18n web static %}
+{% block head %}<script src="{% static 'web/vendor/chart.umd.min.js' %}" defer></script><script src="{% static 'web/js/charts.js' %}" defer></script>{% endblock %}
+{% block content %}
+{% pageheader _("Sales") _("From the ledger: every figure traces to POS transactions and their ledger entries.") %}
+  <form id="range-form" hx-get="{{ request.path }}" hx-target="#sales_summary" hx-swap="outerHTML" hx-trigger="change">{% include "core/components/date_range.html" %}</form>
+{% endpageheader %}
+{% include "school/sales/_summary.html" %}
+<div class="group justify-between align-end mt-xl mb-xs">
+  <span class="fw-600">{% translate "Transactions" %}</span>
+  <form id="transactions-filters" class="group" hx-get="{{ request.path }}" hx-target="#transactions_table" hx-swap="outerHTML" hx-trigger="change">
+    {% choice_filter "device" _("Device") filters.device device_options %}
+    {% choice_filter "sync_status" _("Sync status") filters.sync_status sync_options %}
+  </form>
+</div>
+{% include "school/sales/_transactions.html" %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Reconciliation") _("One Kampala day. POS figures are for transactions synced that day, when their ledger entries were written.") %}
+  <form id="recon-form" class="group align-end" hx-get="{{ request.path }}" hx-target="#recon" hx-swap="outerHTML" hx-trigger="change">
+    {% include "core/components/day_picker.html" with value=date %}
+    <button type="submit" class="btn btn-xs" formaction="/school/reconciliation/export" formmethod="get" hx-disable>{% translate "Export CSV" %}</button>
+  </form>
+{% endpageheader %}
+{% include "school/reconciliation/_recon.html" %}
+{% endblock %}

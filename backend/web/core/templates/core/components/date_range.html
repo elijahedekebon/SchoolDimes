@@ -1,0 +1,4 @@
+{% load i18n %}<div class="group gap-xs align-end">
+  <label class="field field-xs"><span class="label">{% translate "From" %}</span><input class="input" type="date" name="from" value="{{ range.from }}" max="{{ range.to }}"></label>
+  <label class="field field-xs"><span class="label">{% translate "To" %}</span><input class="input" type="date" name="to" value="{{ range.to }}" min="{{ range.from }}"></label>
+</div>

@@ -69,19 +69,7 @@ class DataRequestViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
     serializer_class = DataRequestSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        qs = DataRequest.objects.all()
-        # Part 4A: ?status= / ?request_type= filters for the admin queue.
-        for f in ("status", "request_type"):
-            if self.request.query_params.get(f):
-                qs = qs.filter(**{f: self.request.query_params[f]})
-        if is_platform_admin(user):
-            return qs
-        if is_school_admin(user):
-            # requests about the school's students, or from parents of them
-            return qs.filter(Q(school_id=user.school_id)
-                             | Q(requested_by__guardian_links__student__school_id=user.school_id)).distinct()
-        return qs.filter(requested_by=user)
+        return services.data_requests_for(self.request.user, self.request.query_params)
 
     def create(self, request):
         if request.user.role != User.Role.PARENT:

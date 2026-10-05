@@ -59,10 +59,10 @@ All paths are unchanged. "View" names are in `web/<area>/views.py`.
 |---|---|---|---|---|---|---|
 | 1 | `/` · `app/page.tsx` | `/` | `core.HomeRedirectView` | — (redirect) | A | ✅ |
 | 2 | `/login` · `app/login/page.tsx` | `/login` | `core.LoginView` | `core/login.html` | A | ✅ |
-| 3 | `/school` · `app/school/page.tsx` | `/school` | `school.OverviewView` | `school/index.html` | B | ⬜ |
-| 4 | `/school/sales` · `school/sales/page.tsx` | `/school/sales` | `school.SalesView` | `school/sales/index.html` | B | ⬜ |
-| 5 | `/school/reconciliation` · `school/reconciliation/page.tsx` | `/school/reconciliation` | `school.ReconciliationView` | `school/reconciliation/index.html` | B | ⬜ |
-| 6 | `/school/shortfalls` · `school/shortfalls/page.tsx` | `/school/shortfalls` | `school.ShortfallsView` | `school/shortfalls/index.html` | B | ⬜ |
+| 3 | `/school` · `app/school/page.tsx` | `/school` | `school.OverviewView` | `school/index.html` | B | ✅ |
+| 4 | `/school/sales` · `school/sales/page.tsx` | `/school/sales` | `school.SalesView` | `school/sales/index.html` | B | ✅ |
+| 5 | `/school/reconciliation` · `school/reconciliation/page.tsx` | `/school/reconciliation` | `school.ReconciliationView` | `school/reconciliation/index.html` | B | ✅ |
+| 6 | `/school/shortfalls` · `school/shortfalls/page.tsx` | `/school/shortfalls` | `school.ShortfallsView` | `school/shortfalls/index.html` | B | ✅ |
 | 7 | `/school/analytics` · `school/analytics/page.tsx` | `/school/analytics` | `school.AnalyticsView` | `school/analytics/index.html` | C | ⬜ |
 | 8 | `/school/students` · `school/students/page.tsx` | `/school/students` | `school.StudentsView` | `school/students/index.html` | D | ⬜ |
 | 9 | `/school/students/[id]` · `school/students/[id]/page.tsx` | `/school/students/<int:id>` | `school.StudentDetailView` | `school/students/detail.html` | D | ⬜ |
@@ -195,7 +195,7 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 
 - [x] **0. Inventory, plan, DECISIONS entry**
 - [x] **A. Shell & auth** — base/app frame templates, CSS/JS/vendor assets, session login/logout (+ throttle, role routing and refusal messages), `/` redirect, language switcher (+ `preferred_language`), notifications bell, branding, scoping helper, WhiteNoise, `build_locale` collects web strings
-- [ ] **B. Overview, sales, reconciliation (+CSV), review queue**
+- [x] **B. Overview, sales, reconciliation (+CSV), review queue**
 - [ ] **C. Analytics** (Chart.js)
 - [ ] **D. Students (+detail tabs), guardians & KYC, cards**
 - [ ] **E. Devices (token once + QR), merchants, products, policy & settings, staff accounts**

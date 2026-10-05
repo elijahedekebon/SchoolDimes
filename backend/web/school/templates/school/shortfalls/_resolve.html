@@ -1,0 +1,9 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n web %}
+{% block title %}{% blocktranslate trimmed with id=t.id %}Resolve transaction #{{ id }}{% endblocktranslate %}{% endblock %}
+{% block description %}{{ t.student_name }} — {{ t.amount|money }}{% if has_shortfall %} · {% translate "Outstanding" %}: {{ t.outstanding_amount|money }}{% endif %}{% endblock %}
+{% block fields %}
+<label class="field"><span class="label">{% translate "Resolution" %}</span>
+  <select class="input" name="resolution">{% for value, label, help in options %}<option value="{{ value }}"{% if data.resolution == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+{% for value, label, help in options %}<div class="alert c-blue" data-show-if="resolution={{ value }}"><p class="sm">{{ help }}</p></div>{% endfor %}
+<label class="field"><span class="label">{% translate "Notes" %}</span><textarea class="input" name="review_notes">{{ data.review_notes|default:"" }}</textarea></label>
+{% endblock %}

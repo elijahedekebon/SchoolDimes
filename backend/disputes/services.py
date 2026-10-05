@@ -157,3 +157,27 @@ def resolve(user, dispute, *, outcome, refund_amount=None, resolution_notes=""):
         dispute.save()
     _notify_raiser(dispute)
     return dispute
+
+
+
+def disputes_for(user, params):
+    """Guardians: disputes they raised or about their children; school_admin:
+    their school's queue; platform_admin: read-only, all. ?status=, ?student=."""
+    from django.db.models import Q
+
+    from accounts.models import User
+    from core.permissions import is_platform_admin
+
+    qs = Dispute.objects.select_related("student", "pos_transaction", "ledger_entry")
+    if is_platform_admin(user):
+        pass  # read-only visibility; resolving is refused in the service
+    elif user.role == User.Role.SCHOOL_ADMIN:
+        qs = qs.filter(school_id=user.school_id)
+    elif user.role == User.Role.PARENT:
+        qs = qs.filter(Q(raised_by=user) | Q(student__guardian_links__parent=user)).distinct()
+    else:
+        qs = qs.none()
+    for f in ("status", "student"):
+        if params.get(f):
+            qs = qs.filter(**{f: params[f]})
+    return qs

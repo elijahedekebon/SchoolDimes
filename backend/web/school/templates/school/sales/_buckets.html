@@ -1,0 +1,6 @@
+{% load i18n web %}<div class="table-wrap"><table class="table striped">
+  <thead><tr><th></th><th>{% translate "Transactions" %}</th><th>{% translate "Gross" %}</th><th>{% translate "Collected" %}</th></tr></thead>
+  <tbody>
+  {% for r in rows %}<tr><td>{{ r|get:key|default:"—" }}</td><td>{{ r.transactions }}</td><td>{{ r.gross_amount|money }}</td><td>{{ r.collected_amount|money }}</td></tr>
+  {% empty %}{% empty_row 4 %}{% endfor %}
+  </tbody></table></div>

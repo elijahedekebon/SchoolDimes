@@ -137,3 +137,21 @@ def review_alert(user, alert, status, notes=""):
 def wallet_student(wallet_id):
     wallet = Wallet.objects.select_related("student").filter(pk=wallet_id, student__isnull=False).first()
     return wallet.student if wallet else None
+
+
+
+def alerts_for(user, params):
+    """school_admin review queue (?status=); platform_admin sees all."""
+    from core.permissions import is_platform_admin, is_school_admin
+
+    from .models import P2PAlert
+
+    qs = P2PAlert.objects.select_related("student")
+    if is_platform_admin(user):
+        return qs
+    if is_school_admin(user):
+        qs = qs.filter(school_id=user.school_id)
+        if params.get("status"):
+            qs = qs.filter(status=params["status"])
+        return qs
+    return qs.none()

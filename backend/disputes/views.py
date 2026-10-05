@@ -45,20 +45,7 @@ class DisputeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
     serializer_class = DisputeSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        qs = Dispute.objects.select_related("student", "pos_transaction", "ledger_entry")
-        if is_platform_admin(user):
-            pass  # read-only visibility; resolving is refused in the service
-        elif user.role == User.Role.SCHOOL_ADMIN:
-            qs = qs.filter(school_id=user.school_id)
-        elif user.role == User.Role.PARENT:
-            qs = qs.filter(Q(raised_by=user) | Q(student__guardian_links__parent=user)).distinct()
-        else:
-            qs = qs.none()
-        for f in ("status", "student"):
-            if self.request.query_params.get(f):
-                qs = qs.filter(**{f: self.request.query_params[f]})
-        return qs
+        return services.disputes_for(self.request.user, self.request.query_params)
 
     def create(self, request):
         s = DisputeSerializer(data=request.data)

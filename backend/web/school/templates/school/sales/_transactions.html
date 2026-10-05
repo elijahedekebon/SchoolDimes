@@ -1,0 +1,13 @@
+{% load i18n web %}<div id="transactions_table" class="table-region" data-testid="transactions-table" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#transactions-filters" hx-swap="outerHTML">
+{% if errors.transactions_table %}{% error_alert errors.transactions_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>#</th><th>{% translate "Sale time" %}</th><th>{% translate "Student" %}</th><th>{% translate "Device" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Sync status" %}</th><th>{% translate "Flags" %}</th></tr></thead>
+  <tbody>
+  {% for r in rows %}<tr class="clickable-row" hx-get="/school/sales/transactions/{{ r.id }}" hx-target="#sd-drawer-body">
+    <td>{{ r.id }}</td><td>{{ r.device_local_timestamp|dt }}</td><td>{{ r.student_name|dash }}</td><td>{{ r.device_name }}</td>
+    <td>{{ r.amount|money }}</td><td>{% status_badge r.sync_status %}</td><td>{% flags r.flags %}</td></tr>
+  {% empty %}{% empty_row 7 %}{% endfor %}
+  </tbody></table></div>
+{% pagination page "transactions_table" "#transactions-filters" %}
+{% endif %}
+</div>

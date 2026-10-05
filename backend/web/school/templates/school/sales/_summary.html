@@ -1,0 +1,26 @@
+{% load i18n web %}<div id="sales_summary" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#range-form" hx-swap="outerHTML">
+{% error_alert errors.sales_summary %}
+{% if summary %}{% with s=summary %}
+<div class="grid base-2 md-4">
+  <div class="card">{% stat _("Transactions") s.totals.transactions %}</div>
+  <div class="card">{% stat _("Gross") s.totals.gross_amount|ugx _("Amount rung up at the till") %}</div>
+  <div class="card">{% stat _("Collected") s.totals.collected_amount|ugx _("Amount the ledger actually moved") %}</div>
+  <div class="card">{% if s.totals.shortfall_amount != "0.00" %}{% stat _("Shortfall") s.totals.shortfall_amount|ugx None None "orange" %}{% else %}{% stat _("Shortfall") s.totals.shortfall_amount|ugx %}{% endif %}</div>
+</div>
+<div class="card mt-md">
+  <p class="fw-600 mb-xs">{% translate "By day" %}</p>
+  <div class="chart-box" style="height:240px"><canvas data-chart="#sales-chart"></canvas></div>
+  {{ chart|json_script:"sales-chart" }}
+</div>
+<div class="mt-md">
+  <div class="tabs" data-tabs="buckets">
+    <button type="button" class="tab active" data-tab="day">{% translate "By day" %}</button>
+    <button type="button" class="tab" data-tab="device">{% translate "By device" %}</button>
+    <button type="button" class="tab" data-tab="merchant">{% translate "By merchant" %}</button>
+  </div>
+  <div class="tab-panel" data-tab-panel="buckets:day">{% include "school/sales/_buckets.html" with rows=s.by_day key="date" %}</div>
+  <div class="tab-panel hidden" data-tab-panel="buckets:device">{% include "school/sales/_buckets.html" with rows=s.by_device key="device_name" %}</div>
+  <div class="tab-panel hidden" data-tab-panel="buckets:merchant">{% include "school/sales/_buckets.html" with rows=s.by_merchant key="merchant_name" %}</div>
+</div>
+{% endwith %}{% endif %}
+</div>

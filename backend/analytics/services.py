@@ -205,3 +205,70 @@ def reconciliation(school_id, day: date):
         "books_total": money(books_total),
         "books_balanced": books_total == 0,
     }
+
+
+
+# ---------------------------------------------------------------------------
+# Request parsing and scoping shared by the API views and the web pages
+# ---------------------------------------------------------------------------
+
+def parse_day(value, name):
+    from django.utils.dateparse import parse_date
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+
+    parsed = parse_date(value) if value else None
+    if value and parsed is None:
+        raise ServiceError("date_invalid", _("%(name)s must be YYYY-MM-DD.") % {"name": name})
+    return parsed
+
+
+def date_range(params):
+    """?from=&to= (Kampala days; default: the last 30 days)."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+
+    default_from, default_to = default_range()
+    day_from = parse_day(params.get("from"), "from") or default_from
+    day_to = parse_day(params.get("to"), "to") or default_to
+    if day_to < day_from or (day_to - day_from).days > 366:
+        raise ServiceError("range_invalid", _("from must be before to, and the range at most a year."))
+    return day_from, day_to
+
+
+def school_scope(user, params):
+    """school_admin: their own school only. platform_admin: ?school=<id>, or
+    all schools as a cross-school summary. Everyone else: 403."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin, is_school_admin
+    from tenants.models import School
+
+    if is_school_admin(user):
+        return [user.school_id], False
+    if is_platform_admin(user):
+        if params.get("school"):
+            return [int(params["school"])], False
+        return list(School.objects.values_list("pk", flat=True)), True
+    raise ServiceError("forbidden", _("Analytics are for school administrators."), status=403)
+
+
+def student_spending_for(user, student_id, params):
+    """GET /analytics/students/{id}/spending/: that school's school_admin and
+    the student's guardians only; not platform_admin."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from core.permissions import is_school_admin
+    from students.access import is_guardian
+    from students.models import Student
+
+    student = Student.objects.filter(pk=student_id).first()
+    allowed = student is not None and (
+        is_guardian(user, student) or (is_school_admin(user) and user.school_id == student.school_id))
+    if not allowed:
+        raise ServiceError("not_found", _("Student not found."), status=404)
+    return student_spending(student, *date_range(params))

@@ -29,11 +29,7 @@ class IsSchoolAdminOrPlatformAdmin(permissions.BasePermission):
 
 
 def _admin_scope(qs, user, params=None):
-    if is_platform_admin(user):
-        # Part 4A: platform_admin support views narrow to one school with ?school=.
-        school = (params or {}).get("school")
-        return qs.filter(school_id=school) if school else qs
-    return qs.filter(school_id=user.school_id)
+    return services.admin_scope(qs, user, params)
 
 
 # ---------------------------------------------------------------------------
@@ -45,18 +41,7 @@ class DeviceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.G
     permission_classes = [IsSchoolAdminOrPlatformAdmin]
 
     def get_queryset(self):
-        user = self.request.user
-        params = self.request.query_params
-        if params.get("stale") == "true":
-            if is_platform_admin(user) and not params.get("school"):
-                raise ServiceError("school_required", _("platform_admin must pass ?school=<id>."))
-            school_id = params.get("school") if is_platform_admin(user) else user.school_id
-            return services.stale_devices(int(school_id))
-        qs = _admin_scope(Device.objects.all(), user, params)
-        for f in ("device_role", "status"):
-            if params.get(f):
-                qs = qs.filter(**{f: params[f]})
-        return qs
+        return services.devices_for(self.request.user, self.request.query_params)
 
     @action(detail=False, methods=["post"])
     def register(self, request):
@@ -178,13 +163,7 @@ class PosTransactionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vi
     permission_classes = [IsSchoolAdminOrPlatformAdmin]
 
     def get_queryset(self):
-        qs = _admin_scope(PosTransaction.objects.select_related("device", "student").prefetch_related("items"),
-                          self.request.user, self.request.query_params)
-        params = self.request.query_params
-        for f in ("device", "student", "sync_status", "review_status"):
-            if params.get(f):
-                qs = qs.filter(**{f: params[f]})
-        return qs
+        return services.transactions_for(self.request.user, self.request.query_params)
 
 
 class ShortfallViewSet(PosTransactionViewSet):
@@ -193,16 +172,7 @@ class ShortfallViewSet(PosTransactionViewSet):
     recovering/resolved ones). POST /pos/shortfalls/{id}/resolve/."""
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        if not self.request.query_params.get("review_status"):
-            qs = qs.filter(review_status=PosTransaction.ReviewStatus.PENDING) if self.action == "list" else qs.exclude(
-                review_status=PosTransaction.ReviewStatus.NONE)
-        kind = self.request.query_params.get("type")
-        if kind == "shortfall":
-            qs = qs.filter(shortfall_amount__gt=0)
-        elif kind == "flagged":
-            qs = qs.filter(shortfall_amount=0)
-        return qs
+        return services.shortfalls_for(self.request.user, self.request.query_params, for_list=self.action == "list")
 
     @action(detail=True, methods=["post"])
     def resolve(self, request, pk=None):

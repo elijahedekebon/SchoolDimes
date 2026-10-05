@@ -697,3 +697,62 @@ def pos_p2p_transfer(device, *, sender_card_uid, pin, recipient_card_uid, amount
         raise ServiceError("recipient_card_inactive", _("The recipient's card is not active."), status=422)
     return p2p_transfer(sender_card.student, recipient_card.student, amount, device=device,
                         sender_card=sender_card, note=note, idempotency_key=idempotency_key)
+
+
+
+# ---------------------------------------------------------------------------
+# Admin querysets (shared by the API viewsets and the web pages)
+# ---------------------------------------------------------------------------
+
+def admin_scope(qs, user, params=None):
+    """school_admin: own school. platform_admin: all, or ?school= to narrow."""
+    from core.permissions import is_platform_admin
+
+    if is_platform_admin(user):
+        school = (params or {}).get("school")
+        return qs.filter(school_id=school) if school else qs
+    return qs.filter(school_id=user.school_id)
+
+
+def devices_for(user, params):
+    """GET /pos/devices/: ?device_role=, ?status=, ?stale=true (+?school= for platform_admin)."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin
+
+    if params.get("stale") == "true":
+        if is_platform_admin(user) and not params.get("school"):
+            raise ServiceError("school_required", _("platform_admin must pass ?school=<id>."))
+        school_id = params.get("school") if is_platform_admin(user) else user.school_id
+        return stale_devices(int(school_id))
+    qs = admin_scope(Device.objects.all(), user, params)
+    for f in ("device_role", "status"):
+        if params.get(f):
+            qs = qs.filter(**{f: params[f]})
+    return qs
+
+
+def transactions_for(user, params):
+    """GET /pos/transactions/: ?device=, ?student=, ?sync_status=, ?review_status=."""
+    qs = admin_scope(PosTransaction.objects.select_related("device", "student").prefetch_related("items"),
+                     user, params)
+    for f in ("device", "student", "sync_status", "review_status"):
+        if params.get(f):
+            qs = qs.filter(**{f: params[f]})
+    return qs
+
+
+def shortfalls_for(user, params, *, for_list=True):
+    """GET /pos/shortfalls/: the review queue (pending by default on lists),
+    ?type=shortfall|flagged, ?review_status=."""
+    qs = transactions_for(user, params)
+    if not params.get("review_status"):
+        qs = qs.filter(review_status=PosTransaction.ReviewStatus.PENDING) if for_list else qs.exclude(
+            review_status=PosTransaction.ReviewStatus.NONE)
+    kind = params.get("type")
+    if kind == "shortfall":
+        qs = qs.filter(shortfall_amount__gt=0)
+    elif kind == "flagged":
+        qs = qs.filter(shortfall_amount=0)
+    return qs

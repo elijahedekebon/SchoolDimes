@@ -230,7 +230,39 @@ msgstr "ekkomo ly'wiiki lisukkiddwa"
 
 # --- Web surfaces (web/**): untranslated entries fall back to English ---
 
+msgid "%(confirmed)s confirmed · %(pending)s pending"
+msgstr ""
+
+msgid "%(count)s confirmed"
+msgstr ""
+
+msgid "%(count)s pending"
+msgstr ""
+
+msgid "%(count)s sale"
+msgid_plural "%(count)s sales"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "%(count)s total"
+msgstr ""
+
+msgid "Accept (acknowledge the flag)"
+msgstr ""
+
 msgid "All"
+msgstr ""
+
+msgid "All devices synced recently."
+msgstr ""
+
+msgid "Amount"
+msgstr ""
+
+msgid "Amount rung up at the till"
+msgstr ""
+
+msgid "Amount the ledger actually moved"
 msgstr ""
 
 msgid "Analytics"
@@ -242,10 +274,34 @@ msgstr ""
 msgid "Audit log"
 msgstr ""
 
+msgid "Balanced"
+msgstr ""
+
+msgid "Books NOT balanced — investigate"
+msgstr ""
+
+msgid "Books balanced"
+msgstr ""
+
+msgid "By day"
+msgstr ""
+
+msgid "By device"
+msgstr ""
+
+msgid "By merchant"
+msgstr ""
+
 msgid "Cancel"
 msgstr ""
 
 msgid "Cards"
+msgstr ""
+
+msgid "Channel"
+msgstr ""
+
+msgid "Charge the guardian"
 msgstr ""
 
 msgid "Close"
@@ -254,13 +310,31 @@ msgstr ""
 msgid "Code"
 msgstr ""
 
+msgid "Collected"
+msgstr ""
+
 msgid "Confirm"
 msgstr ""
 
 msgid "Data requests"
 msgstr ""
 
+msgid "Date"
+msgstr ""
+
+msgid "Deposits"
+msgstr ""
+
+msgid "Deposits confirmed today"
+msgstr ""
+
+msgid "Device"
+msgstr ""
+
 msgid "Devices"
+msgstr ""
+
+msgid "Devices not syncing"
 msgstr ""
 
 msgid "Disputes"
@@ -272,19 +346,67 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
+msgid "Every amount next to a ledger amount is recomputed from the ledger entries carrying its reference. Sum of every wallet in the school:"
+msgstr ""
+
+msgid "Every wallet in the school sums to zero"
+msgstr ""
+
+msgid "Export CSV"
+msgstr ""
+
+msgid "Fee payments"
+msgstr ""
+
 msgid "Fees"
 msgstr ""
 
 msgid "Financial tips"
 msgstr ""
 
+msgid "Flags"
+msgstr ""
+
 msgid "For school administrators, platform staff and students (student portal)."
+msgstr ""
+
+msgid "From"
+msgstr ""
+
+msgid "From the ledger: every figure traces to POS transactions and their ledger entries."
+msgstr ""
+
+msgid "Gross"
 msgstr ""
 
 msgid "Guardians & KYC"
 msgstr ""
 
 msgid "Insufficient funds."
+msgstr ""
+
+msgid "Item"
+msgstr ""
+
+msgid "Last sync"
+msgstr ""
+
+msgid "Ledger"
+msgstr ""
+
+msgid "Ledger books"
+msgstr ""
+
+msgid "Ledger reference"
+msgstr ""
+
+msgid "Line items"
+msgstr ""
+
+msgid "Line total"
+msgstr ""
+
+msgid "MISMATCH"
 msgstr ""
 
 msgid "Mark all read"
@@ -296,22 +418,70 @@ msgstr ""
 msgid "My SchoolDimes"
 msgstr ""
 
+msgid "NOT balanced"
+msgstr ""
+
+msgid "Needs review"
+msgstr ""
+
+msgid "No line items were sent with this sale."
+msgstr ""
+
+msgid "No money moves. The flag is acknowledged and the sale stays as recorded."
+msgstr ""
+
+msgid "No money moves. The school (or merchant) absorbs the outstanding amount."
+msgstr ""
+
 msgid "No notifications."
+msgstr ""
+
+msgid "No sync within the school's stale limit"
+msgstr ""
+
+msgid "Notes"
 msgstr ""
 
 msgid "Nothing here yet."
 msgstr ""
 
+msgid "Nothing waiting for review."
+msgstr ""
+
 msgid "Notifications"
 msgstr ""
 
+msgid "Offline sales that synced with a shortfall or broke a policy rule. Nothing is dropped: decide what happens here."
+msgstr ""
+
+msgid "Offline shortfalls and policy flags"
+msgstr ""
+
 msgid "Onboard a school"
+msgstr ""
+
+msgid "One Kampala day. POS figures are for transactions synced that day, when their ledger entries were written."
+msgstr ""
+
+msgid "Open P2P alerts"
+msgstr ""
+
+msgid "Open disputes"
+msgstr ""
+
+msgid "Outstanding"
+msgstr ""
+
+msgid "Outstanding shortfall"
 msgstr ""
 
 msgid "Overview"
 msgstr ""
 
 msgid "P2P alerts"
+msgstr ""
+
+msgid "POS collected"
 msgstr ""
 
 msgid "Parents use the SchoolDimes mobile app, not this dashboard."
@@ -323,7 +493,16 @@ msgstr ""
 msgid "Payment issues"
 msgstr ""
 
+msgid "Pending data requests"
+msgstr ""
+
 msgid "Policy & settings"
+msgstr ""
+
+msgid "Policy flags only"
+msgstr ""
+
+msgid "Pooled fund balances"
 msgstr ""
 
 msgid "Pooled funds"
@@ -332,22 +511,76 @@ msgstr ""
 msgid "Products"
 msgstr ""
 
+msgid "Qty"
+msgstr ""
+
+msgid "Received by server"
+msgstr ""
+
 msgid "Reconciliation"
+msgstr ""
+
+msgid "Recover from next top-up"
+msgstr ""
+
+msgid "Recovered"
 msgstr ""
 
 msgid "Referrals"
 msgstr ""
 
+msgid "Reject reason"
+msgstr ""
+
+msgid "Rejected"
+msgstr ""
+
+msgid "Resolution"
+msgstr ""
+
+msgid "Resolve"
+msgstr ""
+
+msgid "Resolve transaction #%(id)s"
+msgstr ""
+
+msgid "Review"
+msgstr ""
+
+msgid "Review notes"
+msgstr ""
+
 msgid "Review queue"
 msgstr ""
 
+msgid "Review status"
+msgstr ""
+
+msgid "Role"
+msgstr ""
+
+msgid "Sale time"
+msgstr ""
+
 msgid "Sales"
+msgstr ""
+
+msgid "Sales today (collected)"
+msgstr ""
+
+msgid "Same as recovery, plus a payment request for the outstanding amount is sent to the primary guardian's phone."
 msgstr ""
 
 msgid "SchoolDimes back-office"
 msgstr ""
 
 msgid "Schools"
+msgstr ""
+
+msgid "Shortfall"
+msgstr ""
+
+msgid "Shortfalls"
 msgstr ""
 
 msgid "Sign in"
@@ -365,14 +598,68 @@ msgstr ""
 msgid "Staff accounts"
 msgstr ""
 
+msgid "Stale / unsynced devices"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Student"
+msgstr ""
+
 msgid "Students"
 msgstr ""
 
 msgid "Support"
 msgstr ""
 
+msgid "Sync status"
+msgstr ""
+
+msgid "System wallets"
+msgstr ""
+
+msgid "Takes what the student's main wallet holds now, then collects from every later confirmed top-up until the shortfall is repaid."
+msgstr ""
+
+msgid "The aggregator clearing wallet is normally negative: it is money the payment aggregator owes the school."
+msgstr ""
+
 msgid "This account can't use the web dashboard. Canteen and merchant staff use the POS app; parents use the mobile app."
 msgstr ""
 
+msgid "To"
+msgstr ""
+
+msgid "Today, %(date)s (Africa/Kampala)"
+msgstr ""
+
+msgid "Transaction"
+msgstr ""
+
+msgid "Transactions"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Unit price"
+msgstr ""
+
+msgid "Unresolved reviews"
+msgstr ""
+
+msgid "Until real POS devices are in use, sales, shortfalls and attendance come from the backend's simulate_pos command."
+msgstr ""
+
+msgid "Until real devices exist, this queue is filled by the backend's simulate_pos command."
+msgstr ""
+
+msgid "Write off"
+msgstr ""
+
 msgid "Your session ended. Please sign in again."
+msgstr ""
+
+msgid "matches ledger"
 msgstr ""

@@ -9,7 +9,22 @@ from django.utils.module_loading import import_string
 
 SCOPES = {
     "notifications": "notifications.services.inbox",
+    # Section B
+    "devices": "pos.services.devices_for",
+    "transactions": "pos.services.transactions_for",
+    "shortfalls": "pos.services.shortfalls_for",
+    "review_items": "web.core.scoping.review_items",
+    "disputes": "disputes.services.disputes_for",
+    "p2p_alerts": "wallets.p2p.alerts_for",
+    "data_requests": "privacy.services.data_requests_for",
 }
+
+
+def review_items(user, params):
+    """A single review-queue row (what the API's ShortfallViewSet detail/resolve sees)."""
+    from pos.services import shortfalls_for
+
+    return shortfalls_for(user, params, for_list=False)
 
 
 def scoped(user, name, params=None):
