@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.permissions import is_platform_admin, is_school_admin
+from core.throttles import AuthThrottle
 
 from .models import GuardianVerification, User
 from .serializers import (
@@ -17,6 +18,8 @@ from .serializers import (
 
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    # Part 4A: per-IP rate limit (AUTH_THROTTLE_RATE) against password guessing.
+    throttle_classes = [AuthThrottle]
 
 
 class LogoutView(APIView):

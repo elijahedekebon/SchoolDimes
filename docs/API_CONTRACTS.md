@@ -1291,3 +1291,35 @@ Every change below is **additive**. No Part 1 field was renamed or removed.
 | Notifications | `notifications/`, `…/{id}/read/`, `…/read-all/`, `…/preferences/`, `…/push-tokens/` |
 | Privacy | `privacy/my-data/`, `privacy/data-requests/`, `…/{id}/handle/` |
 | Analytics | `analytics/sales-summary|best-sellers|peak-hours|category-breakdown|reconciliation/`, `analytics/students/{id}/spending/` |
+
+---
+
+## Part 4A — Web surfaces & parent-app readiness
+
+Every Part 4A addition is **additive**: no existing path, field or response
+shape changed (the one behaviour fix is called out explicitly). Same
+conventions as Part 2 (trailing slash optional on new routes, `{code, detail}`
+errors, `404` for "not yours"). Runnable examples: `docs/requests/part4a.http`
+and, for the parent app, `docs/requests/parent/`.
+
+### Cross-cutting (Section A)
+- **Login throttling.** `POST /api/v1/auth/login` (and `/auth/register`,
+  Section J) are rate-limited per client IP (`AUTH_THROTTLE_RATE`, default
+  `10/min`) → `429 {"detail": "Request was throttled. Expected available in N seconds."}`.
+- **CORS.** Allowed browser origins come from `CORS_ALLOWED_ORIGINS`
+  (default `http://localhost:3000`). The admin dashboard itself calls the API
+  server-side through its own proxy (see DECISIONS.md), so CORS is only needed
+  by direct browser clients.
+
+#### `GET /api/v1/my-school/`
+JWT, any role. Read-only name and branding of the caller's school(s), for
+headers and theming (`/schools/` stays platform-only).
+```json
+{ "school": { "id": 1, "name": "Kampala Demo Primary School",
+              "branding": { "logo_url": "…", "primary_color": "#1F6FEB" },
+              "supported_languages": ["en", "lg"] },
+  "schools": [ { …same shape… } ] }
+```
+Staff and students: `school` is their school, `schools` = `[school]`.
+Parents: `school: null`, `schools` = the schools of their linked children.
+platform_admin: `{"school": null, "schools": []}`.

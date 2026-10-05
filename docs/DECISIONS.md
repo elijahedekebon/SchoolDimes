@@ -710,3 +710,62 @@ and `notifications.tasks.retry_pending_notifications`.
 - **Real integrations (any time)**: aggregator clients (Flutterwave /
   Pesapal / DPO skeletons), Africa's Talking SMS, FCM push.
 - **Native-speaker review of Luganda strings** (`notifications/translations.py`).
+
+## Part 4A — Web surfaces & parent-app readiness
+
+### Dashboard stack
+- **One Next.js app** (`admin-dashboard/`, App Router, TypeScript, Next 16)
+  serves the school admin area (`/school`), the platform back-office
+  (`/platform`), the student portal (`/student`) and the public contributor
+  page (`/give/{token}`). A separate `platform-backoffice/` app wasn't needed:
+  the back-office is ~7 pages that share the shell, API client and auth.
+- **Mantine** is the single component library (tables, forms, modals,
+  notifications, dates). **Recharts** is the single charting library.
+  **next-intl** handles en/lg/sw. **qrcode.react** draws the device-token QR.
+  **Vitest** for unit tests, **Playwright** for end-to-end.
+- Next.js 16 renamed middleware to `proxy` (`src/proxy.ts`); it does the
+  optimistic role check. Every API call is still authorised by Django.
+
+### Tokens live in httpOnly cookies behind a server-side proxy
+The browser never sees a JWT. `POST /api/auth/login` (a Next.js route handler)
+logs in against Django and stores `access`/`refresh` in `httpOnly`,
+`SameSite=Lax` cookies (`Secure` when `COOKIE_SECURE=true`). The page calls
+`/api/proxy/<path>` on its own origin; the handler forwards to
+`<API>/api/v1/<path>` with `Authorization: Bearer`, refreshes once when the
+access token is expired or Django answers 401 (rotating both cookies), and
+clears the cookies when the refresh fails (the page then shows "session
+ended"). Concurrent requests share one refresh call, because refresh tokens
+rotate and are blacklisted on use. Why not localStorage: any XSS could read a
+token there; an httpOnly cookie can't be read by script. CSRF: the proxy
+only accepts same-origin `fetch` with JSON bodies and `SameSite=Lax` cookies
+are not sent on cross-site POSTs. Logout calls Django's `/auth/logout`
+(blacklists the refresh token) and clears the cookies.
+
+### Who can use the web dashboard
+`school_admin` → `/school`, `platform_admin` → `/platform`, `student` →
+`/student`. Parents (mobile app) and canteen/merchant staff (POS app) are
+refused at login with a clear message, and their freshly issued refresh
+token is blacklisted at once. A platform_admin is sent to `/platform` rather
+than into a single school's admin pages: cross-tenant reads live under
+`/platform/support`, where every request names the school explicitly
+(`?school=`), and the backend audit-logs platform_admin writes.
+
+### Language
+The UI locale is a cookie (`NEXT_LOCALE`), set at login from the JWT's
+`preferred_language` claim. The switcher updates the cookie and PATCHes
+`/me {preferred_language}`. The proxy forwards it as `Accept-Language`, so
+Django's error `detail`s come back translated too. lg/sw message files only
+contain keys a native speaker has provided; everything else falls back to
+English and is listed in `docs/TRANSLATIONS_TODO.md`.
+
+### Money and time in the browser
+Amounts stay decimal strings end to end. The dashboard parses them to integer
+cents (`BigInt`) only to compare or sum, and formats with string grouping;
+no `parseFloat` on money. Day pickers and "today" use Africa/Kampala.
+
+### Backend additions in Section A
+- `django-cors-headers`, origins from `CORS_ALLOWED_ORIGINS`.
+- `core.throttles.AuthThrottle` on login (`AUTH_THROTTLE_RATE`, 10/min/IP):
+  the dashboard and parent app expose a password form to the internet.
+- `GET /my-school/`: staff couldn't read their own school's name/branding
+  (`/schools/` is platform-only and also exposes policy JSON).

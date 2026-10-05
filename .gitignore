@@ -19,3 +19,5 @@ node_modules/
 __pycache__/
 *.pyc
 *.sqlite3
+
+!/admin-dashboard/.env.example

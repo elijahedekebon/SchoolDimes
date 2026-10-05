@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "django_celery_beat",
+    "corsheaders",
     # schooldimes apps
     "core",
     "accounts",
@@ -58,6 +59,7 @@ AUTH_USER_MODEL = "accounts.User"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -217,3 +219,14 @@ P2P_ALERT_NEAR_CAP_COUNT = env.int("P2P_ALERT_NEAR_CAP_COUNT", default=3)
 # At most one low-balance alert per guardian per wallet in this many hours.
 LOW_BALANCE_ALERT_THROTTLE_HOURS = env.int("LOW_BALANCE_ALERT_THROTTLE_HOURS", default=12)
 
+
+# ---------------------------------------------------------------------------
+# Part 4A -- web surfaces
+# ---------------------------------------------------------------------------
+# The admin dashboard talks to the API through its own server-side proxy, so
+# browsers normally never call the API cross-origin. CORS is still configured
+# (from env, never hardcoded) for tools and any direct browser client.
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
+CORS_ALLOW_CREDENTIALS = False
+# Per-IP rate limit for credential endpoints (login, register).
+AUTH_THROTTLE_RATE = env("AUTH_THROTTLE_RATE", default="10/min")

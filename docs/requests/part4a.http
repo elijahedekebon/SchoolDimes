@@ -1,0 +1,15 @@
+### Part 4A additions — VS Code REST Client
+# Log in first (seed credentials), then copy the access token into @token.
+@base = http://localhost:8000/api/v1
+@token = paste-access-token
+@platformToken = paste-platform-admin-access-token
+
+### Log in as the demo school admin (throttled: AUTH_THROTTLE_RATE per IP)
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "admin@kampaladps.schooldimes.test", "password": "pw123456" }
+
+### Section A — my school's name and branding
+GET {{base}}/my-school/
+Authorization: Bearer {{token}}
