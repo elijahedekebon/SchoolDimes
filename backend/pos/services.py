@@ -165,6 +165,38 @@ def pin_hash_scheme() -> dict:
     }
 
 
+def device_info(device) -> dict:
+    """Part 3: GET /pos/device/ payload."""
+    school = device.school
+    settings_ = get_school_settings(device.school_id)
+    merchant = device.merchant if device.merchant_id else None
+    languages = school.supported_languages or ["en"]
+    return {
+        "id": device.pk,
+        "device_name": device.device_name,
+        "device_role": device.device_role,
+        "status": device.status,
+        "school": {"id": school.pk, "name": school.name, "branding": school.branding or {},
+                   "supported_languages": languages, "default_language": languages[0]},
+        "merchant": None if merchant is None else {"id": merchant.pk, "name": merchant.name},
+        "settings": {
+            "offline_spend_ceiling": money(settings_.offline_spend_ceiling),
+            "pin_lockout_threshold": settings_.pin_lockout_threshold,
+            "attendance_on_canteen_devices": settings_.attendance_on_canteen_devices,
+        },
+        "can_sell": device.device_role in (Device.Role.CANTEEN, Device.Role.MERCHANT),
+        "can_record_attendance": _may_record_attendance(device),
+        "can_p2p": device.device_role == Device.Role.CANTEEN,
+        "server_time": timezone.now().isoformat(),
+    }
+
+
+def _may_record_attendance(device) -> bool:
+    from attendance.services import device_may_record_attendance
+
+    return device_may_record_attendance(device)
+
+
 def build_cache(device, since=None, now=None) -> dict:
     """GET /pos/cache/ payload. With `since`, only rows changed after it are
     returned (cards whose card/wallet/student/override changed; products and
@@ -206,6 +238,15 @@ def build_cache(device, since=None, now=None) -> dict:
             device_local_timestamp__gte=day_start, device_local_timestamp__lt=day_end,
         ).order_by().values_list("wallet_id").annotate(s=Sum("amount"))
     )
+    # Part 3 contract addition: week-to-date spend (Monday start, Kampala), so
+    # devices can check weekly_spend_cap offline too.
+    week_start = day_start - timedelta(days=day_start.weekday())
+    week_spend = dict(
+        PosTransaction.objects.filter(
+            wallet__in=wallets.values(), sync_status__in=["applied", "shortfall"],
+            device_local_timestamp__gte=week_start, device_local_timestamp__lt=day_end,
+        ).order_by().values_list("wallet_id").annotate(s=Sum("amount"))
+    )
     overrides = {p.student_id: p for p in Policy.objects.filter(student_id__in=student_ids)}
     policy_cache = {}
 
@@ -227,6 +268,7 @@ def build_cache(device, since=None, now=None) -> dict:
             "wallet_id": wallet.pk,
             "balance": str(wallet.cached_balance),
             "today_spend": money(spend.get(wallet.pk)),
+            "week_spend": money(week_spend.get(wallet.pk)),
             "offline_spend_ceiling": money(school_settings[student.school_id].offline_spend_ceiling),
             "policy": policy_cache[student.pk],
         })
@@ -244,6 +286,7 @@ def build_cache(device, since=None, now=None) -> dict:
         "full": since is None,
         "full_school_ids": sorted(full_school_ids),
         "spend_day": day_start.date().isoformat(),
+        "week_start": week_start.date().isoformat(),
         "device": {
             "id": device.pk, "device_name": device.device_name, "device_role": device.device_role,
             "school_id": device.school_id, "merchant_id": device_merchant_id(device),

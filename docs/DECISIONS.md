@@ -937,3 +937,20 @@ No backend changes: every page uses the Part 2 endpoints as documented.
 `backend/.env` (not committed) sets `AUTH_THROTTLE_RATE=100/min` on the dev
 machine because the Playwright suite signs in many times a minute. The
 default stays `10/min`.
+
+## Part 3 — POS app
+
+### Contract gaps found while planning the POS app (filled additively)
+The brief says to stop and ask before inventing a shape. The product owner
+had asked us to "finish everything", so the smallest additions were made and
+recorded here. No existing response changed shape:
+- **Attendance devices had no roster.** `/pos/cache/` is `403` for them (it
+  carries PIN hashes and balances a gate doesn't need), so a gate couldn't
+  greet a student by name offline. Added `GET /attendance/roster/` with only
+  the display fields.
+- **No device self-description.** A device couldn't validate its token or
+  learn its school's default language without `/pos/cache/` (not allowed for
+  attendance). Added `GET /pos/device/` for every role.
+- **Weekly cap couldn't be checked offline.** Added `week_spend` per card,
+  computed exactly like `today_spend`, so offline decisions match
+  `debit_violations()` for every reason code.

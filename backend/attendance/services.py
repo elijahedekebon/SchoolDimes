@@ -79,3 +79,30 @@ def record_taps(device, taps: list) -> list:
                        else {"idempotency_key": None, "status": "rejected", "reason": "malformed"})
     Device.objects.filter(pk=device.pk).update(last_sync_at=timezone.now())
     return results
+
+
+
+def build_roster(device, since=None) -> dict:
+    """Part 3: the attendance device's offline roster -- every card of the
+    device's school (lost cards included so they can be refused), with only
+    what the gate shows. Incremental with ?since= like /pos/cache/."""
+    from django.db.models import Q
+    from django.utils import timezone
+
+    from cards.models import Card
+
+    now = timezone.now()
+    cards = Card.objects.filter(school_id=device.school_id).select_related("student")
+    if since is not None:
+        cards = cards.filter(Q(updated_at__gt=since) | Q(student__updated_at__gt=since))
+    return {
+        "generated_at": now.isoformat(),
+        "since": since.isoformat() if since else None,
+        "full": since is None,
+        "cards": [
+            {"card_uid": c.card_uid, "status": c.status, "student_id": c.student_id,
+             "student_display_name": c.student.name, "class_name": c.student.class_name,
+             "photo_url": c.student.photo.url if c.student.photo else None}
+            for c in cards
+        ],
+    }

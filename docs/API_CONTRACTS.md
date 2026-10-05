@@ -1584,3 +1584,41 @@ school_admin: their school; platform_admin: all (`?school=`). Filters
 #### `GET /api/v1/payments/deposits/` (extended)
 `?from_contributor=true` → only money sent by relatives through top-up links
 (the "contributions received" list); `false` → only the family's own.
+
+---
+
+## Part 3 — POS app contract additions (additive)
+
+#### `GET /api/v1/pos/device/`
+**Device** auth, **any role** (canteen, merchant, attendance). Validates the
+token and describes the device; used at provisioning and on start-up.
+```json
+{ "id": 3, "device_name": "Main gate", "device_role": "attendance", "status": "active",
+  "school": { "id": 1, "name": "Kampala Demo Primary School", "branding": {…},
+              "supported_languages": ["en", "lg"], "default_language": "en" },
+  "merchant": { "id": 2, "name": "Ntinda Bookshop" } | null,
+  "settings": { "offline_spend_ceiling": "2000.00", "pin_lockout_threshold": 5,
+                "attendance_on_canteen_devices": false },
+  "can_sell": false, "can_record_attendance": true, "can_p2p": false,
+  "server_time": "…" }
+```
+Revoked/unknown token → `401 {"detail": "Invalid or revoked device token."}`.
+
+#### `GET /api/v1/attendance/roster/?since=<ISO>`
+**Device** auth, devices that may record attendance (attendance role, or
+canteen when `attendance_on_canteen_devices`; else `403`). The gate's offline
+roster: every card of the device's school, **without** PIN hashes, balances
+or policies.
+```json
+{ "generated_at": "…", "since": null, "full": true,
+  "cards": [ { "card_uid": "04a2…", "status": "active", "student_id": 1,
+               "student_display_name": "Amina Nakato", "class_name": "P4", "photo_url": null } ] }
+```
+With `since` (pass the previous `generated_at`), only cards whose card or
+student changed are returned. Replace by `card_uid`.
+
+#### `GET /api/v1/pos/cache/` (extended)
+Each card gains `"week_spend"` (gross purchases since Monday 00:00
+Africa/Kampala, same rules as `today_spend`), and the payload gains
+`"week_start": "YYYY-MM-DD"`. A device checks `weekly_spend_cap` offline
+against `week_spend + offline spend since the refresh`.

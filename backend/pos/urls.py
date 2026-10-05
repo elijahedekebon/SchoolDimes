@@ -10,6 +10,7 @@ router.register(r"pos/transactions", views.PosTransactionViewSet, basename="post
 router.register(r"pos/shortfalls", views.ShortfallViewSet, basename="posshortfall")
 
 urlpatterns = [
+    re_path(r"^pos/device/?$", views.DeviceInfoView.as_view(), name="pos-device"),  # Part 3
     re_path(r"^pos/cache/?$", views.PosCacheView.as_view(), name="pos-cache"),
     re_path(r"^pos/sync/?$", views.PosSyncView.as_view(), name="pos-sync"),
     re_path(r"^pos/purchase/?$", views.PosPurchaseView.as_view(), name="pos-purchase"),

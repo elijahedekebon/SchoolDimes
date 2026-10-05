@@ -107,6 +107,18 @@ class _DeviceView(APIView):
         return self.request.user.device
 
 
+class DeviceInfoView(_DeviceView):
+    """Part 3 contract addition: GET /pos/device/ -- any device role. Lets a
+    device validate its token at provisioning and learn its role, school,
+    merchant and the per-school settings it needs (incl. attendance devices,
+    which can't read /pos/cache/)."""
+
+    device_roles = None
+
+    def get(self, request):
+        return Response(services.device_info(self.device))
+
+
 class PosCacheView(_DeviceView):
     def get(self, request):
         since = None

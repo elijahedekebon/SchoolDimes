@@ -84,3 +84,23 @@ class AttendanceViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         if self.request.query_params.get("student"):
             qs = qs.filter(student_id=self.request.query_params["student"])
         return filter_by_date(qs, self.request.query_params)
+
+
+
+class AttendanceRosterView(APIView):
+    """Part 3 contract addition: GET /attendance/roster/?since=<ISO> -- for
+    devices that record attendance. Names/photos so the gate can greet a
+    student offline; no PIN hashes, balances or policies."""
+
+    authentication_classes = [DeviceTokenAuthentication]
+    permission_classes = [_CanRecordAttendance]
+
+    def get(self, request):
+        from django.utils.dateparse import parse_datetime
+
+        since = None
+        if request.query_params.get("since"):
+            since = parse_datetime(request.query_params["since"])
+            if since is None:
+                raise ServiceError("since_invalid", _("since must be an ISO-8601 timestamp."))
+        return Response(services.build_roster(request.user.device, since=since))
