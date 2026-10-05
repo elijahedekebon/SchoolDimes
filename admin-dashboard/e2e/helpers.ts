@@ -11,10 +11,22 @@ export async function login(page: Page, who: { email: string; password: string }
   await page.getByRole("button", { name: "Sign in" }).click();
 }
 
-/** Page loaded its data: no error alert and no spinner left after the network settles. */
+const watched = new WeakSet<Page>();
+const i18nErrors = new WeakMap<Page, string[]>();
+
+/** Page loaded its data: no error alert, and no missing/misformatted translation. */
 export async function expectRendered(page: Page, path: string) {
+  if (!watched.has(page)) {
+    watched.add(page);
+    i18nErrors.set(page, []);
+    page.on("console", (m) => {
+      if (m.type() === "error" && /MISSING_MESSAGE|FORMATTING_ERROR|INVALID_MESSAGE/.test(m.text())) i18nErrors.get(page)!.push(m.text());
+    });
+  }
+  i18nErrors.get(page)!.length = 0;
   await page.goto(path);
   await page.waitForLoadState("networkidle");
   await expect(page.getByTestId("error-alert"), `error on ${path}`).toHaveCount(0);
   await expect(page.locator("h2").first(), `heading on ${path}`).toBeVisible();
+  expect(i18nErrors.get(page), `translation errors on ${path}`).toEqual([]);
 }

@@ -11,11 +11,10 @@ const PASS_RESPONSE_HEADERS = ["content-type", "content-disposition", "retry-aft
  * Forwards a browser request on /api/proxy/<rest> to <backend>/api/v1/<rest>,
  * adding the Bearer token from the httpOnly cookie. If the access token is
  * expired (or the backend answers 401) it refreshes once and retries.
- * When /api/public/<rest> is used, no credentials are attached at all.
  */
-export async function forward(req: NextRequest, prefix: "/api/proxy" | "/api/public"): Promise<NextResponse> {
+export async function forward(req: NextRequest, prefix: "/api/proxy"): Promise<NextResponse> {
   const rest = req.nextUrl.pathname.slice(prefix.length) || "/";
-  const target = `${apiBaseUrl()}/api/v1${prefix === "/api/public" ? "/public" : ""}${rest}${req.nextUrl.search}`;
+  const target = `${apiBaseUrl()}/api/v1${rest}${req.nextUrl.search}`;
   const body = ["GET", "HEAD"].includes(req.method) ? undefined : await req.arrayBuffer();
   const locale = req.cookies.get(LOCALE_COOKIE)?.value;
 
@@ -29,8 +28,6 @@ export async function forward(req: NextRequest, prefix: "/api/proxy" | "/api/pub
     if (fwd) headers["X-Forwarded-For"] = fwd;
     return fetch(target, { method: req.method, headers, body, cache: "no-store", redirect: "manual" });
   };
-
-  if (prefix === "/api/public") return toNext(await send());
 
   let access = req.cookies.get(ACCESS_COOKIE)?.value;
   const refresh = req.cookies.get(REFRESH_COOKIE)?.value;

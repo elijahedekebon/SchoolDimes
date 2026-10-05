@@ -891,3 +891,22 @@ No backend changes: every page uses the Part 2 endpoints as documented.
 - The portal is read-only and simple: balances, savings goals, the last 10
   purchases with items, and one tip in the student's language. The physical
   card remains the primary student client.
+
+### Section I — contributor page security model (confirms Part 2's)
+- The link token (43-char URL-safe random, revocable, optional expiry) is the
+  only credential. The page shows **only** what the public endpoint returns:
+  the student's first name and the school's name. Unknown, revoked and
+  expired tokens all look the same ("this link isn't active").
+- **Throttling stays in the backend** (`PUBLIC_TOPUP_THROTTLE_RATE`, per IP).
+  So the throttle counts real client IPs, this page calls the API from the
+  browser rather than through the dashboard's server proxy (through the
+  proxy, every contributor would share the dashboard server's IP). Trusting
+  `X-Forwarded-For` was rejected: it would let any direct caller spoof IPs.
+- **Cheap bot deterrent:** a hidden honeypot field and a 3-second minimum
+  fill time. No CAPTCHA (an extra third party, and heavy on low-end phones).
+- **Idempotency:** one key per attempt, kept on a network-error retry and
+  renewed only after success. A flaky connection can't create two
+  collections.
+- Status is polled every 3 s for up to ~3 minutes; after that the page says
+  it's safe to close (money is only credited on the aggregator's
+  confirmation).

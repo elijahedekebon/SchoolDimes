@@ -1495,3 +1495,17 @@ A `student`-role JWT may only call `/me`, `/auth/refresh`, `/auth/logout`,
 `/my-school/`, `/student-portal/me/` and `/financial-literacy-tips/`. Every
 other endpoint answers `403` for a student login (enforced by the default
 authentication class, `core.authentication.SchoolDimesJWTAuthentication`).
+
+### Section I — contributor top-up / gift page
+
+**Page URL (the parent app builds and shares these):**
+`<dashboard origin>/give/<StudentTopUpLink.token>`, e.g.
+`http://localhost:3000/give/mJz92…`. The backend's `share_url` field on
+`/payments/topup-links/` already contains exactly this, built from
+`PUBLIC_TOPUP_BASE_URL` (default changed to `http://localhost:3000/give`; set
+it to the public dashboard URL in production). **Use `share_url` as-is.**
+
+The page calls the Part 2 public endpoints **directly from the browser**
+(`/public/topup-links/{token}/`, `…/deposits/`, `…/deposits/{reference}/`,
+`…/gift-vouchers/`), so the backend's per-IP throttle sees each contributor's
+own IP. The dashboard origin must be in `CORS_ALLOWED_ORIGINS`.

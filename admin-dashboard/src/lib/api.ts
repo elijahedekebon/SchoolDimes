@@ -56,7 +56,7 @@ export function buildQuery(q?: Query): string {
   return s ? `?${s}` : "";
 }
 
-type Options = { method?: string; body?: unknown; query?: Query; base?: "/api/proxy" | "/api/public"; raw?: boolean };
+type Options = { method?: string; body?: unknown; query?: Query; base?: "/api/proxy" | "direct"; raw?: boolean };
 
 let onSessionExpired: (() => void) | null = null;
 export function setSessionExpiredHandler(fn: () => void) {
@@ -65,8 +65,15 @@ export function setSessionExpiredHandler(fn: () => void) {
 
 export async function apiFetch<T = unknown>(path: string, opts: Options = {}): Promise<T> {
   const base = opts.base ?? "/api/proxy";
-  const url = `${base}${path}${buildQuery(opts.query)}`;
-  const init: RequestInit = { method: opts.method ?? "GET", headers: { Accept: "application/json" }, credentials: "same-origin" };
+  // "direct": unauthenticated public endpoints, called from the browser so the
+  // backend's per-IP throttle sees each contributor's own IP (see DECISIONS.md).
+  const prefix = base === "direct" ? `${(process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "")}/api/v1` : base;
+  const url = `${prefix}${path}${buildQuery(opts.query)}`;
+  const init: RequestInit = {
+    method: opts.method ?? "GET",
+    headers: { Accept: "application/json" },
+    credentials: base === "direct" ? "omit" : "same-origin",
+  };
   if (opts.body !== undefined) {
     (init.headers as Record<string, string>)["Content-Type"] = "application/json";
     init.body = JSON.stringify(opts.body);

@@ -19,7 +19,7 @@ export type Role =
 
 export const DASHBOARD_ROLES: readonly Role[] = ["school_admin", "platform_admin", "student"];
 
-export const PUBLIC_PREFIXES = ["/login", "/give", "/api/auth", "/api/public", "/_next", "/favicon"];
+export const PUBLIC_PREFIXES = ["/login", "/give", "/api/auth", "/_next", "/favicon"];
 
 export function homeFor(role: Role | null | undefined): string | null {
   switch (role) {

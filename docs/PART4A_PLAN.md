@@ -87,7 +87,7 @@ docs updated → commit `Part 4A – Section X: ...`.
 - Backend: `POST|DELETE /students/{id}/portal-account/` (school_admin), `GET /student-portal/me/`
 - Tests: student sees only self, other roles refused
 
-### [ ] I. Contributor page
+### [x] I. Contributor page
 - `/give/[token]` public page (link info, deposit or gift voucher, instructions, status polling)
 - `PUBLIC_TOPUP_BASE_URL` default → dashboard; security model confirmed in DECISIONS.md
 

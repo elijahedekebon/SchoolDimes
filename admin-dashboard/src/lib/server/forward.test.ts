@@ -58,20 +58,4 @@ describe("API proxy token refresh", () => {
     expect(res.headers.get("x-session-expired")).toBe("1");
     expect(res.cookies.get("sd_access")?.value).toBe("");
   });
-
-  it("public pass-through never sends credentials", async () => {
-    const seen: Array<Record<string, string>> = [];
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (_url: string, init: RequestInit) => {
-        seen.push(init.headers as Record<string, string>);
-        return new Response("{}", { status: 200 });
-      }),
-    );
-    const req = new NextRequest("http://localhost:3000/api/public/topup-links/tok/", {
-      headers: { cookie: `sd_access=${jwt({ exp: now() + 600 })}` },
-    });
-    await forward(req, "/api/public");
-    expect(seen[0].Authorization).toBeUndefined();
-  });
 });
