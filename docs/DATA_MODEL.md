@@ -637,3 +637,12 @@ Set only by `accounts.services.review_guardian_verification()`.
 ### `cards.Card.card_uid` — canonical format
 Lowercase hex, two digits per byte, reader byte order, no separators,
 4–32 bytes (`cards.services.normalize_card_uid()`). No schema change.
+
+### `students.StudentAccount` (Part 4A)
+| Field | Type | Notes |
+|---|---|---|
+| user | OneToOne → User (role `student`), CASCADE | the portal login |
+| student | OneToOne → Student, CASCADE | at most one login per student |
+| created_by | FK → User, null, SET_NULL | the admin who created it |
+| created_at | DateTimeField | |
+Created and removed only by `students.portal`.

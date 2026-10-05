@@ -1,4 +1,4 @@
-from rest_framework import permissions, viewsets
+from rest_framework import generics, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -84,7 +84,7 @@ class StudentViewSet(viewsets.ModelViewSet):
         return qs
 
     def get_permissions(self):
-        if self.action in ("create", "update", "partial_update", "destroy"):
+        if self.action in ("create", "update", "partial_update", "destroy", "portal_account"):
             return [IsSchoolAdminOrPlatformAdmin()]
         # Part 2 actions and (Part 4A, approved fix of the Part 1 quirk) every
         # read: scoping comes from get_queryset() -- parents only ever see
@@ -158,6 +158,46 @@ class StudentViewSet(viewsets.ModelViewSet):
         paginator = StandardResultsSetPagination()
         page = paginator.paginate_queryset(qs, request, view=self)
         return paginator.get_paginated_response(AttendanceRecordSerializer(page, many=True).data)
+
+
+    # ---- Part 4A: student portal login ---------------------------------
+
+    @action(detail=True, methods=["get", "post", "delete"], url_path="portal-account")
+    def portal_account(self, request, pk=None):
+        """GET/POST/DELETE /students/{id}/portal-account/ -- school_admin
+        (own school) / platform_admin. POST {email, password (>= 8)}."""
+        from django.utils.translation import gettext as _
+
+        from core.exceptions import ServiceError
+
+        from . import portal
+
+        student = self.get_object()  # queryset-scoped: other schools -> 404
+        if request.method == "POST":
+            email = (request.data.get("email") or "").strip()
+            password = request.data.get("password") or ""
+            if not email or len(password) < 8:
+                raise ServiceError("invalid", _("An email and a password of at least 8 characters are required."))
+            account = portal.create_portal_account(request.user, student, email=email, password=password)
+            return Response({"email": account.user.email, "is_active": account.user.is_active}, status=201)
+        if request.method == "DELETE":
+            portal.remove_portal_account(request.user, student)
+            return Response(status=204)
+        account = portal.portal_account_for(student)
+        if account is None:
+            raise ServiceError("not_found", _("This student has no portal login."), status=404)
+        return Response({"email": account.user.email, "is_active": account.user.is_active})
+
+
+class StudentPortalView(generics.GenericAPIView):
+    """Part 4A: GET /student-portal/me/ -- the signed-in student only."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from .portal import portal_summary
+
+        return Response(portal_summary(request.user))
 
 
 class GuardianViewSet(viewsets.ModelViewSet):

@@ -115,3 +115,20 @@ Authorization: Bearer {{platformToken}}
 ### Section G — support: one school's devices
 GET {{base}}/pos/devices/?school=1
 Authorization: Bearer {{platformToken}}
+
+### Section H — create a student-portal login (school admin)
+POST {{base}}/students/1/portal-account/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "email": "student.amina2@kampaladps.schooldimes.test", "password": "longpassword1" }
+
+### Section H — log in as the seeded student and read the portal
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "student.amina@kampaladps.schooldimes.test", "password": "pw123456" }
+
+###
+GET {{base}}/student-portal/me/
+Authorization: Bearer paste-student-access-token

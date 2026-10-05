@@ -82,7 +82,7 @@ docs updated → commit `Part 4A – Section X: ...`.
 - Backend: `POST /platform/schools/onboard/`, `GET /platform/schools/stats/`, `GET /audit-logs/`, `GET /payments/unmatched-webhooks/`
 - Test: a school onboarded purely via endpoints registers a device, issues a card and takes a simulated sale
 
-### [ ] H. Student portal
+### [x] H. Student portal
 - `/student` (balance, goals, recent purchases, tip)
 - Backend: `POST|DELETE /students/{id}/portal-account/` (school_admin), `GET /student-portal/me/`
 - Tests: student sees only self, other roles refused

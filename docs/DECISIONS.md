@@ -871,3 +871,23 @@ No backend changes: every page uses the Part 2 endpoints as documented.
   submission for parent2.
 - The Playwright onboarding test creates a new "E2E School <timestamp>" in
   the dev database on every run; that's intentional (it's the real flow).
+
+### Section H — student portal: school-issued login, not card + PIN
+- **Chosen: a school-issued `student` login** (email + password set by the
+  school admin), created per student from the student page. **Rejected: card
+  UID + PIN on the web.** A card PIN is 4–6 digits, so a public web form
+  keyed by a card UID could be brute-forced by anyone who has read the UID.
+  Counting web failures towards the existing PIN lockout would also let
+  anyone freeze any child's card from the internet. Passwords are longer,
+  login is rate-limited (`AUTH_THROTTLE_RATE`), and the login can be removed
+  without touching the card.
+- **Defence in depth.** Many Part 1/2 querysets scope "any non-parent role"
+  to the user's school, because they were written for staff. A student login
+  would therefore have seen every student's wallets and cards. Instead of
+  patching each queryset, the default JWT authentication class only lets
+  `student` logins reach an allowlist (`/me`, `/my-school/`,
+  `/student-portal/me/`, tips, refresh/logout). A test walks the main
+  school endpoints and expects `403` for each.
+- The portal is read-only and simple: balances, savings goals, the last 10
+  purchases with items, and one tip in the student's language. The physical
+  card remains the primary student client.

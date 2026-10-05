@@ -51,3 +51,18 @@ class Guardian(models.Model):
 
     def __str__(self):
         return f"{self.parent} -> {self.student} ({self.relationship})"
+
+
+class StudentAccount(models.Model):
+    """Part 4A: links a `student`-role login (school-issued, for the
+    read-only web student portal) to exactly one Student. The physical card
+    remains the student's main client; this is optional."""
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="student_account")
+    student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name="portal_account")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"StudentAccount({self.user_id} -> {self.student_id})"

@@ -1466,3 +1466,32 @@ platform_admin may narrow these existing lists with `?school=<id>`:
 `/pos/devices/`, `/pos/transactions/`, `/cards/`, `/payments/deposits/`
 (`/students/` already supported it). They remain read-mostly; platform_admin
 writes are audit-logged by the existing mixins.
+
+### Section H additions — student portal
+
+#### `GET|POST|DELETE /api/v1/students/{id}/portal-account/`
+JWT, school_admin (own school; other schools `404`) / platform_admin.
+POST `{ "email": "…", "password": "≥ 8 chars" }` creates a `student`-role
+login linked to this student (`409 portal_account_exists`, `409 email_taken`).
+GET → `{ "email", "is_active" }` or `404`. DELETE removes the login (`204`);
+the student's wallets, card and history are untouched.
+
+#### `GET /api/v1/student-portal/me/`
+JWT, **student** role only (everyone else `403`). Read-only:
+```json
+{ "student": { "id": 1, "name": "Amina Nakato", "first_name": "Amina", "class_name": "P4" },
+  "school": { "id": 1, "name": "…", "branding": {…} },
+  "main_balance": "25300.00", "savings_balance": "2000.00",
+  "savings_goals": [ {SavingsGoal incl. current_amount, progress_percent, is_reached} ],
+  "recent_purchases": [ { "id": 9, "when": "…", "amount": "1700.00", "place": "Simulator bookshop",
+                          "items": [ { "description": "Exercise book", "quantity": 1, "line_total": "1200.00" } ] } ],
+  "tip": { "title": "…", "body": "…", "language": "en" } }
+```
+Last 10 non-rejected POS purchases. The tip is in the student's
+`preferred_language` (school or platform-wide), falling back to English.
+
+#### Student logins are restricted to an allowlist (all endpoints)
+A `student`-role JWT may only call `/me`, `/auth/refresh`, `/auth/logout`,
+`/my-school/`, `/student-portal/me/` and `/financial-literacy-tips/`. Every
+other endpoint answers `403` for a student login (enforced by the default
+authentication class, `core.authentication.SchoolDimesJWTAuthentication`).

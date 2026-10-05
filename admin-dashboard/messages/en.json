@@ -871,5 +871,14 @@
     "actor": "Who",
     "target": "Target",
     "details": "Details"
+  },
+  "portal": {
+    "hello": "Hello, {name}!",
+    "spending": "Spending money",
+    "savings": "Savings",
+    "goals": "My savings goals",
+    "recent": "What I bought recently",
+    "noPurchases": "No purchases yet.",
+    "footer": "{school} · Ask your parent or the school office if something looks wrong."
   }
 }
