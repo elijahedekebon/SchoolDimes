@@ -1622,3 +1622,16 @@ Each card gains `"week_spend"` (gross purchases since Monday 00:00
 Africa/Kampala, same rules as `today_spend`), and the payload gains
 `"week_start": "YYYY-MM-DD"`. A device checks `weekly_spend_cap` offline
 against `week_spend + offline spend since the refresh`.
+
+#### Card PIN hashes (Part 3 change, compatible with the documented scheme)
+New and reset card PINs are hashed with `CARD_PIN_HASH_ITERATIONS`
+(default **40,000**) instead of Django's 870,000. The format is unchanged
+(`pbkdf2_sha256$<iterations>$<salt>$<hash>`), so devices that read the
+iteration count from each hash (as the contract requires) need no change.
+Older 870k hashes keep verifying until the PIN is reset. See DECISIONS.md.
+
+#### Dev tool: `manage.py pos_test_fixture [--balance 20000]`
+DEBUG only. Creates a fresh "POS E2E Student <n>" with a random card UID and
+PIN 2468, a funded main wallet (balanced clearing → wallet transfer), and
+fresh canteen + attendance devices; prints JSON with the raw tokens. Used by
+`pos-app/tool/run_integration.sh` and `pos-app/test/live/`.

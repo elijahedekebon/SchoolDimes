@@ -1030,3 +1030,12 @@ All keys (the file is empty; English is shown). The English source is in `messag
 - `give.privacy`: SchoolDimes only shows the student's first name and school here. Balances and history stay private.
 </details>
 <!-- dashboard:end -->
+
+## POS app (`pos-app/lib/core/l10n/arb/`)
+
+`app_lg.arb` and `app_sw.arb` contain no translations yet (155 keys
+each fall back to English, including every policy reason-code message).
+Flutter writes the current list to `pos-app/lib/core/l10n/untranslated.json`
+on every `flutter gen-l10n`; translate the English values in `app_en.arb`.
+Flutter's own widget strings have no Luganda; the app falls back to English
+for those.
