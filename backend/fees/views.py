@@ -54,11 +54,7 @@ class FeeCategoryViewSet(_SchoolCatalogViewSet):
     serializer_class = FeeCategorySerializer
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        class_name = self.request.query_params.get("class_name")
-        if class_name:
-            qs = [c for c in qs if not c.applicable_classes or class_name in c.applicable_classes]
-        return qs
+        return services.fee_categories_for(self.request.user, self.request.query_params)
 
 
 class PayFeeSerializer(serializers.Serializer):
@@ -92,17 +88,4 @@ class FeePaymentViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewse
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = FeePayment.objects.select_related("fee_category", "student")
-        if is_platform_admin(user):
-            pass
-        elif user.role == User.Role.PARENT:
-            qs = qs.filter(student__guardian_links__parent=user).distinct()
-        elif user.role == User.Role.SCHOOL_ADMIN:
-            qs = qs.filter(school_id=user.school_id)
-        else:
-            qs = qs.none()
-        for f in ("student", "fee_category"):
-            if self.request.query_params.get(f):
-                qs = qs.filter(**{f: self.request.query_params[f]})
-        return qs
+        return services.fee_payments_for(self.request.user, self.request.query_params)

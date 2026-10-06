@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, views_setup as e, views_students as d
+from . import views, views_ops as f, views_setup as e, views_students as d
 
 urlpatterns = [
     # B
@@ -60,4 +60,32 @@ urlpatterns = [
     path("school/staff/new", e.NewStaffView.as_view(), name="school-staff-new"),
     path("school/staff/<int:pk>/toggle", e.ToggleStaffView.as_view(), name="school-staff-toggle"),
     path("school/staff/<int:pk>/set-password", e.SetStaffPasswordView.as_view(), name="school-staff-password"),
+    # F
+    path("school/fees", f.FeesView.as_view(), name="school-fees"),
+    path("school/fees/payments/export", f.FeePaymentsExportView.as_view(), name="school-fees-csv"),
+    path("school/fees/categories/new", f.FeeCategoryFormView.as_view(), name="school-fee-category-new"),
+    path("school/fees/categories/<int:pk>/edit", f.FeeCategoryFormView.as_view(), name="school-fee-category-edit"),
+    path("school/fees/categories/<int:pk>/pay", f.PayFeeView.as_view(), name="school-fee-pay"),
+    path("school/attendance", f.AttendanceView.as_view(), name="school-attendance"),
+    path("school/attendance/export", f.AttendanceRegisterExportView.as_view(), name="school-attendance-csv"),
+    path("school/attendance/student-export", f.AttendanceStudentExportView.as_view(), name="school-attendance-student-csv"),
+    path("school/pooled-funds", f.PooledFundsView.as_view(), name="school-funds"),
+    path("school/pooled-funds/new", f.NewFundView.as_view(), name="school-fund-new"),
+    path("school/pooled-funds/<int:pk>", f.FundDrawerView.as_view(), name="school-fund"),
+    path("school/pooled-funds/<int:pk>/close", f.CloseFundView.as_view(), name="school-fund-close"),
+    path("school/pooled-funds/<int:pk>/disburse", f.DisburseView.as_view(), name="school-fund-disburse"),
+    path("school/disputes", f.DisputesView.as_view(), name="school-disputes"),
+    path("school/disputes/<int:pk>", f.DisputeDrawerView.as_view(), name="school-dispute"),
+    path("school/disputes/<int:pk>/review", f.StartReviewView.as_view(), name="school-dispute-review"),
+    path("school/disputes/<int:pk>/resolve", f.ResolveDisputeView.as_view(), name="school-dispute-resolve"),
+    path("school/p2p-alerts", f.P2PAlertsView.as_view(), name="school-p2p-alerts"),
+    path("school/p2p-alerts/<int:pk>/history", f.P2PHistoryDrawerView.as_view(), name="school-p2p-history"),
+    path("school/p2p-alerts/<int:pk>/review", f.ReviewAlertView.as_view(), name="school-p2p-review"),
+    path("school/privacy", f.PrivacyView.as_view(), name="school-privacy"),
+    path("school/privacy/<int:pk>/handle", f.HandleRequestView.as_view(), name="school-privacy-handle"),
+    path("school/tips", f.TipsView.as_view(), name="school-tips"),
+    path("school/tips/new", f.SchoolTipFormView.as_view(), name="school-tip-new"),
+    path("school/tips/<int:pk>/edit", f.SchoolTipFormView.as_view(), name="school-tip-edit"),
+    path("school/tips/<int:pk>/delete", f.SchoolTipDeleteView.as_view(), name="school-tip-delete"),
+    path("school/payment-issues", f.PaymentIssuesView.as_view(), name="school-payment-issues"),
 ]

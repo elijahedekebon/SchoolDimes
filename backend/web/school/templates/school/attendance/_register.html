@@ -1,0 +1,9 @@
+{% load i18n web %}<div id="attendance_register" class="table-region">
+{% if errors.attendance_register %}{% error_alert errors.attendance_register %}{% else %}
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "Student" %}</th><th>{% translate "Class" %}</th><th>{% translate "Status" %}</th><th>{% translate "First tap in" %}</th><th>{% translate "Last tap out" %}</th><th>{% translate "Taps" %}</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td>{{ r.name }}</td><td>{{ r.class_name }}</td><td>{% if r.first_in %}<span class="badge badge-filled c-green">{% translate "Present" %}</span>{% else %}<span class="badge badge-filled c-gray">{% translate "Absent" %}</span>{% endif %}</td><td>{{ r.first_in|time_only }}</td><td>{{ r.last_out|time_only }}</td><td>{{ r.taps }}</td></tr>
+  {% empty %}{% empty_row 6 %}{% endfor %}</tbody></table></div>
+{% if is_region %}<span hx-swap-oob="innerHTML:#register-summary">{% blocktranslate trimmed with present=present total=total %}{{ present }} of {{ total }} present{% endblocktranslate %}</span>{% endif %}
+{% endif %}
+</div>

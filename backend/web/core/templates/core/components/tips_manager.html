@@ -1,0 +1,5 @@
+{% load i18n web %}<div class="group justify-between align-end mb-sm">
+  <form id="tips-filters" hx-get="{{ request.path }}" hx-target="#tips_table" hx-swap="outerHTML" hx-trigger="change">{% choice_filter "language" _("Language") language langs %}</form>
+  <button type="button" class="btn btn-xs" hx-get="{{ base_url }}/new" hx-target="#sd-modal-body">{% translate "New tip" %}</button>
+</div>
+{% include "core/components/tips_table.html" %}

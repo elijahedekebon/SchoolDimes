@@ -1,0 +1,11 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n web %}
+{% block title %}{% if obj %}{% translate "Edit" %}{% else %}{% translate "New tip" %}{% endif %}{% endblock %}
+{% block description %}{% endblock %}
+{% block fields %}
+{% translate "Title" as l %}{% include "core/components/field.html" with name="title" label=l required=True value=values.title %}
+{% with err=field_errors|get:"body" %}<label class="field"><span class="label">{% translate "Tip" %} <span class="req">*</span></span><textarea class="input{% if err %} error{% endif %}" name="body" rows="3" required>{{ values.body }}</textarea>{% if err %}<span class="field-error">{{ err }}</span>{% endif %}</label>{% endwith %}
+<label class="field"><span class="label">{% translate "Language" %}</span><span class="description">{% translate "Write the tip in this language. A tip in each language is a separate entry." %}</span>
+  <select class="input" name="language">{% for v, l in langs %}<option value="{{ v }}"{% if values.language == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+{% translate "Ages" as l %}{% include "core/components/field.html" with name="target_age_range" label=l placeholder="6-9" value=values.target_age_range %}
+{% endblock %}
+{% block confirm_label %}{% translate "Save" %}{% endblock %}

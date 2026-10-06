@@ -199,3 +199,13 @@ def data_requests_for(user, params):
         return qs.filter(Q(school_id=user.school_id)
                          | Q(requested_by__guardian_links__student__school_id=user.school_id)).distinct()
     return qs.filter(requested_by=user)
+
+
+
+def handle_request_by(actor, request, *, status, notes=""):
+    """POST /privacy/data-requests/{id}/handle/: school_admin only."""
+    from core.permissions import is_school_admin
+
+    if not is_school_admin(actor):
+        raise ServiceError("forbidden", _("Only a school admin handles data requests."), status=403)
+    return handle_request(actor, request, status=status, notes=notes)

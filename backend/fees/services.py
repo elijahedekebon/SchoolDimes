@@ -93,3 +93,36 @@ def pay_fee(user, *, student, fee_category, amount=None, idempotency_key=None) -
         raise
     audit(user, "fee.pay", payment)
     return payment, True
+
+
+
+def fee_categories_for(user, params):
+    """GET /fee-categories/ (?active=, ?class_name= -> categories for that class)."""
+    from policies.services import catalog_for
+
+    qs = catalog_for(user, FeeCategory, params)
+    class_name = params.get("class_name")
+    if class_name:
+        qs = [c for c in qs if not c.applicable_classes or class_name in c.applicable_classes]
+    return qs
+
+
+def fee_payments_for(user, params):
+    """GET /fees/payments/: guardians their students', school_admin their school's
+    (?student=, ?fee_category=)."""
+    from accounts.models import User
+    from core.permissions import is_platform_admin
+
+    qs = FeePayment.objects.select_related("fee_category", "student")
+    if is_platform_admin(user):
+        pass
+    elif user.role == User.Role.PARENT:
+        qs = qs.filter(student__guardian_links__parent=user).distinct()
+    elif user.role == User.Role.SCHOOL_ADMIN:
+        qs = qs.filter(school_id=user.school_id)
+    else:
+        qs = qs.none()
+    for f in ("student", "fee_category"):
+        if params.get(f):
+            qs = qs.filter(**{f: params[f]})
+    return qs

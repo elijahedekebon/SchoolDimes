@@ -1,0 +1,10 @@
+{% load i18n web %}<div id="requests_table" class="table-region mt-sm" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#requests-filters" hx-swap="outerHTML">
+{% if errors.requests_table %}{% error_alert errors.requests_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "Received" %}</th><th>{% translate "Type" %}</th><th>{% translate "About" %}</th><th>{% translate "Details" %}</th><th>{% translate "Status" %}</th><th>{% translate "Notes" %}</th><th></th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td>{{ r.created_at|dt }}</td><td>{{ r.type_label }}</td><td>{% if r.subject == "self" %}{% translate "The parent" %}{% else %}{% blocktranslate trimmed with id=r.student|default:"" %}Student #{{ id }}{% endblocktranslate %}{% endif %}</td><td>{{ r.details|dash }}</td><td>{% status_badge r.status %}</td><td>{{ r.notes|dash }}</td>
+    <td>{% if r.status == "pending" or r.status == "in_progress" %}<button type="button" class="btn btn-xs btn-light" hx-get="/school/privacy/{{ r.id }}/handle" hx-target="#sd-modal-body">{% translate "Handle" %}</button>{% endif %}</td></tr>
+  {% empty %}{% empty_row 7 _("No requests.") %}{% endfor %}</tbody></table></div>
+{% pagination page "requests_table" "#requests-filters" %}
+{% endif %}
+</div>

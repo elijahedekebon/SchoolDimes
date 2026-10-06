@@ -1,0 +1,12 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n web %}
+{% block title %}{% blocktranslate trimmed with title=fund.title %}Disburse from {{ title }}{% endblocktranslate %}{% endblock %}
+{% block description %}{% blocktranslate trimmed with held=held %}The fund holds {{ held }}. Money moves out of the fund wallet at once; a mobile-money payout that fails is returned to the fund.{% endblocktranslate %}{% endblock %}
+{% block fields %}
+<input type="hidden" name="idempotency_key" value="{{ key }}">
+{% translate "Amount" as l %}{% include "core/components/money_input.html" with name="amount" label=l value=data.amount required=True %}
+<label class="field"><span class="label">{% translate "Destination" %}</span>
+  <select class="input" name="destination"><option value="school_settlement">{% translate "School settlement wallet" %}</option><option value="external"{% if data.destination == "external" %} selected{% endif %}>{% translate "Mobile-money payout" %}</option></select></label>
+<div data-show-if="destination=external">{% translate "Phone number" as l %}{% include "core/components/field.html" with name="phone_number" label=l value=data.phone_number required=True %}</div>
+{% with err=field_errors|get:"description" %}<label class="field"><span class="label">{% translate "Description" %} <span class="req">*</span></span><span class="description">{% translate "Required: what the money is for (shown in the transparent log)." %}</span>
+  <textarea class="input{% if err %} error{% endif %}" name="description" required>{{ data.description|default:"" }}</textarea>{% if err %}<span class="field-error">{{ err }}</span>{% endif %}</label>{% endwith %}
+{% endblock %}

@@ -31,7 +31,20 @@ SCOPES = {
     "merchants": "merchants.services.merchants_for",
     "attendance": "attendance.services.attendance_for",
     "staff": "accounts.services.staff_for",
+    # Section F
+    "fee_categories": "fees.services.fee_categories_for",
+    "fee_payments": "fees.services.fee_payments_for",
+    "funds": "pooled_funds.services.funds_for",
+    "funds_detail": "web.core.scoping.fund_detail",
+    "tips": "content.services.tips_for",
+    "deposits": "payments.services.deposits_for",
 }
+
+
+def fund_detail(user, params):
+    from pooled_funds.services import funds_for
+
+    return funds_for(user, params, detail=True)
 
 
 def student_detail(user, params):

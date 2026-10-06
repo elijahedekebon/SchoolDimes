@@ -1,0 +1,8 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n %}
+{% block title %}{% blocktranslate trimmed with name=alert.student.name %}Review alert for {{ name }}{% endblocktranslate %}{% endblock %}
+{% block description %}{% translate "Record what you found (e.g. spoke to the class teacher)." %}{% endblock %}
+{% block fields %}
+<label class="field"><span class="label">{% translate "Outcome" %}</span>
+  <select class="input" name="status"><option value="reviewed">{% translate "Reviewed" %}</option><option value="dismissed">{% translate "Dismissed (no concern)" %}</option></select></label>
+<label class="field"><span class="label">{% translate "Notes" %}</span><textarea class="input" name="review_notes"></textarea></label>
+{% endblock %}

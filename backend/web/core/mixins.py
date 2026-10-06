@@ -63,7 +63,7 @@ class PageView(AreaRequiredMixin, TenantScopedMixin, View):
         self.params = request.GET
         target = hx_target(request)
         if target in self.regions:
-            ctx = {"view": self, **self.page_context(), **self._region(target)}
+            ctx = {"view": self, "is_region": True, **self.page_context(), **self._region(target)}
             return render(request, self.regions[target][0], ctx)
         ctx = {"view": self, **self.page_context()}
         errors = {}

@@ -1,0 +1,10 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Data requests") _("Parents' requests to export, correct or delete personal data.") %}{% endpageheader %}
+<div class="alert c-blue mb-md"><p class="sm">{% translate "Deletion redacts personal details (names, contact details, photos, ID numbers) and deactivates accounts. Financial records — the ledger, deposits, sales, fee payments and disputes — are kept, because they are the audit trail." %}</p></div>
+<form id="requests-filters" class="group" hx-get="{{ request.path }}" hx-target="#requests_table" hx-swap="outerHTML" hx-trigger="change">
+  {% choice_filter "status" _("Status") filters.status status_options %}
+  {% choice_filter "request_type" _("Type") filters.request_type type_options %}
+</form>
+{% include "school/privacy/_table.html" %}
+{% endblock %}

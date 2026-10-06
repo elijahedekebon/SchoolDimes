@@ -1,0 +1,6 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Pooled funds") _("Class collections (trips, gifts…) with a transparent contribution log. Every total is computed from the fund's ledger.") %}<button type="button" class="btn btn-xs" hx-get="/school/pooled-funds/new" hx-target="#sd-modal-body">{% translate "New fund" %}</button>{% endpageheader %}
+<form id="funds-filters" hx-get="{{ request.path }}" hx-target="#funds_table" hx-swap="outerHTML" hx-trigger="change">{% choice_filter "status" _("Status") status status_options %}</form>
+{% include "school/pooled-funds/_table.html" %}
+{% endblock %}

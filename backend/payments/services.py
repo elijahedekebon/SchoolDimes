@@ -673,3 +673,35 @@ def run_due_recurring_topups(now=None, *, force=False) -> list[dict]:
         deposit.refresh_from_db()
         results.append({"recurring_topup": rt.pk, "outcome": deposit.status, "deposit": deposit.pk})
     return results
+
+
+
+def deposits_for(user, params):
+    """GET /payments/deposits/: parents their students' / own, school_admin
+    their school's, platform_admin all (?school=). ?student=, ?status=,
+    ?purpose=, ?from_contributor=true|false."""
+    from django.db.models import Q
+
+    from accounts.models import User
+    from core.permissions import is_platform_admin
+
+    qs = Deposit.objects.select_related("wallet", "contributor")
+    if is_platform_admin(user):
+        if params.get("school"):  # Part 4A support filter
+            qs = qs.filter(school_id=params["school"])
+    elif user.role == User.Role.PARENT:
+        qs = qs.filter(Q(wallet__student__guardian_links__parent=user) | Q(initiated_by=user)).distinct()
+    elif user.role == User.Role.SCHOOL_ADMIN:
+        qs = qs.filter(school_id=user.school_id)
+    else:
+        qs = qs.none()
+    if params.get("student"):
+        qs = qs.filter(wallet__student_id=params["student"])
+    if params.get("status"):
+        qs = qs.filter(status=params["status"])
+    if params.get("purpose"):
+        qs = qs.filter(purpose=params["purpose"])
+    # Part 4A: ?from_contributor=true -> money sent by relatives via top-up links
+    if params.get("from_contributor") in ("true", "false"):
+        qs = qs.filter(contributor__isnull=params["from_contributor"] == "false")
+    return qs

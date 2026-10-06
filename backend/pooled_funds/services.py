@@ -180,3 +180,15 @@ def fund_totals(fund) -> dict:
         "balance": balance,
         "progress_percent": progress,
     }
+
+
+
+def funds_for(user, params, *, detail=False):
+    """GET /pooled-funds/ (?status=); detail prefetches the contribution log."""
+    qs = funds_visible_to(user)
+    if params.get("status"):
+        qs = qs.filter(status=params["status"])
+    if detail:
+        qs = qs.prefetch_related("contributions__deposit", "contributions__contributor_user",
+                                 "contributions__contributor", "disbursements__payout")
+    return qs

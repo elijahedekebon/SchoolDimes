@@ -1,0 +1,9 @@
+{% load i18n web %}<div id="disputes_table" class="table-region mt-sm" data-testid="disputes-table" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#disputes-filters" hx-swap="outerHTML">
+{% if errors.disputes_table %}{% error_alert errors.disputes_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>#</th><th>{% translate "Raised" %}</th><th>{% translate "Student" %}</th><th>{% translate "Reason" %}</th><th>{% translate "Charged" %}</th><th>{% translate "Status" %}</th></tr></thead>
+  <tbody>{% for d in rows %}<tr class="clickable-row" hx-get="/school/disputes/{{ d.id }}" hx-target="#sd-drawer-body"><td>{{ d.id }}</td><td>{{ d.created_at|dt }}</td><td>{{ d.student_name }}</td><td>{{ d.reason_category|human }}</td><td>{{ d.original_amount|money }}</td><td>{% status_badge d.status %}</td></tr>
+  {% empty %}{% empty_row 6 %}{% endfor %}</tbody></table></div>
+{% pagination page "disputes_table" "#disputes-filters" %}
+{% endif %}
+</div>

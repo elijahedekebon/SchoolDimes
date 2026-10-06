@@ -1,0 +1,6 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Payment issues") _("Top-ups, gift vouchers and fund contributions that failed, expired or are still pending.") %}{% endpageheader %}
+<form id="deposit-filters" hx-get="{{ request.path }}" hx-target="#deposit_issues" hx-swap="outerHTML" hx-trigger="change">{% choice_filter "status" _("Status") status status_options %}</form>
+{% include "core/components/deposit_issues.html" %}
+{% endblock %}

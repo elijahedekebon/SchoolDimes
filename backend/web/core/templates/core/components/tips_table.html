@@ -1,0 +1,11 @@
+{% load i18n web %}<div id="tips_table" class="table-region" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#tips-filters" hx-swap="outerHTML">
+{% if errors.tips_table %}{% error_alert errors.tips_table %}{% else %}
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "Title" %}</th><th>{% translate "Language" %}</th><th>{% translate "Ages" %}</th><th>{% translate "Scope" %}</th><th></th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td>{{ r.title }}</td><td>{{ r.language_label }}</td><td>{{ r.target_age_range|default:_("All ages") }}</td><td>{% if r.school is None %}{% translate "Platform-wide" %}{% else %}{% translate "This school" %}{% endif %}</td>
+    <td>{% if r.editable %}<span class="group gap-xs"><button type="button" class="btn btn-xs btn-light" hx-get="{{ base_url }}/{{ r.id }}/edit" hx-target="#sd-modal-body">{% translate "Edit" %}</button>
+      <button type="button" class="btn btn-xs btn-light c-red" hx-get="{{ base_url }}/{{ r.id }}/delete" hx-target="#sd-modal-body">{% translate "Delete" %}</button></span>{% endif %}</td></tr>
+  {% empty %}{% empty_row 5 %}{% endfor %}</tbody></table></div>
+{% pagination page "tips_table" "#tips-filters" %}
+{% endif %}
+</div>

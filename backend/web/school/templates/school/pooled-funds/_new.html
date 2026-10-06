@@ -1,0 +1,11 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n web %}
+{% block title %}{% translate "New fund" %}{% endblock %}
+{% block description %}{% endblock %}
+{% block fields %}
+{% translate "Fund" as l %}{% include "core/components/field.html" with name="title" label=l placeholder="P4 trip to Entebbe Zoo" required=True value=values.title %}
+<label class="field"><span class="label">{% translate "Purpose" %}</span><textarea class="input" name="purpose">{{ values.purpose }}</textarea></label>
+{% translate "Class / group" as l %}{% include "core/components/field.html" with name="group_label" label=l placeholder="P4" value=values.group_label %}
+{% translate "Target" as l %}{% translate "Optional" as dsc %}{% include "core/components/money_input.html" with name="target_amount" label=l description=dsc value=values.target_amount %}
+{% translate "Deadline" as l %}{% include "core/components/field.html" with name="deadline" label=l type="date" value=values.deadline %}
+{% endblock %}
+{% block confirm_label %}{% translate "Create" %}{% endblock %}

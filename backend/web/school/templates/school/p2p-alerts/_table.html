@@ -1,0 +1,10 @@
+{% load i18n web %}<div id="alerts_table" class="table-region mt-sm" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#alerts-filters" hx-swap="outerHTML">
+{% if errors.alerts_table %}{% error_alert errors.alerts_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "Raised" %}</th><th>{% translate "Student" %}</th><th>{% translate "Pattern" %}</th><th>{% translate "Details" %}</th><th>{% translate "Status" %}</th><th>{% translate "Notes" %}</th><th></th></tr></thead>
+  <tbody>{% for a in rows %}<tr><td>{{ a.created_at|dt }}</td><td><a href="#" hx-get="/school/p2p-alerts/{{ a.id }}/history" hx-target="#sd-drawer-body">{{ a.student_name }}</a></td><td>{{ a.rule_label }}</td><td>{{ a.details_text }}</td><td>{% status_badge a.status %}</td><td>{{ a.review_notes|dash }}</td>
+    <td>{% if a.status == "open" %}<button type="button" class="btn btn-xs btn-light" hx-get="/school/p2p-alerts/{{ a.id }}/review" hx-target="#sd-modal-body">{% translate "Review" %}</button>{% endif %}</td></tr>
+  {% empty %}{% empty_row 7 _("No alerts.") %}{% endfor %}</tbody></table></div>
+{% pagination page "alerts_table" "#alerts-filters" %}
+{% endif %}
+</div>

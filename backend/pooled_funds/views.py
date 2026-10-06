@@ -18,13 +18,7 @@ class PooledFundViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewse
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = services.funds_visible_to(self.request.user)
-        if self.request.query_params.get("status"):
-            qs = qs.filter(status=self.request.query_params["status"])
-        if self.action == "retrieve":
-            qs = qs.prefetch_related("contributions__deposit", "contributions__contributor_user",
-                                     "contributions__contributor", "disbursements__payout")
-        return qs
+        return services.funds_for(self.request.user, self.request.query_params, detail=self.action == "retrieve")
 
     def get_serializer_class(self):
         return PooledFundDetailSerializer if self.action == "retrieve" else PooledFundSerializer

@@ -12,14 +12,9 @@ class FinancialLiteracyTipViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = FinancialLiteracyTip.objects.select_related("school")
-        language = self.request.query_params.get("language")
-        if language:
-            qs = qs.filter(language=language)
-        if is_platform_admin(user):
-            return qs
-        return qs.filter(Q(school__isnull=True) | Q(school_id=user.school_id))
+        from .services import tips_for
+
+        return tips_for(self.request.user, self.request.query_params)
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):
@@ -27,11 +22,9 @@ class FinancialLiteracyTipViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
-        user = self.request.user
-        if is_platform_admin(user):
-            serializer.save()  # may set school=None (global) or any school
-        else:
-            serializer.save(school=user.school)
+        from .services import create_tip
+
+        create_tip(self.request.user, serializer)
 
 
 class _IsAdminManagingOwnScope(permissions.BasePermission):
@@ -39,6 +32,6 @@ class _IsAdminManagingOwnScope(permissions.BasePermission):
         return is_platform_admin(request.user) or is_school_admin(request.user)
 
     def has_object_permission(self, request, view, obj):
-        if is_platform_admin(request.user):
-            return True
-        return is_school_admin(request.user) and obj.school_id == request.user.school_id
+        from .services import can_manage_tip
+
+        return can_manage_tip(request.user, obj)

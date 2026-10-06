@@ -1,0 +1,10 @@
+{% load i18n web %}<div id="attendance_student" class="table-region">
+{% error_alert errors.attendance_student %}
+{% if student_rows is not None %}
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "When" %}</th><th>{% translate "Direction" %}</th><th>{% translate "Device" %}</th></tr></thead>
+  <tbody>{% for r in student_rows %}<tr><td>{{ r.device_local_timestamp|dt }}</td><td>{{ r.direction }}</td><td>{{ r.device_name }}</td></tr>
+  {% empty %}{% empty_row 3 %}{% endfor %}</tbody></table></div>
+{% pagination student_page "attendance_student" "#student-attendance-form" %}
+{% endif %}
+</div>

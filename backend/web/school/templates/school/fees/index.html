@@ -1,0 +1,22 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Fees") _("Uniform, trips, exam fees… Paid from a student's main wallet into the school's settlement wallet. Fees are exempt from snack spending caps.") %}{% endpageheader %}
+<div class="tabs" data-tabs="fees">
+  <button type="button" class="tab active" data-tab="categories">{% translate "Fee categories" %}</button>
+  <button type="button" class="tab" data-tab="payments">{% translate "Payments" %}</button>
+</div>
+<div class="tab-panel" data-tab-panel="fees:categories">
+  <div class="group justify-end mb-sm"><button type="button" class="btn btn-xs" hx-get="/school/fees/categories/new" hx-target="#sd-modal-body">{% translate "New fee category" %}</button></div>
+  {% include "school/fees/_categories.html" %}
+</div>
+<div class="tab-panel hidden" data-tab-panel="fees:payments">
+  <div class="group justify-between align-end mb-sm">
+    <form id="fee-payments-filters" class="group align-end" hx-get="{{ request.path }}" hx-target="#fee_payments_table" hx-swap="outerHTML" hx-trigger="change">
+      {% choice_filter "fee_category" _("Category") pay_filters.fee_category category_options %}
+      {% translate "Student" as l %}{% include "core/components/student_picker.html" with label=l value=student_id value_label=student_label %}
+    </form>
+    <button type="submit" form="fee-payments-filters" formaction="/school/fees/payments/export" formmethod="get" class="btn btn-xs btn-light">{% translate "Export CSV" %}</button>
+  </div>
+  {% include "school/fees/_payments.html" %}
+</div>
+{% endblock %}

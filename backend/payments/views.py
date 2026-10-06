@@ -61,28 +61,7 @@ class DepositViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = Deposit.objects.select_related("wallet", "contributor")
-        if is_platform_admin(user):
-            if self.request.query_params.get("school"):  # Part 4A support filter
-                qs = qs.filter(school_id=self.request.query_params["school"])
-        elif user.role == User.Role.PARENT:
-            qs = qs.filter(Q(wallet__student__guardian_links__parent=user) | Q(initiated_by=user)).distinct()
-        elif user.role == User.Role.SCHOOL_ADMIN:
-            qs = qs.filter(school_id=user.school_id)
-        else:
-            qs = qs.none()
-        params = self.request.query_params
-        if params.get("student"):
-            qs = qs.filter(wallet__student_id=params["student"])
-        if params.get("status"):
-            qs = qs.filter(status=params["status"])
-        if params.get("purpose"):
-            qs = qs.filter(purpose=params["purpose"])
-        # Part 4A: ?from_contributor=true -> money sent by relatives via top-up links
-        if params.get("from_contributor") in ("true", "false"):
-            qs = qs.filter(contributor__isnull=params["from_contributor"] == "false")
-        return qs
+        return services.deposits_for(self.request.user, self.request.query_params)
 
     def create(self, request):
         s = DepositCreateSerializer(data=request.data)

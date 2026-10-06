@@ -1,0 +1,10 @@
+{% load i18n web %}<div id="p2p_history">
+<div class="dialog-header"><h3 class="dialog-title">{% blocktranslate trimmed with name=alert.student.name %}{{ name }} — P2P history{% endblocktranslate %}</h3><button type="button" class="close-btn" data-close>×</button></div>
+<div class="stack">
+  <p class="xs dimmed">{% translate "Every transfer to or from this student." %}</p>
+  <table class="table striped"><thead><tr><th>{% translate "When" %}</th><th>{% translate "From" %}</th><th>{% translate "To" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Note" %}</th></tr></thead>
+    <tbody>{% for r in rows %}<tr><td>{{ r.created_at|dt }}</td><td>{{ r.sender_name }}</td><td>{{ r.recipient_name }}</td><td>{{ r.amount|money }}</td><td>{{ r.note|dash }}</td></tr>
+    {% empty %}{% empty_row 5 %}{% endfor %}</tbody></table>
+  {% if page.paginator.num_pages > 1 %}<div class="group justify-end pagination">{% for n in page.paginator.page_range %}<button type="button" class="page-btn{% if n == page.number %} active{% endif %}" hx-get="/school/p2p-alerts/{{ alert.id }}/history?page={{ n }}" hx-target="#sd-drawer-body">{{ n }}</button>{% endfor %}</div>{% endif %}
+</div>
+</div>

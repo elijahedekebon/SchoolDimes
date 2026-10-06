@@ -1,0 +1,16 @@
+{% load i18n web %}<div id="dispute_drawer" hx-get="/school/disputes/{{ d.id }}" hx-trigger="sd-refresh from:body" hx-swap="outerHTML">
+<div class="dialog-header"><h3 class="dialog-title">{% translate "Dispute" %} #{{ d.id }}</h3><button type="button" class="close-btn" data-close>×</button></div>
+<div class="stack">
+  <div class="group">{% status_badge d.status %}<span class="sm">{{ d.student_name }}</span></div>
+  <p class="sm"><b>{% translate "Reason" %}:</b> {{ d.reason_category|human }}</p>
+  <p class="sm">{{ d.description|dash }}</p>
+  <p class="sm">{% translate "Charged" %}: {{ d.original_amount|money }} · {% translate "Already refunded" %}: {{ d.refunded_total|money }}</p>
+  {% if d.pos_transaction %}<button type="button" class="btn btn-xs btn-light btn-fit" hx-get="/school/sales/transactions/{{ d.pos_transaction }}" hx-target="#sd-drawer2-body">{% translate "View transaction & items" %}</button>{% endif %}
+  {% if d.ledger_entry %}<p class="xs dimmed">{% translate "Ledger entry" %} #{{ d.ledger_entry }}</p>{% endif %}
+  {% if d.resolution_notes %}<div class="alert c-blue"><b>{% translate "Resolution" %}:</b> {{ d.resolution_notes }}{% if d.refund_amount != "0.00" %} · {% translate "Refund" %}: {{ d.refund_amount|money }}{% endif %}</div>{% endif %}
+  {% if is_open %}<div class="group">
+    {% if d.status == "open" %}<button type="button" class="btn btn-xs btn-light" hx-get="/school/disputes/{{ d.id }}/review" hx-target="#sd-modal-body">{% translate "Start review" %}</button>{% endif %}
+    <button type="button" class="btn btn-xs btn-light" data-testid="resolve-dispute" hx-get="/school/disputes/{{ d.id }}/resolve" hx-target="#sd-modal-body">{% translate "Resolve" %}</button>
+  </div>{% endif %}
+</div>
+</div>

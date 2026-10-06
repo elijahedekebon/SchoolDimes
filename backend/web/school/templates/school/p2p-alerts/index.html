@@ -1,0 +1,6 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("P2P alerts") _("Patterns in student-to-student transfers that may mean pressure or bullying. Alerts never block transfers; they're for a person to check.") %}{% endpageheader %}
+<form id="alerts-filters" hx-get="{{ request.path }}" hx-target="#alerts_table" hx-swap="outerHTML" hx-trigger="change">{% choice_filter "status" _("Status") status status_options %}</form>
+{% include "school/p2p-alerts/_table.html" %}
+{% endblock %}

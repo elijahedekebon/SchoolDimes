@@ -1,0 +1,14 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n web %}
+{% block title %}{% blocktranslate trimmed with id=d.id %}Resolve dispute #{{ id }}{% endblocktranslate %}{% endblock %}
+{% block description %}<span data-show-if="outcome=refund">{% blocktranslate trimmed with student=d.student_name max=max %}Credits {{ student }}'s main wallet from the wallet that received the money. At most {{ max }} can still be refunded. The parent is notified.{% endblocktranslate %}</span>
+<span data-show-if="outcome=deny">{% translate "Closes the dispute with no money moving. The parent is notified with your notes." %}</span>{% endblock %}
+{% block fields %}
+<div class="segmented inline">
+  <label><input type="radio" name="outcome" value="refund"{% if data.outcome != "deny" %} checked{% endif %}>{% translate "Refund" %}</label>
+  <label><input type="radio" name="outcome" value="deny"{% if data.outcome == "deny" %} checked{% endif %}>{% translate "Deny" %}</label>
+</div>
+<div data-show-if="outcome=refund">{% translate "Refund amount" as l %}{% blocktranslate trimmed asvar dsc with max=max %}Maximum {{ max }}{% endblocktranslate %}
+{% include "core/components/money_input.html" with name="refund_amount" label=l description=dsc value=data.refund_amount|default:remaining attrs='data-testid="refund-amount"' %}</div>
+<label class="field"><span class="label">{% translate "Notes to the parent" %}</span><textarea class="input" name="resolution_notes">{{ data.resolution_notes|default:"" }}</textarea></label>
+{% endblock %}
+{% block confirm_testid %}confirm-button{% endblock %}

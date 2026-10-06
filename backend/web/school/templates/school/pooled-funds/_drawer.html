@@ -1,0 +1,20 @@
+{% load i18n web %}<div id="fund_drawer" class="drawer-xl" hx-get="/school/pooled-funds/{{ f.id }}" hx-trigger="sd-refresh from:body" hx-swap="outerHTML">
+<div class="dialog-header"><h3 class="dialog-title">{{ f.title }}</h3><button type="button" class="close-btn" data-close>×</button></div>
+<div class="stack">
+  <p class="sm dimmed">{{ f.purpose }}</p>
+  <div class="group">{% status_badge f.status %}<span class="sm">{% translate "Raised" %}: {{ f.total_contributed|money }} · {% translate "Disbursed" %}: {{ f.total_disbursed|money }} · {% translate "Held now" %}: {{ f.balance|money }}</span></div>
+  <p class="xs dimmed">{% translate "Raised, disbursed and held are summed from the fund wallet's ledger on every request." %}</p>
+  <div class="group">
+    {% if f.status == "open" %}<button type="button" class="btn btn-xs btn-light c-orange" hx-get="/school/pooled-funds/{{ f.id }}/close" hx-target="#sd-modal-body">{% translate "Close fund" %}</button>{% endif %}
+    {% if can_disburse %}<button type="button" class="btn btn-xs btn-light" hx-get="/school/pooled-funds/{{ f.id }}/disburse" hx-target="#sd-modal-body">{% translate "Disburse" %}</button>{% endif %}
+  </div>
+  <p class="fw-600">{% translate "Contributions" %}</p>
+  <table class="table striped"><thead><tr><th>{% translate "When" %}</th><th>{% translate "Contributor" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Reference" %}</th></tr></thead>
+    <tbody>{% for c in f.contributions %}<tr><td>{{ c.created_at|dt }}</td><td>{{ c.contributor_name }}</td><td>{{ c.amount|money }}</td><td><span class="mono">{{ c.deposit_reference }}</span></td></tr>
+    {% empty %}{% empty_row 4 _("No confirmed contributions yet.") %}{% endfor %}</tbody></table>
+  <p class="fw-600">{% translate "Disbursements" %}</p>
+  <table class="table striped"><thead><tr><th>{% translate "When" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Destination" %}</th><th>{% translate "Description" %}</th><th>{% translate "Payout" %}</th></tr></thead>
+    <tbody>{% for d in f.disbursements %}<tr><td>{{ d.created_at|dt }}</td><td>{{ d.amount|money }}</td><td>{% if d.destination == "external" %}{% translate "Mobile-money payout" %}{% else %}{% translate "School settlement wallet" %}{% endif %}</td><td>{{ d.description }}</td><td>{% status_badge d.payout_status %}</td></tr>
+    {% empty %}{% empty_row 5 _("Nothing disbursed yet.") %}{% endfor %}</tbody></table>
+</div>
+</div>

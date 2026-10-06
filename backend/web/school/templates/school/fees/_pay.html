@@ -1,0 +1,13 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n web %}
+{% block title %}{% blocktranslate trimmed with name=category.name %}Pay {{ name }} for a student{% endblocktranslate %}{% endblock %}
+{% block description %}{% translate "Debits the student's main wallet now and credits the school. Refused if the card is frozen or the balance is too low." %}{% endblock %}
+{% block fields %}
+<input type="hidden" name="idempotency_key" value="{{ key }}">
+{% translate "Student" as l %}{% include "core/components/student_picker.html" with label=l value=data.student width="100%" required=True %}
+{% if field_errors.student %}<span class="field-error">{{ field_errors.student }}</span>{% endif %}
+{% if category.amount_type == "fixed" %}
+<label class="field"><span class="label">{% translate "Amount" %}</span><span class="input-prefix"><span>UGX</span><input class="input" value="{{ category.fixed_amount }}" disabled></span></label>
+{% else %}
+{% translate "Amount" as l %}{% include "core/components/money_input.html" with name="amount" label=l description=amount_label value=data.amount required=True %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% load i18n web %}<div id="funds_table" class="table-region mt-sm" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#funds-filters" hx-swap="outerHTML">
+{% if errors.funds_table %}{% error_alert errors.funds_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "Fund" %}</th><th>{% translate "Class / group" %}</th><th>{% translate "Status" %}</th><th>{% translate "Raised" %}</th><th>{% translate "Target" %}</th><th>{% translate "Progress" %}</th><th>{% translate "Held now" %}</th><th>{% translate "Deadline" %}</th></tr></thead>
+  <tbody>{% for f in rows %}<tr class="clickable-row" hx-get="/school/pooled-funds/{{ f.id }}" hx-target="#sd-drawer-body"><td>{{ f.title }}</td><td>{{ f.group_label|dash }}</td><td>{% status_badge f.status %}</td><td>{{ f.total_contributed|money }}</td>
+    <td>{% if f.target_amount %}{{ f.target_amount|money }}{% else %}—{% endif %}</td>
+    <td>{% if f.progress_percent is None %}—{% else %}<div class="progress" style="width:120px"><span style="width:{{ f.progress_percent }}%"></span></div>{% endif %}</td>
+    <td>{{ f.balance|money }}</td><td>{{ f.deadline|d }}</td></tr>
+  {% empty %}{% empty_row 8 %}{% endfor %}</tbody></table></div>
+{% pagination page "funds_table" "#funds-filters" %}
+{% endif %}
+</div>

@@ -1,0 +1,9 @@
+{% load i18n web %}<div id="fee_payments_table" class="table-region" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#fee-payments-filters" hx-swap="outerHTML">
+{% if errors.fee_payments_table %}{% error_alert errors.fee_payments_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "When" %}</th><th>{% translate "Student" %}</th><th>{% translate "Category" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Status" %}</th><th>{% translate "Ledger reference" %}</th></tr></thead>
+  <tbody>{% for p in pay_rows %}<tr><td>{{ p.created_at|dt }}</td><td>{{ p.student_name }}</td><td>{{ p.fee_category_name }}</td><td>{{ p.amount|money }}</td><td>{% status_badge p.status %}</td><td><span class="mono">{{ p.ledger_reference }}</span></td></tr>
+  {% empty %}{% empty_row 6 %}{% endfor %}</tbody></table></div>
+{% pagination pay_page "fee_payments_table" "#fee-payments-filters" %}
+{% endif %}
+</div>

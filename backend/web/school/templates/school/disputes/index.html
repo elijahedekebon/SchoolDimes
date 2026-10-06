@@ -1,0 +1,7 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Disputes") _("Problems parents reported with a sale or fee. Refunds can never exceed what was actually charged.") %}{% endpageheader %}
+<form id="disputes-filters" hx-get="{{ request.path }}" hx-target="#disputes_table" hx-swap="outerHTML" hx-trigger="change">{% choice_filter "status" _("Status") status status_options %}</form>
+{% include "school/disputes/_table.html" %}
+{% if open_id %}<div hx-get="/school/disputes/{{ open_id }}" hx-target="#sd-drawer-body" hx-trigger="load"></div>{% endif %}
+{% endblock %}

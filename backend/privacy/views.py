@@ -83,9 +83,6 @@ class DataRequestViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
 
     @action(detail=True, methods=["post"])
     def handle(self, request, pk=None):
-        req = self.get_object()
-        if not is_school_admin(request.user):
-            raise ServiceError("forbidden", _("Only a school admin handles data requests."), status=403)
-        req = services.handle_request(request.user, req, status=request.data.get("status"),
-                                      notes=request.data.get("notes", ""))
+        req = services.handle_request_by(request.user, self.get_object(), status=request.data.get("status"),
+                                         notes=request.data.get("notes", ""))
         return Response(DataRequestSerializer(req).data)

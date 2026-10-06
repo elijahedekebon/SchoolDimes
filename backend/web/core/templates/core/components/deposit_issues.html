@@ -1,0 +1,10 @@
+{% load i18n web %}<div id="deposit_issues" class="table-region" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#deposit-filters" hx-swap="outerHTML">
+<p class="xs dimmed my-xs">{% translate "No money moved for failed or expired payments. A pending payment credits the wallet only when the aggregator confirms it." %}</p>
+{% if errors.deposit_issues %}{% error_alert errors.deposit_issues %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "When" %}</th><th>{% translate "Reference" %}</th><th>{% translate "Purpose" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Channel" %}</th><th>{% translate "Payer" %}</th><th>{% translate "Status" %}</th><th>{% translate "Reason" %}</th></tr></thead>
+  <tbody>{% for d in rows %}<tr><td>{{ d.created_at|dt }}</td><td><span class="mono">{{ d.reference }}</span></td><td>{{ d.purpose|human }}</td><td>{{ d.amount|money }}</td><td>{{ d.channel }}</td><td>{{ d.contributor_name|default:d.payer_phone|dash }}</td><td>{% status_badge d.status %}</td><td>{{ d.failure_reason|dash }}</td></tr>
+  {% empty %}{% empty_row 8 _("Nothing to review.") %}{% endfor %}</tbody></table></div>
+{% pagination page "deposit_issues" "#deposit-filters" %}
+{% endif %}
+</div>

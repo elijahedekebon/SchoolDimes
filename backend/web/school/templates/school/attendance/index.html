@@ -1,0 +1,30 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Attendance") _("Card taps at the gate (or canteen, if enabled). Days are Africa/Kampala.") %}{% endpageheader %}
+<div class="tabs" data-tabs="attendance">
+  <button type="button" class="tab active" data-tab="register">{% translate "Daily register" %}</button>
+  <button type="button" class="tab" data-tab="student">{% translate "Per student" %}</button>
+</div>
+<div class="tab-panel" data-tab-panel="attendance:register">
+  <div class="group justify-between align-end mb-sm">
+    <form id="register-form" class="group align-end" hx-get="{{ request.path }}" hx-target="#attendance_register" hx-swap="outerHTML" hx-trigger="change, input delay:400ms from:input[name=class_name], submit">
+      {% include "core/components/day_picker.html" with value=date %}
+      <label class="field field-xs" style="width:120px"><span class="label">{% translate "Class" %}</span><input class="input" name="class_name" placeholder="P4" value="{{ class_name }}"></label>
+      <button type="submit" class="btn btn-xs btn-default">{% translate "Refresh" %}</button>
+    </form>
+    <div class="group"><span class="sm" id="register-summary">{% blocktranslate trimmed with present=present total=total %}{{ present }} of {{ total }} present{% endblocktranslate %}</span>
+      <button type="submit" form="register-form" formaction="/school/attendance/export" formmethod="get" class="btn btn-xs btn-light">{% translate "Export CSV" %}</button></div>
+  </div>
+  {% include "school/attendance/_register.html" %}
+  <p class="xs dimmed mt-xs">{% translate 'Present = at least one "in" tap that day. Offline readers\' taps appear once they sync.' %}</p>
+</div>
+<div class="tab-panel hidden" data-tab-panel="attendance:student">
+  <div class="group justify-between align-end mb-sm">
+    <form id="student-attendance-form" hx-get="{{ request.path }}" hx-target="#attendance_student" hx-swap="outerHTML" hx-trigger="change">
+      {% translate "Student" as l %}{% include "core/components/student_picker.html" with label=l value=student_id value_label=student_label %}
+    </form>
+    <button type="submit" form="student-attendance-form" formaction="/school/attendance/student-export" formmethod="get" class="btn btn-xs btn-light" data-show-if="student=*">{% translate "Export CSV" %}</button>
+  </div>
+  {% include "school/attendance/_student.html" %}
+</div>
+{% endblock %}

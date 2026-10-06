@@ -1,0 +1,17 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n web %}
+{% block title %}{% if obj %}{% translate "Edit" %}{% else %}{% translate "New fee category" %}{% endif %}{% endblock %}
+{% block description %}{% endblock %}
+{% block fields %}
+{% translate "Name" as l %}{% include "core/components/field.html" with name="name" label=l placeholder="Exam fee" required=True value=values.name %}
+<label class="field"><span class="label">{% translate "Amount" %}</span>
+  <select class="input" name="amount_type"><option value="fixed"{% if values.amount_type == "fixed" %} selected{% endif %}>{% translate "Fixed amount" %}</option><option value="range"{% if values.amount_type == "range" %} selected{% endif %}>{% translate "Range (parent chooses)" %}</option></select></label>
+<div data-show-if="amount_type=fixed">{% translate "Fixed amount" as l %}{% include "core/components/money_input.html" with name="fixed_amount" label=l value=values.fixed_amount required=True %}</div>
+<div class="grid sm-2 grow" data-show-if="amount_type=range">
+  {% translate "Minimum" as l %}{% include "core/components/money_input.html" with name="min_amount" label=l value=values.min_amount required=True %}
+  {% translate "Maximum" as l %}{% include "core/components/money_input.html" with name="max_amount" label=l value=values.max_amount required=True %}
+</div>
+{% translate "Due date" as l %}{% include "core/components/field.html" with name="due_date" label=l type="date" value=values.due_date %}
+{% translate "Classes" as l %}{% translate "Leave empty for every class. Separate classes with commas (e.g. P4, P5)." as dsc %}{% include "core/components/field.html" with name="applicable_classes" label=l description=dsc value=values.applicable_classes %}
+<label class="checkbox"><input type="checkbox" name="active" value="1"{% if values.active or not obj and request.method == "GET" %} checked{% endif %}> {% translate "Active" %}</label>
+{% endblock %}
+{% block confirm_label %}{% translate "Save" %}{% endblock %}

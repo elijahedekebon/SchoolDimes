@@ -1,0 +1,5 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Financial tips") _("Short money tips shown to parents and students, one row per language.") %}{% endpageheader %}
+{% include "core/components/tips_manager.html" %}
+{% endblock %}

@@ -73,14 +73,14 @@ All paths are unchanged. "View" names are in `web/<area>/views.py`.
 | 14 | `/school/products` · `school/products/page.tsx` | `/school/products` | `school.ProductsView` | `school/products/index.html` | E | ✅ |
 | 15 | `/school/policy` · `school/policy/page.tsx` | `/school/policy` | `school.PolicyView` | `school/policy/index.html` | E | ✅ |
 | 16 | `/school/staff` · `school/staff/page.tsx` | `/school/staff` | `school.StaffView` | `school/staff/index.html` | E | ✅ |
-| 17 | `/school/fees` · `school/fees/page.tsx` | `/school/fees` | `school.FeesView` | `school/fees/index.html` | F | ⬜ |
-| 18 | `/school/attendance` · `school/attendance/page.tsx` | `/school/attendance` | `school.AttendanceView` | `school/attendance/index.html` | F | ⬜ |
-| 19 | `/school/pooled-funds` · `school/pooled-funds/page.tsx` | `/school/pooled-funds` | `school.PooledFundsView` | `school/pooled-funds/index.html` | F | ⬜ |
-| 20 | `/school/disputes` · `school/disputes/page.tsx` | `/school/disputes` (`?open=<id>`) | `school.DisputesView` | `school/disputes/index.html` | F | ⬜ |
-| 21 | `/school/p2p-alerts` · `school/p2p-alerts/page.tsx` | `/school/p2p-alerts` | `school.P2PAlertsView` | `school/p2p-alerts/index.html` | F | ⬜ |
-| 22 | `/school/privacy` · `school/privacy/page.tsx` | `/school/privacy` | `school.PrivacyView` | `school/privacy/index.html` | F | ⬜ |
-| 23 | `/school/tips` · `school/tips/page.tsx` | `/school/tips` | `school.TipsView` | `school/tips/index.html` | F | ⬜ |
-| 24 | `/school/payment-issues` · `school/payment-issues/page.tsx` | `/school/payment-issues` | `school.PaymentIssuesView` | `school/payment-issues/index.html` | F | ⬜ |
+| 17 | `/school/fees` · `school/fees/page.tsx` | `/school/fees` | `school.FeesView` | `school/fees/index.html` | F | ✅ |
+| 18 | `/school/attendance` · `school/attendance/page.tsx` | `/school/attendance` | `school.AttendanceView` | `school/attendance/index.html` | F | ✅ |
+| 19 | `/school/pooled-funds` · `school/pooled-funds/page.tsx` | `/school/pooled-funds` | `school.PooledFundsView` | `school/pooled-funds/index.html` | F | ✅ |
+| 20 | `/school/disputes` · `school/disputes/page.tsx` | `/school/disputes` (`?open=<id>`) | `school.DisputesView` | `school/disputes/index.html` | F | ✅ |
+| 21 | `/school/p2p-alerts` · `school/p2p-alerts/page.tsx` | `/school/p2p-alerts` | `school.P2PAlertsView` | `school/p2p-alerts/index.html` | F | ✅ |
+| 22 | `/school/privacy` · `school/privacy/page.tsx` | `/school/privacy` | `school.PrivacyView` | `school/privacy/index.html` | F | ✅ |
+| 23 | `/school/tips` · `school/tips/page.tsx` | `/school/tips` | `school.TipsView` | `school/tips/index.html` | F | ✅ |
+| 24 | `/school/payment-issues` · `school/payment-issues/page.tsx` | `/school/payment-issues` | `school.PaymentIssuesView` | `school/payment-issues/index.html` | F | ✅ |
 | 25 | `/platform` · `platform/page.tsx` | `/platform` | `platform.SchoolsView` | `platform/index.html` | G | ⬜ |
 | 26 | `/platform/onboard` · `platform/onboard/page.tsx` | `/platform/onboard` | `platform.OnboardView` | `platform/onboard/index.html` | G | ⬜ |
 | 27 | `/platform/referrals` · `platform/referrals/page.tsx` | `/platform/referrals` | `platform.ReferralsView` | `platform/referrals/index.html` | G | ⬜ |
@@ -199,7 +199,7 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 - [x] **C. Analytics** (Chart.js)
 - [x] **D. Students (+detail tabs), guardians & KYC, cards**
 - [x] **E. Devices (token once + QR), merchants, products, policy & settings, staff accounts**
-- [ ] **F. Fees, attendance, pooled funds, disputes, P2P alerts, data requests, tips, payment issues**
+- [x] **F. Fees, attendance, pooled funds, disputes, P2P alerts, data requests, tips, payment issues**
 - [ ] **G. Platform back-office**
 - [ ] **H. Student portal**
 - [ ] **I. Contributor page**
