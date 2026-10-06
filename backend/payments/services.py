@@ -705,3 +705,36 @@ def deposits_for(user, params):
     if params.get("from_contributor") in ("true", "false"):
         qs = qs.filter(contributor__isnull=params["from_contributor"] == "false")
     return qs
+
+
+
+def create_public_gift_voucher(link, data):
+    """POST /public/topup-links/{token}/gift-vouchers/ with validated
+    PublicGiftVoucherSerializer data. A replayed idempotency key returns the
+    original voucher (created=False)."""
+    replay = replayed_public_deposit(link, data["idempotency_key"], Deposit.Purpose.GIFT_VOUCHER)
+    if replay is not None:
+        return replay.gift_voucher, False
+    contributor = create_contributor(data["contributor"])
+    return create_gift_voucher(
+        student=link.student,
+        amount=data["amount"],
+        message=data.get("message", ""),
+        channel=data["channel"],
+        payer_phone=data.get("payer_phone") or contributor.phone_number,
+        idempotency_key=data["idempotency_key"],
+        sender_contributor=contributor,
+    )
+
+
+def public_deposit_status(link, reference):
+    """A contributor's own deposit on this link, by reference (404 otherwise)."""
+    from django.shortcuts import get_object_or_404
+
+    return get_object_or_404(Deposit, reference=reference, wallet=link.wallet, contributor__isnull=False)
+
+
+def public_link_info(link) -> dict:
+    """ONLY these two fields -- never balances, history, ids or other PII."""
+    return {"student_first_name": link.student.name.split()[0] if link.student.name else "",
+            "school_name": link.school.name}

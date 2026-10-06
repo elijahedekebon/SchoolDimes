@@ -1,5 +1,8 @@
 from django.urls import path
 
-from . import views  # noqa: F401
+from . import views
 
-urlpatterns = []
+urlpatterns = [
+    path("give/<str:token>", views.GiveView.as_view(), name="give"),
+    path("give/<str:token>/status/<str:reference>", views.GiveStatusView.as_view(), name="give-status"),
+]

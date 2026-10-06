@@ -125,6 +125,18 @@
 
   document.addEventListener("change", function (evt) { applyShowIf(evt.target.closest("form") || document); });
 
+  // Contributor page: "Continue UGX 5,000" follows the amount as it is typed.
+  document.addEventListener("input", function (evt) {
+    if (evt.target.name !== "amount") return;
+    var btn = evt.target.form && evt.target.form.querySelector("[data-continue]");
+    if (!btn) return;
+    var m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(evt.target.value.trim());
+    var ok = m && (Number(m[1]) > 0 || Number(m[2] || 0) > 0);
+    var whole = m ? m[1].replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "";
+    var frac = m && m[2] && Number(m[2]) ? "." + (m[2] + "0").slice(0, 2) : "";
+    btn.textContent = btn.dataset.continue.replace("__AMOUNT__", ok ? "UGX " + whole + frac : "").trim();
+  });
+
   // Dialogs with data-no-dismiss can't be closed with Escape (device token modal).
   document.addEventListener("cancel", function (evt) {
     if (evt.target.querySelector && evt.target.querySelector("[data-no-dismiss]")) evt.preventDefault();

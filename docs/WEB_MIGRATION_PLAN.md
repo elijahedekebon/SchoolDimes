@@ -89,7 +89,7 @@ All paths are unchanged. "View" names are in `web/<area>/views.py`.
 | 30 | `/platform/audit-log` · `platform/audit-log/page.tsx` | `/platform/audit-log` | `platform.AuditLogView` | `platform/audit-log/index.html` | G | ✅ |
 | 31 | `/platform/tips` · `platform/tips/page.tsx` | `/platform/tips` | `platform.TipsView` | `platform/tips/index.html` | G | ✅ |
 | 32 | `/student` · `student/page.tsx` | `/student` | `student.PortalView` | `student/index.html` | H | ✅ |
-| 33 | `/give/[token]` · `give/[token]/page.tsx` | `/give/<str:token>` | `give.GiveView` | `give/detail.html` | I | ⬜ |
+| 33 | `/give/[token]` · `give/[token]/page.tsx` | `/give/<str:token>` | `give.GiveView` | `give/detail.html` | I | ✅ |
 
 ### Next.js route handlers (not pages) and what replaces them
 
@@ -202,6 +202,6 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 - [x] **F. Fees, attendance, pooled funds, disputes, P2P alerts, data requests, tips, payment issues**
 - [x] **G. Platform back-office**
 - [x] **H. Student portal**
-- [ ] **I. Contributor page**
+- [x] **I. Contributor page**
 - [ ] **J. Parent-app backend readiness** (verified unchanged; docs updated for the new page origin)
 - [ ] **K. Remove the Next.js app** — waiting for the owner's confirmation of the parity table above

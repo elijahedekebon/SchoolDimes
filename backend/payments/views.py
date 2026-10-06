@@ -224,12 +224,7 @@ class _PublicView(APIView):
 
 class PublicTopUpLinkView(_PublicView):
     def get(self, request, token):
-        link = self.get_link(token)
-        # ONLY these two fields -- never balances, history, ids or other PII.
-        return Response({
-            "student_first_name": link.student.name.split()[0] if link.student.name else "",
-            "school_name": link.school.name,
-        })
+        return Response(services.public_link_info(self.get_link(token)))
 
 
 class PublicTopUpDepositView(_PublicView):
@@ -251,8 +246,7 @@ class PublicTopUpDepositView(_PublicView):
 
 class PublicTopUpDepositStatusView(_PublicView):
     def get(self, request, token, reference):
-        link = self.get_link(token)
-        deposit = get_object_or_404(Deposit, reference=reference, wallet=link.wallet, contributor__isnull=False)
+        deposit = services.public_deposit_status(self.get_link(token), reference)
         return Response(PublicDepositSerializer(deposit).data)
 
 
@@ -261,20 +255,7 @@ class PublicGiftVoucherView(_PublicView):
         link = self.get_link(token)
         s = PublicGiftVoucherSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        data = s.validated_data
-        replay = services.replayed_public_deposit(link, data["idempotency_key"], Deposit.Purpose.GIFT_VOUCHER)
-        if replay is not None:
-            return Response(PublicGiftVoucherOutSerializer(replay.gift_voucher).data, status=200)
-        contributor = services.create_contributor(data["contributor"])
-        voucher, created = services.create_gift_voucher(
-            student=link.student,
-            amount=data["amount"],
-            message=data.get("message", ""),
-            channel=data["channel"],
-            payer_phone=data.get("payer_phone") or contributor.phone_number,
-            idempotency_key=data["idempotency_key"],
-            sender_contributor=contributor,
-        )
+        voucher, created = services.create_public_gift_voucher(link, s.validated_data)
         return Response(PublicGiftVoucherOutSerializer(voucher).data, status=201 if created else 200)
 
 

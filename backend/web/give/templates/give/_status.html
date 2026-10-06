@@ -1,0 +1,18 @@
+{% load i18n web %}<div class="card stack" style="padding:20px;box-shadow:var(--shadow-sm)">
+  <div class="group justify-between">
+    <h4>{{ d.amount|money }} → {{ info.student_first_name }}</h4>
+    <span class="badge badge-filled badge-lg {% if d.status == 'confirmed' %}c-green{% elif pending %}c-yellow{% else %}c-red{% endif %}" data-testid="give-status">{% if d.status == "confirmed" %}{% translate "Paid" %}{% elif d.status == "pending" %}{% translate "Waiting" %}{% elif d.status == "failed" %}{% translate "Failed" %}{% else %}{% translate "Expired" %}{% endif %}</span>
+  </div>
+  {% if pending and d.instructions %}<div class="alert c-blue"><div class="alert-title">{% translate "How to pay" %}</div>
+    <p class="sm">{{ d.instructions.message }}</p>
+    {% if d.instructions.type == "ussd" %}<p class="lg fw-800 mono">{{ d.instructions.ussd_code }}</p>{% endif %}
+    {% if d.instructions.type == "bank_transfer" %}<p class="sm">{{ d.instructions.bank_name }} · {{ d.instructions.account_name }} · <b class="mono">{{ d.instructions.account_number }}</b> · {% translate "Reference" %}: <b class="mono">{{ d.instructions.narration }}</b></p>{% endif %}
+  </div>{% endif %}
+  {% if pending and not give_up %}<div class="group gap-xs"><span class="loader xs"></span><span class="sm dimmed">{% translate "Waiting for the payment to be confirmed… you can keep this page open." %}</span></div>
+    <div hx-get="/give/{{ token }}/status/{{ d.reference }}?n={{ next_poll }}" hx-trigger="load delay:3s" hx-target="#give-body" hx-swap="innerHTML"></div>{% endif %}
+  {% if pending and give_up %}<div class="alert c-yellow">{% translate "Still waiting for confirmation. You can close this page: the money is only added when the payment provider confirms it." %}</div>{% endif %}
+  {% if d.status == "confirmed" %}<div class="alert c-green"><div class="alert-title">{% translate "Thank you!" %}</div>{% blocktranslate trimmed with name=info.student_first_name %}The money has been added to {{ name }}'s SchoolDimes wallet and the family has been told.{% endblocktranslate %}</div>{% endif %}
+  {% if d.status == "failed" or d.status == "expired" %}<div class="alert c-red">{% blocktranslate trimmed with reason=d.failure_reason|default:d.status %}The payment didn't go through ({{ reason }}). No money was taken by SchoolDimes. You can try again.{% endblocktranslate %}</div>{% endif %}
+  <p class="xs dimmed">{% translate "Reference" %}: <span class="mono" data-testid="give-reference">{{ d.reference }}</span></p>
+  {% if not pending %}<button type="button" class="btn btn-light" hx-get="/give/{{ token }}" hx-target="#give-body" hx-swap="innerHTML">{% translate "Send another" %}</button>{% endif %}
+</div>

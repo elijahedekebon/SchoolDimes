@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% load i18n web %}
+{% block title %}SchoolDimes{% endblock %}
+{% block body %}
+<div class="give-page"><div class="give-container">
+  <div class="group justify-between mb-md"><span class="brand-text">SchoolDimes</span>{% language_switcher %}</div>
+  <div id="give-body">
+    {% if invalid %}{% include "give/_invalid.html" %}{% elif busy %}{% include "give/_busy.html" %}{% else %}{% include "give/_form.html" %}{% endif %}
+  </div>
+  <p class="xs dimmed center mt-xl">{% translate "SchoolDimes only shows the student's first name and school here. Balances and history stay private." %}</p>
+</div></div>
+{% endblock %}

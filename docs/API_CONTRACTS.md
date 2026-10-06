@@ -1506,17 +1506,21 @@ authentication class, `core.authentication.SchoolDimesJWTAuthentication`).
 
 ### Section I — contributor top-up / gift page
 
-**Page URL (the parent app builds and shares these):**
-`<dashboard origin>/give/<StudentTopUpLink.token>`, e.g.
-`http://localhost:3000/give/mJz92…`. The backend's `share_url` field on
-`/payments/topup-links/` already contains exactly this, built from
-`PUBLIC_TOPUP_BASE_URL` (default changed to `http://localhost:3000/give`; set
-it to the public dashboard URL in production). **Use `share_url` as-is.**
+**Page URL (the parent app builds and shares these) — unchanged path:**
+`<backend origin>/give/<StudentTopUpLink.token>`, e.g.
+`http://localhost:8000/give/mJz92…` (production: `https://<public host>/give/<token>`).
+The backend's `share_url` field on `/payments/topup-links/` already contains
+exactly this, built from `PUBLIC_TOPUP_BASE_URL` (default
+`http://localhost:8000/give` since the web migration; set it to the public
+host in production). **Use `share_url` as-is**; the response shape is unchanged.
 
-The page calls the Part 2 public endpoints **directly from the browser**
+Since the web migration the page is served by Django itself (`web.give`, no
+login): it calls the same payment services as the public API endpoints
 (`/public/topup-links/{token}/`, `…/deposits/`, `…/deposits/{reference}/`,
-`…/gift-vouchers/`), so the backend's per-IP throttle sees each contributor's
-own IP. The dashboard origin must be in `CORS_ALLOWED_ORIGINS`.
+`…/gift-vouchers/`, all unchanged and still available) and applies the same
+per-IP `PublicTopUpThrottle`, which now sees the contributor's real IP
+directly. The form is CSRF-protected; status is polled every 3 s by HTMX at
+`GET /give/<token>/status/<reference>`. No CORS origin is needed for it.
 
 ### Section J additions — parent-app readiness
 See `docs/PARENT_APP_READINESS.md` for every parent-app screen → endpoint.

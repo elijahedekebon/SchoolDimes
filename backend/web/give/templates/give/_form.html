@@ -1,0 +1,31 @@
+{% load i18n web %}<form class="card stack" style="padding:20px;box-shadow:var(--shadow-sm)" hx-post="/give/{{ token }}" hx-target="#give-body" hx-swap="innerHTML" novalidate>
+  <input type="hidden" name="idempotency_key" value="{{ key }}">
+  <input type="hidden" name="shown" value="{{ shown }}">
+  <h3>{% blocktranslate trimmed with name=info.student_first_name %}Send money to {{ name }}{% endblocktranslate %}</h3>
+  <p class="sm dimmed">{% blocktranslate trimmed with name=info.student_first_name school=info.school_name %}Pocket money for {{ name }} at {{ school }}, via SchoolDimes. No account or app needed.{% endblocktranslate %}</p>
+  <div class="segmented">
+    <label><input type="radio" name="kind" value="topup"{% if kind != "gift" %} checked{% endif %}>{% translate "Top up" %}</label>
+    <label><input type="radio" name="kind" value="gift"{% if kind == "gift" %} checked{% endif %}>{% translate "Gift with a message" %}</label>
+  </div>
+  {% translate "Your name" as l %}{% include "core/components/field.html" with name="name" label=l required=True value=data.name attrs='data-testid="give-name" autocomplete="name"' %}
+  {% translate "You are their…" as l %}{% translate "Grandmother, uncle, aunt…" as ph %}{% include "core/components/field.html" with name="relationship_label" label=l placeholder=ph value=data.relationship_label %}
+  <div class="grid sm-2">
+    {% translate "Your phone" as l %}{% include "core/components/field.html" with name="phone_number" label=l type="tel" placeholder="0772 000 111" value=data.phone_number attrs='data-testid="give-phone" autocomplete="tel"' %}
+    {% translate "Your email" as l %}{% include "core/components/field.html" with name="email" label=l type="email" value=data.email %}
+  </div>
+  <p class="xs dimmed" style="margin-top:-8px">{% translate "A phone number or an email, so the family knows who sent it." %}</p>
+  {% translate "Amount" as l %}{% include "core/components/money_input.html" with name="amount" label=l value=data.amount required=True attrs='data-testid="give-amount"' %}
+  <div data-show-if="kind=gift"><label class="field"><span class="label">{% translate "Your message" %}</span><textarea class="input" name="message" maxlength="280" placeholder="{% translate 'Happy birthday! Buy yourself something nice.' %}">{{ data.message|default:"" }}</textarea></label></div>
+  <div class="segmented">
+    <label><input type="radio" name="channel" value="momo"{% if channel == "momo" %} checked{% endif %}>{% translate "Mobile money" %}</label>
+    <label><input type="radio" name="channel" value="ussd"{% if channel == "ussd" %} checked{% endif %}>{% translate "USSD" %}</label>
+    <label><input type="radio" name="channel" value="bank"{% if channel == "bank" %} checked{% endif %}>{% translate "Bank" %}</label>
+  </div>
+  <div data-show-if="channel=momo|ussd">{% translate "Phone that will pay" as l %}{% translate "Leave blank to use your phone above." as dsc %}{% include "core/components/field.html" with name="payer_phone" label=l type="tel" description=dsc value=data.payer_phone %}</div>
+  {# bot trap: humans never see or fill this #}
+  <input type="text" name="website" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" value="">
+  {% if notice %}<div class="alert c-yellow">{{ notice }}</div>{% endif %}
+  {% error_alert error %}
+  {% blocktranslate trimmed asvar continue_tpl with amount="__AMOUNT__" %}Continue {{ amount }}{% endblocktranslate %}
+  <button type="submit" class="btn btn-md btn-block" data-testid="give-submit" data-continue="{{ continue_tpl }}">{% blocktranslate trimmed with amount=amount_label %}Continue {{ amount }}{% endblocktranslate %}</button>
+</form>
