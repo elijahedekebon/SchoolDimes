@@ -47,21 +47,7 @@ class AttendanceTapView(APIView):
 
 
 def filter_by_date(qs, params):
-    for key, lookup in (("date", None), ("from", "gte"), ("to", "lt")):
-        if params.get(key):
-            day = parse_date(params[key])
-            if day is None:
-                raise ServiceError("date_invalid", _("Dates must be YYYY-MM-DD."))
-            start, end = services.kampala_day_range(day)
-            if key == "date":
-                qs = qs.filter(device_local_timestamp__gte=start, device_local_timestamp__lt=end)
-            elif key == "from":
-                qs = qs.filter(device_local_timestamp__gte=start)
-            else:
-                qs = qs.filter(device_local_timestamp__lt=end)  # inclusive "to" day
-    if params.get("direction"):
-        qs = qs.filter(direction=params["direction"])
-    return qs
+    return services.filter_by_date(qs, params)
 
 
 class AttendanceViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -71,19 +57,7 @@ class AttendanceViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = AttendanceRecordSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        qs = AttendanceRecord.objects.select_related("student", "device")
-        if is_platform_admin(user):
-            pass
-        elif user.role == User.Role.SCHOOL_ADMIN:
-            qs = qs.filter(school_id=user.school_id)
-        elif user.role == User.Role.PARENT:
-            qs = qs.filter(student__guardian_links__parent=user).distinct()
-        else:
-            qs = qs.none()
-        if self.request.query_params.get("student"):
-            qs = qs.filter(student_id=self.request.query_params["student"])
-        return filter_by_date(qs, self.request.query_params)
+        return services.attendance_for(self.request.user, self.request.query_params)
 
 
 

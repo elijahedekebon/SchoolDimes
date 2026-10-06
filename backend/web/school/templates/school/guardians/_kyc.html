@@ -1,0 +1,10 @@
+{% load i18n web %}<div id="kyc_table" class="table-region" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-swap="outerHTML">
+{% if errors.kyc_table %}{% error_alert errors.kyc_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "Name on ID" %}</th><th>{% translate "Account" %}</th><th>{% translate "Document" %}</th><th>{% translate "Submitted" %}</th><th>{% translate "Status" %}</th><th>{% translate "Notes" %}</th><th></th></tr></thead>
+  <tbody>{% for v in kyc_rows %}<tr><td>{{ v.full_name }}</td><td>{{ v.parent_email }}</td><td>{{ v.id_document_type|human }} · {{ v.id_number }}</td><td>{{ v.created_at|dt }}</td><td>{% status_badge v.status %}</td><td>{{ v.review_notes|dash }}</td>
+    <td><button type="button" class="btn btn-xs btn-light" hx-get="/school/guardians/kyc/{{ v.id }}/review" hx-target="#sd-modal-body">{% translate "Review" %}</button></td></tr>
+  {% empty %}{% empty_row 7 _("No verifications submitted.") %}{% endfor %}</tbody></table></div>
+{% pagination kyc_page "kyc_table" %}
+{% endif %}
+</div>

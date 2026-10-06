@@ -1,0 +1,5 @@
+{% if page.paginator.num_pages > 1 %}<div class="group justify-end pagination">
+  {% for n in page.paginator.page_range %}{% if n == 1 or n == page.paginator.num_pages or n|add:"-2" <= page.number and page.number <= n|add:"2" %}
+  <button type="button" class="page-btn{% if n == page.number %} active{% endif %}" hx-get="{{ request.path }}?tab={{ tab }}&page={{ n }}{{ extra|default:'' }}" hx-target="#student_tab" hx-swap="outerHTML">{{ n }}</button>
+  {% elif n == 2 or n == page.paginator.num_pages|add:"-1" %}<span class="dimmed">…</span>{% endif %}{% endfor %}
+</div>{% endif %}

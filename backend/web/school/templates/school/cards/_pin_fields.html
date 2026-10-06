@@ -1,0 +1,2 @@
+{% load i18n %}{% translate "PIN" as l %}{% translate "4 to 6 digits. It is hashed at once and never shown again." as dsc %}{% include "core/components/field.html" with name="pin" label=l type="password" description=dsc attrs='inputmode="numeric" maxlength="6" pattern="\d{4,6}" aria-label="PIN"' %}
+{% translate "Repeat PIN" as l %}{% include "core/components/field.html" with name="pin2" label=l type="password" attrs='inputmode="numeric" maxlength="6" aria-label="Repeat PIN"' %}

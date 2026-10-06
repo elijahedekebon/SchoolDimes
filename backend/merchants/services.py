@@ -93,3 +93,25 @@ def statement(merchant, *, school_ids, date_from=None, date_to=None):
     if date_to:
         entries = entries.filter(created_at__lt=date_to)
     return wallets, entries
+
+
+
+def merchants_for(user, params=None):
+    """school_admin/platform_admin: every merchant (to find and approve ones a
+    neighbouring school registered); parents: merchants approved for their
+    children's schools; merchant_staff: their own."""
+    from accounts.models import User
+    from core.permissions import is_platform_admin, is_school_admin
+    from students.access import user_school_ids
+
+    from .models import Merchant, MerchantApproval
+
+    qs = Merchant.objects.prefetch_related("approvals")
+    if is_platform_admin(user) or is_school_admin(user):
+        return qs
+    if user.role == User.Role.PARENT:
+        return qs.filter(approvals__school_id__in=user_school_ids(user),
+                         approvals__status=MerchantApproval.Status.APPROVED, status=Merchant.Status.APPROVED).distinct()
+    if user.role == User.Role.MERCHANT_STAFF:
+        return qs.filter(staff__user=user)
+    return qs.none()

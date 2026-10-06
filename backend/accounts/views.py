@@ -66,20 +66,9 @@ class GuardianVerificationViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = GuardianVerification.objects.select_related("parent")
-        if is_platform_admin(user):
-            return qs
-        if is_school_admin(user):
-            # a school admin may review verifications for any parent
-            # linked (via Guardian) to a student in their own school.
-            from students.models import Guardian
+        from .services import verifications_for
 
-            parent_ids = Guardian.objects.filter(
-                student__school_id=user.school_id
-            ).values_list("parent_id", flat=True)
-            return qs.filter(parent_id__in=parent_ids)
-        return qs.filter(parent=user)
+        return verifications_for(self.request.user, self.request.query_params)
 
     def perform_update(self, serializer):
         # only school/platform admins may change the review status;
@@ -126,15 +115,9 @@ class UserLookupView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        from core.exceptions import ServiceError
+        from .services import lookup_parent
 
-        if not (is_platform_admin(request.user) or is_school_admin(request.user)):
-            raise ServiceError("forbidden", _("Only admins can look up accounts."), status=403)
-        email = (request.query_params.get("email") or "").strip()
-        user = User.objects.filter(email__iexact=email, role=User.Role.PARENT, is_active=True).first() if email else None
-        if user is None:
-            raise ServiceError("not_found", _("No parent account with that email."), status=404)
-        return Response(UserLookupSerializer(user).data)
+        return Response(UserLookupSerializer(lookup_parent(request.user, request.query_params.get("email"))).data)
 
 
 class StaffUserViewSet(viewsets.ModelViewSet):

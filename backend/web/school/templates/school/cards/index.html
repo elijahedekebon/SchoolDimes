@@ -1,0 +1,14 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Cards") _("Issue, freeze, replace and reset PINs. Changes reach POS devices on their next cache refresh.") %}{% endpageheader %}
+<div class="alert c-blue mb-md"><p class="sm">{% translate 'Card UID format: the NFC tag\'s bytes as lowercase hex with no separators, e.g. 04:A2:2B:7C:91:3E:80 is stored as 04a22b7c913e80. Read it with the POS app\'s dev "show UID" helper, or any NFC reader app.' %}</p></div>
+<form id="issue-form" class="group align-end mb-md">
+  {% translate "Issue a card for" as l %}{% include "core/components/student_picker.html" with label=l %}
+  <button type="button" class="btn btn-xs" data-show-if="student=*" data-testid="issue-card" hx-get="/school/cards/issue" hx-include="#issue-form" hx-target="#sd-modal-body">{% translate "Issue card" %}</button>
+</form>
+<form id="cards-filters" class="group align-end mb-sm" hx-get="{{ request.path }}" hx-target="#cards_table" hx-swap="outerHTML" hx-trigger="change, input delay:300ms from:input[name=card_uid]">
+  <label class="field field-xs" style="width:240px"><span class="label">{% translate "Find by UID" %}</span><input class="input" name="card_uid" placeholder="04:A2:2B:7C"></label>
+  {% choice_filter "status" _("Status") filters.status status_options %}
+</form>
+{% include "school/cards/_table.html" %}
+{% endblock %}

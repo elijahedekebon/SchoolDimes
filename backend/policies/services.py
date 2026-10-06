@@ -194,3 +194,73 @@ def spent_this_week(wallet, now=None) -> Decimal:
 def p2p_sent_today(wallet, now=None) -> Decimal:
     start, end = kampala_day_bounds(now)
     return _debit_sum(wallet, ["p2p_transfer_out"], start, end)
+
+
+
+# ---------------------------------------------------------------------------
+# Querysets shared by the API viewsets and the web pages
+# ---------------------------------------------------------------------------
+
+def catalog_for(user, model, params):
+    """Product categories / products / fee categories: readable by anyone
+    attached to the school (staff, guardians); ?active=true|false."""
+    from core.permissions import is_platform_admin
+    from students.access import user_school_ids
+
+    qs = model.objects.all()
+    if not is_platform_admin(user):
+        qs = qs.filter(school_id__in=user_school_ids(user))
+    if params.get("active") in ("true", "false"):
+        qs = qs.filter(active=params["active"] == "true")
+    return qs
+
+
+def categories_for(user, params):
+    from .models import ProductCategory
+
+    return catalog_for(user, ProductCategory, params)
+
+
+def products_for(user, params):
+    """GET /products/ (?category=, ?merchant=, ?active=)."""
+    from .models import Product
+
+    qs = catalog_for(user, Product, params).select_related("category")
+    if params.get("category"):
+        qs = qs.filter(category_id=params["category"])
+    if params.get("merchant"):
+        qs = qs.filter(merchant_id=params["merchant"])
+    return qs
+
+
+def policies_for(user, params):
+    """GET /policies/ (?student=, ?kind=default|override). Creates the school
+    default lazily, as the API always has."""
+    from django.db.models import Q
+
+    from accounts.models import User
+    from core.permissions import is_platform_admin
+    from students.access import STAFF_ROLES, linked_student_ids, user_school_ids
+
+    from .models import Policy
+
+    qs = Policy.objects.prefetch_related("blocked_categories", "allowed_categories", "blocked_items",
+                                         "blocked_merchants", "allowed_merchants")
+    if params.get("student"):
+        qs = qs.filter(student_id=params["student"])
+    if params.get("kind") == "default":
+        qs = qs.filter(student__isnull=True)
+    elif params.get("kind") == "override":
+        qs = qs.filter(student__isnull=False)
+    if is_platform_admin(user):
+        return qs
+    if user.role == User.Role.PARENT:
+        for school_id in user_school_ids(user):
+            get_school_policy(school_id)
+        return qs.filter(
+            Q(student_id__in=linked_student_ids(user)) | Q(student__isnull=True, school_id__in=user_school_ids(user))
+        )
+    if user.role in STAFF_ROLES and user.school_id:
+        get_school_policy(user.school_id)
+        return qs.filter(school_id=user.school_id)
+    return qs.none()

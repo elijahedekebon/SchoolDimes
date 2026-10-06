@@ -1,0 +1,10 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Students") %}<button type="button" class="btn btn-xs" data-testid="new-student" hx-get="/school/students/new" hx-target="#sd-modal-body">{% translate "New student" %}</button>{% endpageheader %}
+<form id="students-filters" class="group align-end mb-sm" hx-get="{{ request.path }}" hx-target="#students_table" hx-swap="outerHTML" hx-trigger="change, input delay:300ms from:input[name=search]">
+  <label class="field field-xs" style="width:260px"><span class="label">{% translate "Search" %}</span><input class="input" type="search" name="search" placeholder="{% translate 'Name or class' %}" value="{{ filters.search }}"></label>
+  {% choice_filter "card_status" _("Card") filters.card_status card_options %}
+  <label class="switch"><input type="checkbox" name="low_balance" value="true"{% if filters.low_balance %} checked{% endif %}> {% translate "Low balance only" %}</label>
+</form>
+{% include "school/students/_table.html" %}
+{% endblock %}

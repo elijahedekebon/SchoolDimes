@@ -59,16 +59,7 @@ class MerchantViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.C
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = Merchant.objects.prefetch_related("approvals")
-        if is_platform_admin(user) or is_school_admin(user):
-            return qs
-        if user.role == User.Role.PARENT:
-            return qs.filter(approvals__school_id__in=user_school_ids(user),
-                             approvals__status=MerchantApproval.Status.APPROVED, status=Merchant.Status.APPROVED).distinct()
-        if user.role == User.Role.MERCHANT_STAFF:
-            return qs.filter(staff__user=user)
-        return qs.none()
+        return services.merchants_for(self.request.user, self.request.query_params)
 
     def create(self, request):
         s = MerchantSerializer(data=request.data, context={"request": request})

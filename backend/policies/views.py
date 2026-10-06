@@ -20,13 +20,9 @@ class _SchoolCatalogViewSet(AuditPlatformAdminWritesMixin, viewsets.ModelViewSet
     model = None
 
     def get_queryset(self):
-        user = self.request.user
-        qs = self.model.objects.all()
-        if not is_platform_admin(user):
-            qs = qs.filter(school_id__in=user_school_ids(user))
-        if self.request.query_params.get("active") in ("true", "false"):
-            qs = qs.filter(active=self.request.query_params["active"] == "true")
-        return qs
+        from .services import catalog_for
+
+        return catalog_for(self.request.user, self.model, self.request.query_params)
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):
@@ -71,12 +67,9 @@ class ProductViewSet(_SchoolCatalogViewSet):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related("category")
-        if self.request.query_params.get("category"):
-            qs = qs.filter(category_id=self.request.query_params["category"])
-        if self.request.query_params.get("merchant"):
-            qs = qs.filter(merchant_id=self.request.query_params["merchant"])
-        return qs
+        from .services import products_for
+
+        return products_for(self.request.user, self.request.query_params)
 
     def _check_refs(self, serializer, school_id):
         category = serializer.validated_data.get("category")
@@ -105,29 +98,9 @@ class PolicyViewSet(AuditPlatformAdminWritesMixin, viewsets.ModelViewSet):
     http_method_names = ["get", "post", "patch", "put", "delete", "head", "options"]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = Policy.objects.prefetch_related("blocked_categories", "allowed_categories", "blocked_items",
-                                             "blocked_merchants", "allowed_merchants")
-        # Part 4A list filters: ?student=<id>, ?kind=default|override.
-        params = self.request.query_params
-        if params.get("student"):
-            qs = qs.filter(student_id=params["student"])
-        if params.get("kind") == "default":
-            qs = qs.filter(student__isnull=True)
-        elif params.get("kind") == "override":
-            qs = qs.filter(student__isnull=False)
-        if is_platform_admin(user):
-            return qs
-        if user.role == User.Role.PARENT:
-            for school_id in user_school_ids(user):
-                get_school_policy(school_id)
-            return qs.filter(
-                Q(student_id__in=linked_student_ids(user)) | Q(student__isnull=True, school_id__in=user_school_ids(user))
-            )
-        if user.role in STAFF_ROLES and user.school_id:
-            get_school_policy(user.school_id)
-            return qs.filter(school_id=user.school_id)
-        return qs.none()
+        from .services import policies_for
+
+        return policies_for(self.request.user, self.request.query_params)
 
     def _authorize_write(self, student, school_id):
         user = self.request.user

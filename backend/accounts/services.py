@@ -101,3 +101,41 @@ def set_preferred_language(user, language):
         user.preferred_language = language
         user.save(update_fields=["preferred_language"])
     return user
+
+
+
+def verifications_for(user, params=None):
+    """GuardianVerification rows: platform_admin all; school_admin those of
+    parents linked to a student of their school; a parent their own."""
+    from core.permissions import is_platform_admin, is_school_admin
+
+    from .models import GuardianVerification
+
+    qs = GuardianVerification.objects.select_related("parent")
+    if is_platform_admin(user):
+        return qs
+    if is_school_admin(user):
+        from students.models import Guardian
+
+        parent_ids = Guardian.objects.filter(student__school_id=user.school_id).values_list("parent_id", flat=True)
+        return qs.filter(parent_id__in=parent_ids)
+    return qs.filter(parent=user)
+
+
+def lookup_parent(actor, email):
+    """Exact-email lookup of an active parent account (no partial search, so
+    admins can't enumerate the platform's parents)."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin, is_school_admin
+
+    from .models import User
+
+    if not (is_platform_admin(actor) or is_school_admin(actor)):
+        raise ServiceError("forbidden", _("Only admins can look up accounts."), status=403)
+    email = (email or "").strip()
+    user = User.objects.filter(email__iexact=email, role=User.Role.PARENT, is_active=True).first() if email else None
+    if user is None:
+        raise ServiceError("not_found", _("No parent account with that email."), status=404)
+    return user

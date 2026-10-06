@@ -8,15 +8,7 @@ from core.permissions import IsSchoolAdminOrPlatformAdmin, is_platform_admin, is
 
 from .models import Card
 from .serializers import CardSerializer, IssueCardSerializer, ReissueCardSerializer, ResetPinSerializer
-from .services import (
-    card_status_changed,
-    freeze_card,
-    issue_card,
-    reissue_card,
-    report_lost_card,
-    reset_card_pin,
-    unfreeze_card,
-)
+from .services import freeze_card_by, issue_card, reissue_card, report_lost_by, reset_pin_by, unfreeze_card_by
 
 
 def can_manage_card(user, card: Card) -> bool:
@@ -37,26 +29,9 @@ class CardViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "head", "options"]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = Card.objects.select_related("student", "school")
-        # Part 4A list filters: ?student=, ?status=, ?card_uid= (normalised).
-        params = self.request.query_params
-        if params.get("student"):
-            qs = qs.filter(student_id=params["student"])
-        if params.get("status"):
-            qs = qs.filter(status=params["status"])
-        if params.get("card_uid"):
-            from .services import normalize_card_uid
+        from .services import cards_for
 
-            try:
-                qs = qs.filter(card_uid=normalize_card_uid(params["card_uid"]))
-            except ValueError:
-                qs = qs.none()
-        if is_platform_admin(user):
-            return qs.filter(school_id=params["school"]) if params.get("school") else qs
-        if user.role == User.Role.PARENT:
-            return qs.filter(student__guardian_links__parent=user).distinct()
-        return qs.filter(school_id=user.school_id)
+        return cards_for(self.request.user, self.request.query_params)
 
     def get_permissions(self):
         if self.action in ("issue", "reissue", "reset_pin"):
@@ -96,24 +71,14 @@ class CardViewSet(viewsets.ModelViewSet):
         # Part 2: same response; also notifies the other guardians and is
         # audit-logged for platform_admin. Takes effect for authorize_debit()
         # immediately and reaches offline POS devices on their next cache refresh.
-        freeze_card(card)
-        card_status_changed(card, request.user, "card_frozen")
-        return Response(CardSerializer(card).data)
+        return Response(CardSerializer(freeze_card_by(request.user, card)).data)
 
     @action(detail=True, methods=["post"])
     def unfreeze(self, request, pk=None):
         card = self.get_object()
         if not can_manage_card(request.user, card):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        if card.status == Card.Status.LOST:
-            # Part 2: a lost card is replaced via reissue, never reactivated.
-            return Response(
-                {"code": "card_lost", "detail": _("A lost card cannot be unfrozen; reissue it instead.")},
-                status=status.HTTP_409_CONFLICT,
-            )
-        unfreeze_card(card)
-        card_status_changed(card, request.user, "card_unfrozen")
-        return Response(CardSerializer(card).data)
+        return Response(CardSerializer(unfreeze_card_by(request.user, card)).data)
 
     @action(detail=True, methods=["post"], url_path="report-lost")
     def report_lost(self, request, pk=None):
@@ -122,9 +87,7 @@ class CardViewSet(viewsets.ModelViewSet):
         card = self.get_object()
         if not can_manage_card(request.user, card):
             return Response(status=status.HTTP_403_FORBIDDEN)
-        report_lost_card(card)
-        card_status_changed(card, request.user, "card_reported_lost")
-        return Response(CardSerializer(card).data)
+        return Response(CardSerializer(report_lost_by(request.user, card)).data)
 
     @action(detail=True, methods=["post"], url_path="reset-pin")
     def reset_pin(self, request, pk=None):
@@ -136,12 +99,7 @@ class CardViewSet(viewsets.ModelViewSet):
         if not is_platform_admin(request.user) and card.school_id != request.user.school_id:
             return Response(status=status.HTTP_403_FORBIDDEN)
         if card.status == Card.Status.LOST:
-            return Response(
-                {"code": "card_lost", "detail": _("A lost card can't get a new PIN; reissue it instead.")},
-                status=status.HTTP_409_CONFLICT,
-            )
+            reset_pin_by(request.user, card, None)  # raises card_lost (409)
         s = ResetPinSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        reset_card_pin(card, s.validated_data["pin"])
-        audit(request.user, "card.reset_pin", card)
-        return Response(CardSerializer(card).data)
+        return Response(CardSerializer(reset_pin_by(request.user, card, s.validated_data["pin"])).data)

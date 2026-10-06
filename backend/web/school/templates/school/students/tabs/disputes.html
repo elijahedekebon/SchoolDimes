@@ -1,0 +1,5 @@
+{% load i18n web %}<div class="table-region"><div class="table-wrap"><table class="table striped">
+  <thead><tr><th>#</th><th>{% translate "When" %}</th><th>{% translate "Reason" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Status" %}</th><th>{% translate "Refund" %}</th></tr></thead>
+  <tbody>{% for r in rows %}<tr class="clickable-row" onclick="location.href='/school/disputes?open={{ r.id }}'"><td>{{ r.id }}</td><td>{{ r.created_at|dt }}</td><td>{{ r.reason_category }}</td><td>{{ r.original_amount|money }}</td><td>{% status_badge r.status %}</td><td>{{ r.refund_amount|money }}</td></tr>
+  {% empty %}{% empty_row 6 %}{% endfor %}</tbody></table></div>
+{% include "school/students/_tab_pagination.html" %}</div>

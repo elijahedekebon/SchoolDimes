@@ -1,0 +1,9 @@
+{% load i18n web %}{% error_alert lookup_error %}
+{% if found %}<form class="group align-end mt-sm" id="link-form">
+  <span class="sm">{{ found.full_name|default:found.email }} ({{ found.email }})</span>
+  <input type="hidden" name="email" value="{{ found.email }}">
+  <label class="field field-xs" style="width:140px"><span class="label">{% translate "Relationship" %}</span>
+    <select class="input" name="relationship">
+      <option value="mother">mother</option><option value="father">father</option><option value="guardian" selected>guardian</option><option value="other">other</option></select></label>
+  <button type="button" class="btn btn-xs btn-light" hx-get="/school/students/{{ student.id }}/link-guardian" hx-include="#link-form" hx-target="#sd-modal-body">{% translate "Link" %}</button>
+</form>{% endif %}

@@ -83,16 +83,9 @@ class StudentViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
-        user = self.request.user
-        # tenant scoping is always derived server-side, never from client input,
-        # except platform_admin who legitimately operates across tenants.
-        if is_platform_admin(user):
-            school = serializer.validated_data.get("school") or self.request.data.get("school")
-            serializer.save(school_id=school if isinstance(school, int) else user.school_id)
-        else:
-            serializer.save(school=user.school)
-        # Part 2: every student gets their main + savings wallets at onboarding.
-        ensure_student_wallets(serializer.instance)
+        from .services import create_student
+
+        create_student(self.request.user, serializer, self.request.data.get("school"))
 
     # ---- Part 2 read-only student sub-resources -------------------------
 
@@ -110,16 +103,13 @@ class StudentViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"], url_path="p2p-history")
     def p2p_history(self, request, pk=None):
         """Guardians of the student and that school's school_admin only."""
-        from django.db.models import Q
-
         from core.pagination import StandardResultsSetPagination
-        from wallets.models import P2PTransfer
         from wallets.serializers import P2PTransferSerializer
 
+        from .services import p2p_history
+
         student = self._student_for_family_or_admin()
-        qs = P2PTransfer.objects.filter(
-            Q(sender_wallet__student=student) | Q(recipient_wallet__student=student)
-        ).select_related("sender_wallet__student", "recipient_wallet__student")
+        qs = p2p_history(student)
         paginator = StandardResultsSetPagination()
         page = paginator.paginate_queryset(qs, request, view=self)
         return paginator.get_paginated_response(P2PTransferSerializer(page, many=True).data)
@@ -136,15 +126,13 @@ class StudentViewSet(viewsets.ModelViewSet):
     def attendance(self, request, pk=None):
         """Guardians of the student and that school's school_admin.
         ?date=YYYY-MM-DD or ?from=&to= (Africa/Kampala days), ?direction=."""
-        from attendance.models import AttendanceRecord
-        from attendance.views import AttendanceRecordSerializer, filter_by_date
+        from attendance.views import AttendanceRecordSerializer
         from core.pagination import StandardResultsSetPagination
 
+        from attendance.services import student_attendance
+
         student = self._student_for_family_or_admin()
-        qs = filter_by_date(
-            AttendanceRecord.objects.filter(student=student).select_related("student", "device"),
-            request.query_params,
-        )
+        qs = student_attendance(student, request.query_params)
         paginator = StandardResultsSetPagination()
         page = paginator.paginate_queryset(qs, request, view=self)
         return paginator.get_paginated_response(AttendanceRecordSerializer(page, many=True).data)
@@ -200,11 +188,8 @@ class StudentViewSet(viewsets.ModelViewSet):
 
         student = self.get_object()  # queryset-scoped: other schools -> 404
         if request.method == "POST":
-            email = (request.data.get("email") or "").strip()
-            password = request.data.get("password") or ""
-            if not email or len(password) < 8:
-                raise ServiceError("invalid", _("An email and a password of at least 8 characters are required."))
-            account = portal.create_portal_account(request.user, student, email=email, password=password)
+            account = portal.create_portal_account(request.user, student, email=request.data.get("email"),
+                                                   password=request.data.get("password"))
             return Response({"email": account.user.email, "is_active": account.user.is_active}, status=201)
         if request.method == "DELETE":
             portal.remove_portal_account(request.user, student)
@@ -231,17 +216,9 @@ class GuardianViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = Guardian.objects.select_related("parent", "student", "parent__guardian_verification")
-        # Part 4A: ?student= / ?parent= filters.
-        for f in ("student", "parent"):
-            if self.request.query_params.get(f):
-                qs = qs.filter(**{f: self.request.query_params[f]})
-        if is_platform_admin(user):
-            return qs
-        if user.role == User.Role.PARENT:
-            return qs.filter(parent=user)
-        return qs.filter(student__school_id=user.school_id)
+        from .services import guardians_for
+
+        return guardians_for(self.request.user, self.request.query_params)
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):
@@ -249,13 +226,9 @@ class GuardianViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def _check_student_school(self, serializer):
-        # Part 4A tenant fix: a school_admin may only link students of their own school.
-        from core.exceptions import ServiceError
+        from .services import check_guardian_student
 
-        student = serializer.validated_data.get("student")
-        user = self.request.user
-        if student is not None and not is_platform_admin(user) and student.school_id != user.school_id:
-            raise ServiceError("not_found", "Student not found.", status=404)
+        check_guardian_student(self.request.user, serializer.validated_data.get("student"))
 
     def perform_create(self, serializer):
         self._check_student_school(serializer)

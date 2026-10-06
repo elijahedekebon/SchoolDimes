@@ -1,0 +1,4 @@
+{% load i18n web %}<div id="student_tab" class="tab-panel" hx-get="{{ request.path }}?tab={{ tab }}" hx-trigger="sd-refresh from:body" hx-swap="outerHTML">
+{% error_alert errors.student_tab %}
+{% include "school/students/tabs/"|add:tab|add:".html" %}
+</div>

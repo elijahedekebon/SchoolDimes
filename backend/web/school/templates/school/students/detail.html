@@ -1,0 +1,12 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% blocktranslate trimmed asvar subtitle with cls=student.class_name|default:"—" born=student.date_of_birth|d %}{{ cls }} · born {{ born }}{% endblocktranslate %}
+{% pageheader student.name subtitle %}
+  <a class="btn btn-xs btn-default" href="/school/students">{% translate "All students" %}</a>
+  <button type="button" class="btn btn-xs btn-light" data-testid="edit-student" hx-get="/school/students/{{ student.id }}/edit" hx-target="#sd-modal-body">{% translate "Edit" %}</button>
+{% endpageheader %}
+<div class="tabs" role="tablist">
+  {% for key, label in tabs %}<button type="button" role="tab" class="tab{% if key == tab %} active{% endif %}" data-tab="{{ key }}" hx-get="{{ request.path }}?tab={{ key }}" hx-target="#student_tab" hx-swap="outerHTML">{{ label }}</button>{% endfor %}
+</div>
+{% include "school/students/_tab.html" %}
+{% endblock %}

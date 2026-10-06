@@ -64,10 +64,10 @@ All paths are unchanged. "View" names are in `web/<area>/views.py`.
 | 5 | `/school/reconciliation` · `school/reconciliation/page.tsx` | `/school/reconciliation` | `school.ReconciliationView` | `school/reconciliation/index.html` | B | ✅ |
 | 6 | `/school/shortfalls` · `school/shortfalls/page.tsx` | `/school/shortfalls` | `school.ShortfallsView` | `school/shortfalls/index.html` | B | ✅ |
 | 7 | `/school/analytics` · `school/analytics/page.tsx` | `/school/analytics` | `school.AnalyticsView` | `school/analytics/index.html` | C | ✅ |
-| 8 | `/school/students` · `school/students/page.tsx` | `/school/students` | `school.StudentsView` | `school/students/index.html` | D | ⬜ |
-| 9 | `/school/students/[id]` · `school/students/[id]/page.tsx` | `/school/students/<int:id>` | `school.StudentDetailView` | `school/students/detail.html` | D | ⬜ |
-| 10 | `/school/guardians` · `school/guardians/page.tsx` | `/school/guardians` | `school.GuardiansView` | `school/guardians/index.html` | D | ⬜ |
-| 11 | `/school/cards` · `school/cards/page.tsx` | `/school/cards` | `school.CardsView` | `school/cards/index.html` | D | ⬜ |
+| 8 | `/school/students` · `school/students/page.tsx` | `/school/students` | `school.StudentsView` | `school/students/index.html` | D | ✅ |
+| 9 | `/school/students/[id]` · `school/students/[id]/page.tsx` | `/school/students/<int:id>` | `school.StudentDetailView` | `school/students/detail.html` | D | ✅ |
+| 10 | `/school/guardians` · `school/guardians/page.tsx` | `/school/guardians` | `school.GuardiansView` | `school/guardians/index.html` | D | ✅ |
+| 11 | `/school/cards` · `school/cards/page.tsx` | `/school/cards` | `school.CardsView` | `school/cards/index.html` | D | ✅ |
 | 12 | `/school/devices` · `school/devices/page.tsx` | `/school/devices` | `school.DevicesView` | `school/devices/index.html` | E | ⬜ |
 | 13 | `/school/merchants` · `school/merchants/page.tsx` | `/school/merchants` | `school.MerchantsView` | `school/merchants/index.html` | E | ⬜ |
 | 14 | `/school/products` · `school/products/page.tsx` | `/school/products` | `school.ProductsView` | `school/products/index.html` | E | ⬜ |
@@ -197,7 +197,7 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 - [x] **A. Shell & auth** — base/app frame templates, CSS/JS/vendor assets, session login/logout (+ throttle, role routing and refusal messages), `/` redirect, language switcher (+ `preferred_language`), notifications bell, branding, scoping helper, WhiteNoise, `build_locale` collects web strings
 - [x] **B. Overview, sales, reconciliation (+CSV), review queue**
 - [x] **C. Analytics** (Chart.js)
-- [ ] **D. Students (+detail tabs), guardians & KYC, cards**
+- [x] **D. Students (+detail tabs), guardians & KYC, cards**
 - [ ] **E. Devices (token once + QR), merchants, products, policy & settings, staff accounts**
 - [ ] **F. Fees, attendance, pooled funds, disputes, P2P alerts, data requests, tips, payment issues**
 - [ ] **G. Platform back-office**

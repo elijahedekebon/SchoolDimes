@@ -15,6 +15,9 @@ def portal_account_for(student):
 
 @transaction.atomic
 def create_portal_account(actor, student, *, email, password):
+    email = (email or "").strip()
+    if not email or len(password or "") < 8:
+        raise ServiceError("invalid", _("An email and a password of at least 8 characters are required."))
     if portal_account_for(student) is not None:
         raise ServiceError("portal_account_exists", _("This student already has a portal login."), status=409)
     if User.objects.filter(email__iexact=email).exists():

@@ -1,0 +1,8 @@
+{% load i18n %}<span class="group gap-xs">{% if card.status == "lost" %}
+  <button type="button" class="btn btn-xs btn-light c-orange" data-testid="reissue-card" hx-get="/school/cards/{{ card.id }}/reissue" hx-target="#sd-modal-body">{% translate "Replace card" %}</button>
+{% else %}
+  {% if card.status == "active" %}<button type="button" class="btn btn-xs btn-light c-cyan" data-testid="freeze-card" hx-get="/school/cards/{{ card.id }}/freeze" hx-target="#sd-modal-body">{% translate "Freeze" %}</button>
+  {% else %}<button type="button" class="btn btn-xs btn-light c-green" hx-get="/school/cards/{{ card.id }}/unfreeze" hx-target="#sd-modal-body">{% translate "Unfreeze" %}</button>{% endif %}
+  <button type="button" class="btn btn-xs btn-light" hx-get="/school/cards/{{ card.id }}/reset-pin" hx-target="#sd-modal-body">{% translate "Reset PIN" %}</button>
+  <button type="button" class="btn btn-xs btn-light c-red" hx-get="/school/cards/{{ card.id }}/mark-lost" hx-target="#sd-modal-body">{% translate "Mark lost" %}</button>
+{% endif %}</span>

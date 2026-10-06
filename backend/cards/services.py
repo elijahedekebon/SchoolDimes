@@ -104,3 +104,70 @@ def card_status_changed(card: Card, actor, event_type: str):
         },
         exclude_user_ids=[actor.pk],
     )
+
+
+
+# ---------------------------------------------------------------------------
+# Shared by the API viewset and the web pages
+# ---------------------------------------------------------------------------
+
+def cards_for(user, params):
+    """GET /cards/: ?student=, ?status=, ?card_uid= (normalised); platform_admin
+    all (?school=), parents their children's cards, staff their school's."""
+    from core.permissions import is_platform_admin
+
+    qs = Card.objects.select_related("student", "school")
+    if params.get("student"):
+        qs = qs.filter(student_id=params["student"])
+    if params.get("status"):
+        qs = qs.filter(status=params["status"])
+    if params.get("card_uid"):
+        try:
+            qs = qs.filter(card_uid=normalize_card_uid(params["card_uid"]))
+        except ValueError:
+            qs = qs.none()
+    if is_platform_admin(user):
+        return qs.filter(school_id=params["school"]) if params.get("school") else qs
+    if user.role == "parent":
+        return qs.filter(student__guardian_links__parent=user).distinct()
+    return qs.filter(school_id=user.school_id)
+
+
+def freeze_card_by(actor, card: Card) -> Card:
+    """Freeze + notify the other guardians + audit (platform_admin). Takes
+    effect for authorize_debit() at once; offline devices on their next refresh."""
+    freeze_card(card)
+    card_status_changed(card, actor, "card_frozen")
+    return card
+
+
+def unfreeze_card_by(actor, card: Card) -> Card:
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+
+    if card.status == Card.Status.LOST:
+        # Part 2: a lost card is replaced via reissue, never reactivated.
+        raise ServiceError("card_lost", _("A lost card cannot be unfrozen; reissue it instead."), status=409)
+    unfreeze_card(card)
+    card_status_changed(card, actor, "card_unfrozen")
+    return card
+
+
+def report_lost_by(actor, card: Card) -> Card:
+    report_lost_card(card)
+    card_status_changed(card, actor, "card_reported_lost")
+    return card
+
+
+def reset_pin_by(actor, card: Card, raw_pin) -> Card:
+    from django.utils.translation import gettext as _
+
+    from core.audit import audit
+    from core.exceptions import ServiceError
+
+    if card.status == Card.Status.LOST:
+        raise ServiceError("card_lost", _("A lost card can't get a new PIN; reissue it instead."), status=409)
+    reset_card_pin(card, raw_pin)
+    audit(actor, "card.reset_pin", card)
+    return card

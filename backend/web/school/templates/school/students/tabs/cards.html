@@ -1,0 +1,8 @@
+{% load i18n web %}<div class="stack">
+{% if not has_usable %}<div class="group"><span class="sm dimmed">{% translate "This student has no usable card." %}</span>
+  <button type="button" class="btn btn-xs" data-testid="issue-card" hx-get="/school/cards/issue?student={{ student.id }}" hx-target="#sd-modal-body">{% translate "Issue card" %}</button></div>{% endif %}
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "Card UID" %}</th><th>{% translate "Status" %}</th><th>{% translate "Issued" %}</th><th></th></tr></thead>
+  <tbody>{% for c in cards %}<tr><td><span class="mono">{{ c.card_uid }}</span></td><td>{% status_badge c.status %}</td><td>{{ c.issued_at|dt }}</td><td>{% include "school/cards/_actions.html" with card=c %}</td></tr>
+  {% empty %}{% empty_row 4 _("No cards issued.") %}{% endfor %}</tbody></table></div>
+</div>

@@ -1,0 +1,9 @@
+{% load i18n web %}<div id="students_table" class="table-region" data-testid="students-table" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#students-filters" hx-swap="outerHTML">
+{% if errors.students_table %}{% error_alert errors.students_table %}{% else %}
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "Name" %}</th><th>{% translate "Class" %}</th><th>{% translate "Date of birth" %}</th><th>{% translate "Added" %}</th></tr></thead>
+  <tbody>{% for s in rows %}<tr class="clickable-row" onclick="location.href='/school/students/{{ s.id }}'"><td><a class="plain-link" href="/school/students/{{ s.id }}">{{ s.name }}</a></td><td>{{ s.class_name|dash }}</td><td>{{ s.date_of_birth|d }}</td><td>{{ s.created_at|d }}</td></tr>
+  {% empty %}{% empty_row 4 %}{% endfor %}</tbody></table></div>
+{% pagination page "students_table" "#students-filters" %}
+{% endif %}
+</div>

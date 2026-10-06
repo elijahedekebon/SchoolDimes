@@ -1,0 +1,9 @@
+{% load i18n web %}<div id="links_table" class="table-region" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#links-filters" hx-swap="outerHTML">
+{% if errors.links_table %}{% error_alert errors.links_table %}{% else %}
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "Student" %}</th><th>{% translate "Guardian" %}</th><th>{% translate "Account" %}</th><th>{% translate "Relationship" %}</th><th>{% translate "Status" %}</th></tr></thead>
+  <tbody>{% for r in link_rows %}<tr><td><a href="/school/students/{{ r.student }}">{{ r.student_name }}</a></td><td>{{ r.parent_name|default:r.parent_email }}</td><td>{{ r.parent_email }}</td><td>{{ r.relationship }}</td><td>{% status_badge r.verification_status|default:"not_submitted" %}</td></tr>
+  {% empty %}{% empty_row 5 %}{% endfor %}</tbody></table></div>
+{% pagination links_page "links_table" "#links-filters" %}
+{% endif %}
+</div>

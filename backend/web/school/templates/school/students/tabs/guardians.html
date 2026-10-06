@@ -1,0 +1,16 @@
+{% load i18n web %}<div class="stack">
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "Guardian" %}</th><th>{% translate "Email" %}</th><th>{% translate "Phone" %}</th><th>{% translate "Relationship" %}</th><th>{% translate "Primary" %}</th><th>{% translate "KYC" %}</th><th></th></tr></thead>
+  <tbody>{% for g in guardians %}<tr><td>{{ g.parent_name|dash }}</td><td>{{ g.parent_email }}</td><td>{{ g.parent_phone|dash }}</td><td>{{ g.relationship }}</td><td>{% if g.is_primary_contact %}✓{% endif %}</td><td>{% status_badge g.verification_status|default:"not_submitted" %}</td>
+    <td><button type="button" class="btn btn-xs btn-light c-red" hx-get="/school/guardians/{{ g.id }}/unlink" hx-target="#sd-modal-body">{% translate "Unlink" %}</button></td></tr>
+  {% empty %}{% empty_row 7 _("No guardians linked.") %}{% endfor %}</tbody></table></div>
+<div class="card">
+  <p class="fw-600 mb-xs">{% translate "Link a guardian" %}</p>
+  <p class="xs dimmed mb-xs">{% translate "The parent registers in the SchoolDimes app first. Enter the exact email of their account." %}</p>
+  <form class="group align-end" hx-get="/school/students/{{ student.id }}/guardian-lookup" hx-target="#guardian-lookup" hx-swap="innerHTML">
+    <label class="field field-xs" style="width:280px"><span class="label">{% translate "Email" %}</span><input class="input" type="email" name="email" required></label>
+    <button type="submit" class="btn btn-xs btn-light">{% translate "Find" %}</button>
+  </form>
+  <div id="guardian-lookup"></div>
+</div>
+</div>

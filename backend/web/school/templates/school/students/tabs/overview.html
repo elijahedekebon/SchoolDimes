@@ -1,0 +1,18 @@
+{% load i18n web %}<div class="grid md-2">
+  <div class="card">
+    <p class="fw-600 mb-xs">{% translate "Balances" %}</p>
+    {% for w in wallets %}<div class="group justify-between"><span class="sm">{{ w.label }}</span>{{ w.balance|money }}</div>{% endfor %}
+    <p class="fw-600 mt-md mb-xs">{% translate "Savings goals" %}</p>
+    {% for g in goals %}<div class="stack gap-2 mb-xs">
+      <div class="group justify-between"><span class="sm">{{ g.goal_name }} {% if g.is_reached %}✓{% endif %}</span><span class="xs dimmed">{{ g.current_amount|money }} / {{ g.target_amount|money }}</span></div>
+      <div class="progress{% if g.is_reached %} c-green{% endif %}"><span style="width:{{ g.progress_percent }}%"></span></div>
+    </div>{% empty %}<p class="sm dimmed">{% translate "No savings goals." %}</p>{% endfor %}
+  </div>
+  <div class="card">
+    <p class="fw-600 mb-xs">{% translate "Effective spending policy" %}</p>
+    <div class="stack gap-4">
+      {% for label, value, is_money in policy_lines %}<div class="group justify-between nowrap"><span class="sm dimmed">{{ label }}</span><span class="sm right">{% if is_money %}{% if value is None %}{% translate "No limit" %}{% else %}{{ value|money }}{% endif %}{% else %}{{ value }}{% endif %}</span></div>{% endfor %}
+      {% if override %}<div class="alert c-blue mt-xs">{% blocktranslate trimmed with who=override.updated_by_name|default:"—" role=override.updated_by_role|default:"—" when=override.updated_at|dt %}Student override last set by {{ who }} ({{ role }}) on {{ when }}. Parents can only tighten school limits.{% endblocktranslate %}</div>{% endif %}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n %}
+{% block title %}{% if replace %}{% blocktranslate trimmed with name=student.name %}Replace {{ name }}'s card{% endblocktranslate %}{% else %}{% blocktranslate trimmed with name=student.name %}Issue a card for {{ name }}{% endblocktranslate %}{% endif %}{% endblock %}
+{% block form_attrs %}{% if not replace %}hx-vals='{"student": "{{ student.id }}"}'{% endif %}{% endblock %}
+{% block description %}{% if replace %}<div class="alert c-orange">{% blocktranslate trimmed with uid=replace.card_uid %}The old card ({{ uid }}) stays retired as lost. The new card gets a new UID and PIN.{% endblocktranslate %}</div>{% endif %}{% endblock %}
+{% block fields %}
+{% translate "Card UID (NFC)" as l %}{% translate "Tap the card on a reader and type its UID. Leave blank to let the server generate one (no physical card)." as dsc %}
+{% include "core/components/field.html" with name="card_uid" label=l description=dsc placeholder="04:A2:2B:7C:91:3E:80" value=data.card_uid attrs='data-testid="card-uid-input" autofocus hx-get="/school/cards/uid-preview" hx-trigger="input changed delay:200ms" hx-target="#uid-preview"' %}
+<div id="uid-preview">{% include "school/cards/_uid_preview.html" with raw=data.card_uid normalized=None %}</div>
+{% include "school/cards/_pin_fields.html" %}
+{% endblock %}
+{% block confirm_testid %}confirm-issue{% endblock %}
+{% block confirm_label %}{% if replace %}{% translate "Replace card" %}{% else %}{% translate "Issue card" %}{% endif %}{% endblock %}

@@ -230,6 +230,9 @@ msgstr "kikomo cha matumizi ya wiki kimepitwa"
 
 # --- Web surfaces (web/**): untranslated entries fall back to English ---
 
+msgid "%(cls)s · born %(born)s"
+msgstr ""
+
 msgid "%(confirmed)s confirmed · %(pending)s pending"
 msgstr ""
 
@@ -247,16 +250,52 @@ msgstr[1] ""
 msgid "%(count)s total"
 msgstr ""
 
+msgid "%(name)s's card can be used again. Guardians are notified."
+msgstr ""
+
+msgid "%(parent)s will be able to see %(student)s's balances and history, top up, set spending limits and freeze the card."
+msgstr ""
+
+msgid "%(parent)s will no longer see or manage %(student)s's wallet, card or history. Their account is not deleted."
+msgstr ""
+
 msgid "%(pct)s%% on unhealthy categories"
 msgstr ""
 
+msgid "4 to 6 digits. It is hashed at once and never shown again."
+msgstr ""
+
 msgid "Accept (acknowledge the flag)"
+msgstr ""
+
+msgid "Account"
+msgstr ""
+
+msgid "Active card"
+msgstr ""
+
+msgid "Add a student"
+msgstr ""
+
+msgid "Added"
 msgstr ""
 
 msgid "All"
 msgstr ""
 
 msgid "All devices synced recently."
+msgstr ""
+
+msgid "All guardian links"
+msgstr ""
+
+msgid "All students"
+msgstr ""
+
+msgid "Allowed"
+msgstr ""
+
+msgid "Allowed categories"
 msgstr ""
 
 msgid "Amount"
@@ -271,16 +310,34 @@ msgstr ""
 msgid "Analytics"
 msgstr ""
 
+msgid "At least 8 characters. Give it to the student privately."
+msgstr ""
+
 msgid "Attendance"
 msgstr ""
 
 msgid "Audit log"
 msgstr ""
 
+msgid "Balance"
+msgstr ""
+
 msgid "Balanced"
 msgstr ""
 
+msgid "Balances"
+msgstr ""
+
 msgid "Best-sellers"
+msgstr ""
+
+msgid "Blocked categories"
+msgstr ""
+
+msgid "Blocked items"
+msgstr ""
+
+msgid "Blocked merchants"
 msgstr ""
 
 msgid "Books NOT balanced — investigate"
@@ -301,6 +358,21 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
+msgid "Card"
+msgstr ""
+
+msgid "Card UID"
+msgstr ""
+
+msgid "Card UID (NFC)"
+msgstr ""
+
+msgid "Card UID format: the NFC tag\\'s bytes as lowercase hex with no separators, e.g. 04:A2:2B:7C:91:3E:80 is stored as 04a22b7c913e80. Read it with the POS app\\'s dev \"show UID\" helper, or any NFC reader app."
+msgstr ""
+
+msgid "Card issued"
+msgstr ""
+
 msgid "Cards"
 msgstr ""
 
@@ -313,7 +385,16 @@ msgstr ""
 msgid "Charge the guardian"
 msgstr ""
 
+msgid "Check the parent's %(doc)s number %(number)s against the document they show you."
+msgstr ""
+
 msgid "Choose a student to see their spending in this period."
+msgstr ""
+
+msgid "Class"
+msgstr ""
+
+msgid "Class is required"
 msgstr ""
 
 msgid "Close"
@@ -331,16 +412,34 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
+msgid "Create portal login"
+msgstr ""
+
+msgid "Creates a read-only student login for %(name)s. It can never see other students."
+msgstr ""
+
+msgid "Daily cap"
+msgstr ""
+
 msgid "Data requests"
 msgstr ""
 
 msgid "Date"
 msgstr ""
 
+msgid "Date of birth"
+msgstr ""
+
+msgid "Decision"
+msgstr ""
+
 msgid "Deposits"
 msgstr ""
 
 msgid "Deposits confirmed today"
+msgstr ""
+
+msgid "Description"
 msgstr ""
 
 msgid "Device"
@@ -352,16 +451,34 @@ msgstr ""
 msgid "Devices not syncing"
 msgstr ""
 
+msgid "Direction"
+msgstr ""
+
 msgid "Disputes"
 msgstr ""
 
+msgid "Document"
+msgstr ""
+
 msgid "Done"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Edit student"
+msgstr ""
+
+msgid "Effective spending policy"
 msgstr ""
 
 msgid "Email"
 msgstr ""
 
 msgid "Every amount next to a ledger amount is recomputed from the ledger entries carrying its reference. Sum of every wallet in the school:"
+msgstr ""
+
+msgid "Every purchase, transfer and fee payment from %(name)s's card is refused at once. Offline POS devices refuse it after their next cache refresh. Guardians are notified."
 msgstr ""
 
 msgid "Every wallet in the school sums to zero"
@@ -379,10 +496,22 @@ msgstr ""
 msgid "Financial tips"
 msgstr ""
 
+msgid "Find"
+msgstr ""
+
+msgid "Find by UID"
+msgstr ""
+
 msgid "Flags"
 msgstr ""
 
 msgid "For school administrators, platform staff and students (student portal)."
+msgstr ""
+
+msgid "Freeze"
+msgstr ""
+
+msgid "Freeze card"
 msgstr ""
 
 msgid "From"
@@ -391,7 +520,16 @@ msgstr ""
 msgid "From the ledger: every figure traces to POS transactions and their ledger entries."
 msgstr ""
 
+msgid "Frozen card"
+msgstr ""
+
 msgid "Gross"
+msgstr ""
+
+msgid "Guardian"
+msgstr ""
+
+msgid "Guardians"
 msgstr ""
 
 msgid "Guardians & KYC"
@@ -400,10 +538,37 @@ msgstr ""
 msgid "Hour"
 msgstr ""
 
+msgid "Identity checks (KYC-lite) for parents linked to your students, and all guardian links."
+msgstr ""
+
+msgid "Initial password"
+msgstr ""
+
 msgid "Insufficient funds."
 msgstr ""
 
+msgid "Issue a card for"
+msgstr ""
+
+msgid "Issue a card for %(name)s"
+msgstr ""
+
+msgid "Issue card"
+msgstr ""
+
+msgid "Issue, freeze, replace and reset PINs. Changes reach POS devices on their next cache refresh."
+msgstr ""
+
+msgid "Issued"
+msgstr ""
+
 msgid "Item"
+msgstr ""
+
+msgid "KYC"
+msgstr ""
+
+msgid "KYC status"
 msgstr ""
 
 msgid "Last sync"
@@ -424,13 +589,43 @@ msgstr ""
 msgid "Line total"
 msgstr ""
 
+msgid "Link"
+msgstr ""
+
+msgid "Link a guardian"
+msgstr ""
+
+msgid "Link guardian"
+msgstr ""
+
+msgid "Login email (school-issued)"
+msgstr ""
+
+msgid "Low balance only"
+msgstr ""
+
+msgid "Low-balance alert"
+msgstr ""
+
 msgid "MISMATCH"
+msgstr ""
+
+msgid "Main wallet"
 msgstr ""
 
 msgid "Mark all read"
 msgstr ""
 
+msgid "Mark card lost"
+msgstr ""
+
+msgid "Mark lost"
+msgstr ""
+
 msgid "Merchants"
+msgstr ""
+
+msgid "Must be 4–32 bytes of hex, e.g. 04:A2:2B:7C"
 msgstr ""
 
 msgid "My SchoolDimes"
@@ -439,7 +634,37 @@ msgstr ""
 msgid "NOT balanced"
 msgstr ""
 
+msgid "Name"
+msgstr ""
+
+msgid "Name is required"
+msgstr ""
+
+msgid "Name on ID"
+msgstr ""
+
+msgid "Name or class"
+msgstr ""
+
 msgid "Needs review"
+msgstr ""
+
+msgid "New student"
+msgstr ""
+
+msgid "No UID: the server generates one (for testing without a physical card)."
+msgstr ""
+
+msgid "No card"
+msgstr ""
+
+msgid "No cards issued."
+msgstr ""
+
+msgid "No guardians linked."
+msgstr ""
+
+msgid "No limit"
 msgstr ""
 
 msgid "No line items were sent with this sale."
@@ -454,7 +679,16 @@ msgstr ""
 msgid "No notifications."
 msgstr ""
 
+msgid "No savings goals."
+msgstr ""
+
 msgid "No sync within the school's stale limit"
+msgstr ""
+
+msgid "No verifications submitted."
+msgstr ""
+
+msgid "Note"
 msgstr ""
 
 msgid "Notes"
@@ -472,6 +706,9 @@ msgstr ""
 msgid "Nutrition flag: share of item revenue in categories this school marks as unhealthy (Products page). Sales sent without line items aren't in this breakdown."
 msgstr ""
 
+msgid "Off"
+msgstr ""
+
 msgid "Offline sales that synced with a shortfall or broke a policy rule. Nothing is dropped: decide what happens here."
 msgstr ""
 
@@ -484,10 +721,19 @@ msgstr ""
 msgid "One Kampala day. POS figures are for transactions synced that day, when their ledger entries were written."
 msgstr ""
 
+msgid "Only lost cards"
+msgstr ""
+
 msgid "Open P2P alerts"
 msgstr ""
 
 msgid "Open disputes"
+msgstr ""
+
+msgid "Optional read-only portal where the student sees their balance, savings goals and recent purchases. The physical card stays the main way students pay."
+msgstr ""
+
+msgid "Other student"
 msgstr ""
 
 msgid "Outstanding"
@@ -499,7 +745,13 @@ msgstr ""
 msgid "Overview"
 msgstr ""
 
+msgid "P2P"
+msgstr ""
+
 msgid "P2P alerts"
+msgstr ""
+
+msgid "P2P daily cap"
 msgstr ""
 
 msgid "P2P received"
@@ -508,7 +760,19 @@ msgstr ""
 msgid "P2P sent"
 msgstr ""
 
+msgid "PIN"
+msgstr ""
+
+msgid "PINs don't match"
+msgstr ""
+
+msgid "POS (card + PIN)"
+msgstr ""
+
 msgid "POS collected"
+msgstr ""
+
+msgid "Parent app"
 msgstr ""
 
 msgid "Parents use the SchoolDimes mobile app, not this dashboard."
@@ -529,6 +793,15 @@ msgstr ""
 msgid "Per-student spending"
 msgstr ""
 
+msgid "Per-transaction cap"
+msgstr ""
+
+msgid "Permanent: %(name)s's card can never be used again. Issue a replacement afterwards."
+msgstr ""
+
+msgid "Phone"
+msgstr ""
+
 msgid "Policy & settings"
 msgstr ""
 
@@ -539,6 +812,12 @@ msgid "Pooled fund balances"
 msgstr ""
 
 msgid "Pooled funds"
+msgstr ""
+
+msgid "Portal login"
+msgstr ""
+
+msgid "Primary"
 msgstr ""
 
 msgid "Product"
@@ -556,6 +835,12 @@ msgstr ""
 msgid "Quantity"
 msgstr ""
 
+msgid "Reason"
+msgstr ""
+
+msgid "Received"
+msgstr ""
+
 msgid "Received by server"
 msgstr ""
 
@@ -568,7 +853,13 @@ msgstr ""
 msgid "Recovered"
 msgstr ""
 
+msgid "Reference"
+msgstr ""
+
 msgid "Referrals"
+msgstr ""
+
+msgid "Refund"
 msgstr ""
 
 msgid "Refunds"
@@ -578,6 +869,24 @@ msgid "Reject reason"
 msgstr ""
 
 msgid "Rejected"
+msgstr ""
+
+msgid "Relationship"
+msgstr ""
+
+msgid "Remove portal login"
+msgstr ""
+
+msgid "Repeat PIN"
+msgstr ""
+
+msgid "Replace %(name)s's card"
+msgstr ""
+
+msgid "Replace card"
+msgstr ""
+
+msgid "Reset PIN"
 msgstr ""
 
 msgid "Resolution"
@@ -593,6 +902,9 @@ msgid "Revenue"
 msgstr ""
 
 msgid "Review"
+msgstr ""
+
+msgid "Review %(name)s"
 msgstr ""
 
 msgid "Review notes"
@@ -619,10 +931,28 @@ msgstr ""
 msgid "Same as recovery, plus a payment request for the outstanding amount is sent to the primary guardian's phone."
 msgstr ""
 
+msgid "Save"
+msgstr ""
+
+msgid "Savings"
+msgstr ""
+
+msgid "Savings goals"
+msgstr ""
+
 msgid "SchoolDimes back-office"
 msgstr ""
 
 msgid "Schools"
+msgstr ""
+
+msgid "Search"
+msgstr ""
+
+msgid "Sent"
+msgstr ""
+
+msgid "Set a new PIN"
 msgstr ""
 
 msgid "Share"
@@ -664,7 +994,16 @@ msgstr ""
 msgid "Student"
 msgstr ""
 
+msgid "Student override last set by %(who)s (%(role)s) on %(when)s. Parents can only tighten school limits."
+msgstr ""
+
+msgid "Student portal"
+msgstr ""
+
 msgid "Students"
+msgstr ""
+
+msgid "Submitted"
 msgstr ""
 
 msgid "Support"
@@ -679,13 +1018,37 @@ msgstr ""
 msgid "Takes what the student's main wallet holds now, then collects from every later confirmed top-up until the shortfall is repaid."
 msgstr ""
 
+msgid "Tap the card on a reader and type its UID. Leave blank to let the server generate one (no physical card)."
+msgstr ""
+
 msgid "The aggregator clearing wallet is normally negative: it is money the payment aggregator owes the school."
+msgstr ""
+
+msgid "The append-only ledger. Balances are the sum of these entries; nothing is ever edited or deleted."
+msgstr ""
+
+msgid "The old PIN stops working. POS devices pick up the new PIN on their next refresh. A card frozen after wrong PINs stays frozen until you unfreeze it."
+msgstr ""
+
+msgid "The old card (%(uid)s) stays retired as lost. The new card gets a new UID and PIN."
+msgstr ""
+
+msgid "The parent registers in the SchoolDimes app first. Enter the exact email of their account."
+msgstr ""
+
+msgid "The student will no longer be able to sign in to the portal. Their wallet and card are unaffected."
 msgstr ""
 
 msgid "This account can't use the web dashboard. Canteen and merchant staff use the POS app; parents use the mobile app."
 msgstr ""
 
+msgid "This student has no usable card."
+msgstr ""
+
 msgid "To"
+msgstr ""
+
+msgid "To link or unlink a guardian, open the student."
 msgstr ""
 
 msgid "Today, %(date)s (Africa/Kampala)"
@@ -703,7 +1066,19 @@ msgstr ""
 msgid "Type"
 msgstr ""
 
+msgid "Unfreeze"
+msgstr ""
+
+msgid "Unfreeze card"
+msgstr ""
+
 msgid "Unit price"
+msgstr ""
+
+msgid "Unlink"
+msgstr ""
+
+msgid "Unlink guardian"
 msgstr ""
 
 msgid "Unresolved reviews"
@@ -713,6 +1088,27 @@ msgid "Until real POS devices are in use, sales, shortfalls and attendance come 
 msgstr ""
 
 msgid "Until real devices exist, this queue is filled by the backend's simulate_pos command."
+msgstr ""
+
+msgid "Verification queue"
+msgstr ""
+
+msgid "Verified"
+msgstr ""
+
+msgid "Via"
+msgstr ""
+
+msgid "Wallet"
+msgstr ""
+
+msgid "Weekly cap"
+msgstr ""
+
+msgid "When"
+msgstr ""
+
+msgid "Will be stored as"
 msgstr ""
 
 msgid "Write off"

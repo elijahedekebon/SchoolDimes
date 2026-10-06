@@ -35,7 +35,7 @@
       var name = parts[0], values = (parts[1] || "").split("|");
       var input = form.querySelector('[name="' + name + '"]:checked') || form.querySelector('select[name="' + name + '"], input[name="' + name + '"]:not([type=radio])');
       var value = input ? (input.type === "checkbox" ? String(input.checked) : input.value) : "";
-      var show = values.indexOf(value) !== -1;
+      var show = values[0] === "*" ? value !== "" : values.indexOf(value) !== -1;
       el.classList.toggle("hidden", !show);
       el.querySelectorAll("input, select, textarea").forEach(function (f) { f.disabled = !show; });
     });

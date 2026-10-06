@@ -1,0 +1,9 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n %}
+{% block title %}{% if student %}{% translate "Edit student" %}{% else %}{% translate "Add a student" %}{% endif %}{% endblock %}
+{% block description %}{% endblock %}
+{% block fields %}
+{% translate "Name" as l %}{% include "core/components/field.html" with name="name" label=l required=True value=values.name %}
+{% translate "Class" as l %}{% include "core/components/field.html" with name="class_name" label=l required=True placeholder="P4" value=values.class_name %}
+{% translate "Date of birth" as l %}{% include "core/components/field.html" with name="date_of_birth" label=l type="date" value=values.date_of_birth %}
+{% endblock %}
+{% block confirm_label %}{% translate "Save" %}{% endblock %}

@@ -106,3 +106,57 @@ def build_roster(device, since=None) -> dict:
             for c in cards
         ],
     }
+
+
+
+def filter_by_date(qs, params):
+    """?date=YYYY-MM-DD or ?from=&to= (inclusive Kampala days), ?direction=."""
+    from django.utils.dateparse import parse_date
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+
+    for key in ("date", "from", "to"):
+        if params.get(key):
+            day = parse_date(params[key])
+            if day is None:
+                raise ServiceError("date_invalid", _("Dates must be YYYY-MM-DD."))
+            start, end = kampala_day_range(day)
+            if key == "date":
+                qs = qs.filter(device_local_timestamp__gte=start, device_local_timestamp__lt=end)
+            elif key == "from":
+                qs = qs.filter(device_local_timestamp__gte=start)
+            else:
+                qs = qs.filter(device_local_timestamp__lt=end)  # inclusive "to" day
+    if params.get("direction"):
+        qs = qs.filter(direction=params["direction"])
+    return qs
+
+
+def student_attendance(student, params=None):
+    from .models import AttendanceRecord
+
+    return filter_by_date(AttendanceRecord.objects.filter(student=student).select_related("student", "device"),
+                          params or {})
+
+
+def attendance_for(user, params):
+    """GET /attendance/ (?date=, ?student=, ?direction=): school_admin their
+    school; guardians their own children; platform_admin all."""
+    from accounts.models import User
+    from core.permissions import is_platform_admin
+
+    from .models import AttendanceRecord
+
+    qs = AttendanceRecord.objects.select_related("student", "device")
+    if is_platform_admin(user):
+        pass
+    elif user.role == User.Role.SCHOOL_ADMIN:
+        qs = qs.filter(school_id=user.school_id)
+    elif user.role == User.Role.PARENT:
+        qs = qs.filter(student__guardian_links__parent=user).distinct()
+    else:
+        qs = qs.none()
+    if params.get("student"):
+        qs = qs.filter(student_id=params["student"])
+    return filter_by_date(qs, params)

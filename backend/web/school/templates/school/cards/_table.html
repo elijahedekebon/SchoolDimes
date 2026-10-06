@@ -1,0 +1,9 @@
+{% load i18n web %}<div id="cards_table" class="table-region" data-testid="cards-table" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#cards-filters" hx-swap="outerHTML">
+{% if errors.cards_table %}{% error_alert errors.cards_table %}{% else %}
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "Student" %}</th><th>{% translate "Card UID (NFC)" %}</th><th>{% translate "Status" %}</th><th></th></tr></thead>
+  <tbody>{% for c in rows %}<tr><td><a href="/school/students/{{ c.student }}">{{ c.student_name }}</a></td><td><span class="mono">{{ c.card_uid }}</span></td><td>{% status_badge c.status %}</td><td>{% include "school/cards/_actions.html" with card=c %}</td></tr>
+  {% empty %}{% empty_row 4 %}{% endfor %}</tbody></table></div>
+{% pagination page "cards_table" "#cards-filters" %}
+{% endif %}
+</div>

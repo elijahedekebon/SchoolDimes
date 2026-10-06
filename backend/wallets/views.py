@@ -26,12 +26,9 @@ from .services import get_student_wallet
 
 
 def wallets_visible_to(user):
-    qs = Wallet.objects.select_related("student", "school")
-    if is_platform_admin(user):
-        return qs
-    if user.role == User.Role.PARENT:
-        return qs.filter(student__guardian_links__parent=user).distinct()
-    return qs.filter(school_id=user.school_id)
+    from .services import wallets_visible_to as visible
+
+    return visible(user)
 
 
 class WalletViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -39,14 +36,9 @@ class WalletViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.G
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = wallets_visible_to(self.request.user)
-        # Part 4A list filters: ?student=, ?wallet_type=.
-        params = self.request.query_params
-        if params.get("student"):
-            qs = qs.filter(student_id=params["student"])
-        if params.get("wallet_type"):
-            qs = qs.filter(wallet_type=params["wallet_type"])
-        return qs
+        from .services import wallets_for
+
+        return wallets_for(self.request.user, self.request.query_params)
 
     @action(detail=True, methods=["get"])
     def balance(self, request, pk=None):
@@ -178,13 +170,6 @@ class SavingsGoalViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = SavingsGoal.objects.filter(
-            wallet__in=wallets_visible_to(self.request.user)
-        ).select_related("wallet")
-        # Part 4A list filters: ?student=, ?wallet=.
-        params = self.request.query_params
-        if params.get("student"):
-            qs = qs.filter(wallet__student_id=params["student"])
-        if params.get("wallet"):
-            qs = qs.filter(wallet_id=params["wallet"])
-        return qs
+        from .services import goals_for
+
+        return goals_for(self.request.user, self.request.query_params)

@@ -1,0 +1,9 @@
+{% load i18n web %}<div class="card" style="max-width:560px">
+  <p class="sm dimmed mb-sm">{% translate "Optional read-only portal where the student sees their balance, savings goals and recent purchases. The physical card stays the main way students pay." %}</p>
+  {% if account %}
+  <div class="group justify-between"><span class="sm">{% translate "Portal login" %}: <b>{{ account.user.email }}</b></span>
+    <button type="button" class="btn btn-xs btn-light c-red" hx-get="/school/students/{{ student.id }}/portal/remove" hx-target="#sd-modal-body">{% translate "Remove portal login" %}</button></div>
+  {% else %}
+  <button type="button" class="btn btn-xs btn-light" hx-get="/school/students/{{ student.id }}/portal/create" hx-target="#sd-modal-body">{% translate "Create portal login" %}</button>
+  {% endif %}
+</div>

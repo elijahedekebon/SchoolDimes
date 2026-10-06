@@ -1,0 +1,14 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Guardians & KYC") _("Identity checks (KYC-lite) for parents linked to your students, and all guardian links.") %}{% endpageheader %}
+<div class="tabs" data-tabs="guardians">
+  <button type="button" class="tab active" data-tab="kyc">{% translate "Verification queue" %}</button>
+  <button type="button" class="tab" data-tab="links">{% translate "All guardian links" %}</button>
+</div>
+<div class="tab-panel" data-tab-panel="guardians:kyc">{% include "school/guardians/_kyc.html" %}</div>
+<div class="tab-panel hidden" data-tab-panel="guardians:links">
+  <form id="links-filters" hx-get="{{ request.path }}" hx-target="#links_table" hx-swap="outerHTML" hx-trigger="change">{% choice_filter "kyc" _("KYC status") kyc kyc_options %}</form>
+  <p class="xs dimmed my-xs">{% translate "To link or unlink a guardian, open the student." %}</p>
+  {% include "school/guardians/_links.html" %}
+</div>
+{% endblock %}

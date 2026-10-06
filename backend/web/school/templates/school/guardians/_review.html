@@ -1,0 +1,11 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n web %}
+{% block title %}{% blocktranslate trimmed with name=v.full_name %}Review {{ name }}{% endblocktranslate %}{% endblock %}
+{% block description %}{% blocktranslate trimmed with doc=v.id_document_type|human number=v.id_number %}Check the parent's {{ doc }} number {{ number }} against the document they show you.{% endblocktranslate %}{% endblock %}
+{% block fields %}
+<label class="field"><span class="label">{% translate "Decision" %}</span>
+  <select class="input" name="status">
+    <option value="verified"{% if default == "verified" %} selected{% endif %}>{% translate "Verified" %}</option>
+    <option value="rejected"{% if default == "rejected" %} selected{% endif %}>{% translate "Rejected" %}</option>
+  </select></label>
+<label class="field"><span class="label">{% translate "Notes" %}</span><textarea class="input" name="review_notes"></textarea></label>
+{% endblock %}

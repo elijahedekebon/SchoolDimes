@@ -299,3 +299,43 @@ def require_debit(wallet: Wallet, amount: Decimal, context: DebitContext) -> Non
     decision = authorize_debit(wallet, amount, context)
     if not decision.allowed:
         raise DebitRefused(decision.code, decision.message, extra={"violations": decision.violations})
+
+
+
+# ---------------------------------------------------------------------------
+# Querysets shared by the API viewsets and the web pages
+# ---------------------------------------------------------------------------
+
+def wallets_visible_to(user):
+    from core.permissions import is_platform_admin
+
+    from .models import Wallet
+
+    qs = Wallet.objects.select_related("student", "school")
+    if is_platform_admin(user):
+        return qs
+    if user.role == "parent":
+        return qs.filter(student__guardian_links__parent=user).distinct()
+    return qs.filter(school_id=user.school_id)
+
+
+def wallets_for(user, params):
+    """GET /wallets/ (?student=, ?wallet_type=)."""
+    qs = wallets_visible_to(user)
+    if params.get("student"):
+        qs = qs.filter(student_id=params["student"])
+    if params.get("wallet_type"):
+        qs = qs.filter(wallet_type=params["wallet_type"])
+    return qs
+
+
+def goals_for(user, params):
+    """GET /savings-goals/ (?student=, ?wallet=)."""
+    from .models import SavingsGoal
+
+    qs = SavingsGoal.objects.filter(wallet__in=wallets_visible_to(user)).select_related("wallet")
+    if params.get("student"):
+        qs = qs.filter(wallet__student_id=params["student"])
+    if params.get("wallet"):
+        qs = qs.filter(wallet_id=params["wallet"])
+    return qs

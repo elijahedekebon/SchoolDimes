@@ -20,6 +20,16 @@ SCOPES = {
     # Section C/D
     "students": "students.access.students_for",
     "student": "web.core.scoping.student_detail",
+    "guardians": "students.services.guardians_for",
+    "verifications": "accounts.services.verifications_for",
+    "cards": "cards.services.cards_for",
+    "wallets": "wallets.services.wallets_for",
+    "goals": "wallets.services.goals_for",
+    "policies": "policies.services.policies_for",
+    "categories": "policies.services.categories_for",
+    "products": "policies.services.products_for",
+    "merchants": "merchants.services.merchants_for",
+    "attendance": "attendance.services.attendance_for",
 }
 
 

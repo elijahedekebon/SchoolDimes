@@ -1,0 +1,1 @@
+{% load i18n %}{% if not raw %}<p class="xs dimmed">{% translate "No UID: the server generates one (for testing without a physical card)." %}</p>{% elif normalized %}<p class="xs dimmed">{% translate "Will be stored as" %} <span class="mono">{{ normalized }}</span></p>{% else %}<p class="field-error">{% translate "Must be 4–32 bytes of hex, e.g. 04:A2:2B:7C" %}</p>{% endif %}

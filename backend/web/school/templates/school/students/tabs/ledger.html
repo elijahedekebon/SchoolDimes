@@ -1,0 +1,16 @@
+{% load i18n web %}<div class="stack">
+<form class="group align-end" hx-get="{{ request.path }}" hx-target="#student_tab" hx-swap="outerHTML" hx-trigger="change">
+  <input type="hidden" name="tab" value="ledger">
+  <label class="field field-xs"><span class="label">{% translate "Wallet" %}</span>
+    <select class="input" name="wallet">{% for id, label in wallet_options %}<option value="{{ id }}"{% if wallet.pk == id %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  {% if wallet %}<span class="sm">{% translate "Balance" %}: {{ wallet.balance|money }}</span>{% endif %}
+</form>
+<div id="ledger-rows" class="table-region">
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "When" %}</th><th>{% translate "Type" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Reference" %}</th><th>{% translate "Description" %}</th></tr></thead>
+  <tbody>{% for e in entries %}<tr><td>{{ e.created_at|dt }}</td><td>{{ e.entry_type|human }}</td><td>{% if e.direction == "debit" %}{{ e.amount|signed:"debit"|money:"red" }}{% else %}{{ e.amount|money:"green" }}{% endif %}</td><td><span class="mono">{{ e.reference_id|dash }}</span></td><td>{{ e.description }}</td></tr>
+  {% empty %}{% empty_row 5 %}{% endfor %}</tbody></table></div>
+{% if page %}{% include "school/students/_tab_pagination.html" with extra=ledger_extra %}{% endif %}
+</div>
+<p class="xs dimmed">{% translate "The append-only ledger. Balances are the sum of these entries; nothing is ever edited or deleted." %}</p>
+</div>
