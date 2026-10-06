@@ -1,6 +1,5 @@
 """Part 4A: issue/reissue with a real NFC UID, UID normalisation, PIN reset."""
 import pytest
-from django.contrib.auth.hashers import check_password
 
 from cards.models import Card
 from cards.services import normalize_card_uid
@@ -66,7 +65,9 @@ class TestResetPin:
         r = client_for(school_admin_a).post(f"/api/v1/cards/{card_a1.pk}/reset-pin/", {"pin": "9876"}, format="json")
         assert r.status_code == 200 and "pin_hash" not in r.data
         card_a1.refresh_from_db()
-        assert check_password("9876", card_a1.pin_hash)
+        from cards.services import verify_pin
+
+        assert verify_pin(card_a1, "9876")
         assert card_a1.updated_at > before  # reaches POS caches via ?since=
 
     def test_other_school_admin_cannot(self, school_admin_b, card_a1):
@@ -93,3 +94,16 @@ def test_card_list_filters(school_admin_a, card_a1, student_a2, school_admin_b):
     assert c.get("/api/v1/cards/", {"card_uid": "04:A2:2B:7C"}).data["count"] == 1
     assert c.get("/api/v1/cards/", {"student": card_a1.student_id}).data["results"][0]["student_name"]
     assert client_for(school_admin_b).get("/api/v1/cards/", {"card_uid": "04a22b7c"}).data["count"] == 0
+
+
+@pytest.mark.django_db
+def test_card_pin_hash_uses_configured_iterations(card_a1, settings):
+    from cards.services import hash_pin, reset_card_pin, verify_pin
+
+    settings.CARD_PIN_HASH_ITERATIONS = 40000
+    encoded = hash_pin("2468")
+    assert encoded.startswith("pbkdf2_sha256$40000$")
+    reset_card_pin(card_a1, "2468")
+    card_a1.refresh_from_db()
+    assert card_a1.pin_hash.split("$")[1] == "40000"
+    assert verify_pin(card_a1, "2468") and not verify_pin(card_a1, "2469")

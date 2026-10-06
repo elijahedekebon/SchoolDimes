@@ -194,6 +194,9 @@ class AppLocalizationsSw extends AppLocalizations {
   String get clear => 'Clear';
 
   @override
+  String get chargeButton => 'Charge';
+
+  @override
   String get tapCard => 'Tap the student\'s card';
 
   @override

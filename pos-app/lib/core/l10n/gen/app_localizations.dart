@@ -388,6 +388,12 @@ abstract class AppLocalizations {
   /// **'Clear'**
   String get clear;
 
+  /// No description provided for @chargeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Charge'**
+  String get chargeButton;
+
   /// No description provided for @tapCard.
   ///
   /// In en, this message translates to:

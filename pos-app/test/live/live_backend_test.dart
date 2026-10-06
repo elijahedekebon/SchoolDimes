@@ -24,7 +24,9 @@ final base = Platform.environment['SD_API'] ?? 'http://localhost:8000';
 final live = Platform.environment['SD_LIVE'] == '1';
 
 Future<Map<String, dynamic>> fixture() async {
-  final r = await Process.run('docker', ['compose', 'exec', '-T', 'web', 'python', 'manage.py', 'pos_test_fixture'], workingDirectory: '..');
+  // the running stack's compose project (default: the repo folder name "schooldimes")
+  final project = Platform.environment['SD_COMPOSE_PROJECT'] ?? 'schooldimes';
+  final r = await Process.run('docker', ['compose', '-p', project, 'exec', '-T', 'web', 'python', 'manage.py', 'pos_test_fixture']);
   if (r.exitCode != 0) throw StateError('pos_test_fixture failed: ${r.stderr}');
   return (jsonDecode((r.stdout as String).trim().split('\n').last) as Map).cast<String, dynamic>();
 }

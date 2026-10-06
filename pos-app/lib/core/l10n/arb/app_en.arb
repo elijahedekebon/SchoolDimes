@@ -54,6 +54,7 @@
   "charge": "Charge {amount}",
   "@charge": {"placeholders": {"amount": {"type": "String"}}},
   "clear": "Clear",
+  "chargeButton": "Charge",
   "tapCard": "Tap the student's card",
   "tapCardHint": "Hold the card against the back of the device",
   "simulateTap": "Simulate tap (dev)",
