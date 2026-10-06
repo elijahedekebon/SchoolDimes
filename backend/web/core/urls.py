@@ -1,9 +1,12 @@
+from django.templatetags.static import static
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import views
 
 urlpatterns = [
     path("", views.HomeRedirectView.as_view(), name="web-home"),
+    path("favicon.ico", RedirectView.as_view(url=static("web/favicon.svg"), permanent=True)),
     path("login", views.LoginView.as_view(), name="web-login"),
     path("logout", views.LogoutView.as_view(), name="web-logout"),
     path("locale", views.LocaleView.as_view(), name="web-locale"),

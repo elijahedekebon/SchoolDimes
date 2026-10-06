@@ -114,6 +114,14 @@
     // clicking the backdrop of a modal does not close it (Mantine default for these dialogs)
   });
 
+  // The picker's search box is only for finding a student: its own "change"
+  // (fired on blur, just before a result is picked) must not refresh the
+  // filter form -- that request would race the real one and win.
+  document.addEventListener("change", function (evt) {
+    var t = evt.target;
+    if (t && t.type === "search" && t.closest && t.closest(".picker")) evt.stopPropagation();
+  }, true);
+
   // A cleared picker search clears its value too.
   document.addEventListener("input", function (evt) {
     var picker = evt.target.closest && evt.target.closest(".picker");

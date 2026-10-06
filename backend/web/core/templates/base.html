@@ -8,6 +8,7 @@
   <meta name="description" content="SchoolDimes school dashboard">
   <meta name="csrf-token" content="{{ csrf_token }}">
   <meta name="htmx-config" content='{"disableInheritance": true, "historyCacheSize": 0}'>
+  <link rel="icon" href="{% static 'web/favicon.svg' %}" type="image/svg+xml">
   <link rel="stylesheet" href="{% static 'web/css/app.css' %}">
   {% block brand %}{% if frame_palette %}<style>:root{ {% for c in frame_palette %}--primary-{{ forloop.counter0 }}:{{ c }};{% endfor %} }</style>{% endif %}{% endblock %}
   <script src="{% static 'web/vendor/htmx.min.js' %}" defer></script>

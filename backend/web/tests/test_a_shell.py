@@ -181,3 +181,8 @@ def test_bell_lists_own_notifications_and_marks_read(school_admin_a, school_admi
     assert not NotificationEvent.objects.filter(user=school_admin_a, read_at__isnull=True).exists()
     theirs.refresh_from_db()
     assert theirs.read_at is None
+
+
+def test_favicon_is_served():
+    r = web_client().get("/favicon.ico")
+    assert r.status_code == 301 and r["Location"].endswith("web/favicon.svg")
