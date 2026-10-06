@@ -18,19 +18,29 @@ Client-only part: every screen uses an endpoint listed in
 | i18n | ARB en/lg/sw (lg/sw untranslated → English, listed in TRANSLATIONS_TODO) |
 
 ## Sections
-### [ ] A. Scaffold & flavors
-### [ ] B. Authentication (register, login, logout, refresh, app lock)
-### [ ] C. Onboarding & KYC-lite
-### [ ] D. Multi-child dashboard (+ tip, offline cache)
-### [ ] E. Student detail (history, filters, line items, report a problem)
-### [ ] F. Top-ups (channels, instructions, polling, history, one-tap from low balance)
-### [ ] G. Recurring top-ups
-### [ ] H. Gift vouchers & contributor links
-### [ ] I. Pooled funds
-### [ ] J. Spending controls (school limits alongside, tighten only)
-### [ ] K. Savings (move, goals, window, withdraw, payout status)
-### [ ] L. Card control & P2P history
-### [ ] M. Disputes
-### [ ] N. Notifications (inbox, read, prefs, deep links, push token)
-### [ ] O. Privacy & account
-### [ ] P. Tests & documentation
+### [x] A. Scaffold & flavors
+### [x] B. Authentication (register, login, logout, refresh, app lock)
+### [x] C. Onboarding & KYC-lite
+### [x] D. Multi-child dashboard (+ tip, offline cache)
+### [x] E. Student detail (history, filters, line items, report a problem)
+### [x] F. Top-ups (channels, instructions, polling, history, one-tap from low balance)
+### [x] G. Recurring top-ups
+### [x] H. Gift vouchers & contributor links
+### [x] I. Pooled funds
+### [x] J. Spending controls (school limits alongside, tighten only)
+### [x] K. Savings (move, goals, window, withdraw, payout status)
+### [x] L. Card control & P2P history
+### [x] M. Disputes
+### [x] N. Notifications (inbox, read, prefs, deep links, push token)
+### [x] O. Privacy & account
+### [x] P. Tests & documentation
+
+## Result
+
+All sections built. Tests: 12 unit + widget tests (`flutter test`: login,
+dashboard, top-up with status polling, freeze, dispute, offline dashboard,
+money formatting, deep-link routing, idempotent retry) and the end-to-end
+test on an emulator against the running backend
+(`tool/run_integration.sh`: login → dashboard → top-up → `mock_webhook`
+→ balance updated). Simplified: real FCM push (no Firebase project; the
+token-registration path is behind `PUSH_ENABLED`, steps in the README).

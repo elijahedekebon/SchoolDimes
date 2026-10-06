@@ -1148,3 +1148,50 @@ hardware decision). `Card.biometric_enrolled` remains a flag only.
   device is available.
 - **iOS**: the code avoids Android-only APIs where possible, but iOS builds
   weren't verified (no Xcode on the build machine).
+
+## Part 4B — Parent app
+
+### Mirrors the POS app
+Same Flutter conventions as `pos-app/`: Riverpod 3 without codegen,
+feature-first folders (`lib/core/*`, `lib/features/*`), plain-Dart logic
+behind an API interface (`ParentApi`, faked in widget tests), ARB en/lg/sw,
+dev/prod Android flavors with cleartext only in dev.
+
+### No shared package (yet)
+The overlap with the POS app is three small files (`Money`, Kampala time,
+the API error shape). They are copied with a "twin of pos-app/…" header
+rather than extracted into `packages/schooldimes_core/`, because a shared
+package would couple two apps with different release cycles (terminals vs.
+parents' phones) for very little code. Revisit if the overlap grows.
+
+### Auth
+JWT access/refresh in `flutter_secure_storage`. One dio interceptor adds
+the Bearer token and, on a 401, performs **one** shared refresh: refresh
+tokens rotate and are blacklisted on use, so concurrent refreshes would log
+the parent out. It then retries once; a failed refresh signs out with "your
+session ended". Logout blacklists the refresh token server-side. The
+optional app lock uses `local_auth`. That's right here (unlike on the
+shared POS terminal) because it's the parent's own phone.
+
+### Slow or intermittent data
+- The last `/parent/dashboard/` response is cached on the phone and shown
+  read-only with "Offline — last updated …" (no top-up/freeze buttons).
+- Every money action keeps its idempotency key across retries of the same
+  action and only gets a new one after success: deposits, gift vouchers,
+  fund contributions, savings withdrawals. A retry on bad data returns the
+  original object instead of charging twice (tested).
+- Deposit status polling (3 s, up to 3 min) survives network blips. After
+  that it says it's safe to leave: money is only credited on confirmation.
+
+### KYC-lite
+Shown as a guided step after sign-up (skippable) and in "More". No feature
+is restricted in the app: nothing in the backend restricts unverified
+parents, and the brief says not to invent restrictions.
+
+### Push notifications
+No Firebase project or `google-services.json` was provided, so real FCM
+delivery isn't wired. The token-registration path (`POST/DELETE
+/notifications/push-tokens/`) exists behind `--dart-define=PUSH_ENABLED=true`
+with a pluggable `PushTokenSource`; the in-app inbox (with deep links) is
+the working channel. `parent-app/README.md` lists the exact steps to switch
+FCM on.
