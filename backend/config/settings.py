@@ -241,10 +241,10 @@ LOW_BALANCE_ALERT_THROTTLE_HOURS = env.int("LOW_BALANCE_ALERT_THROTTLE_HOURS", d
 # ---------------------------------------------------------------------------
 # Part 4A -- web surfaces
 # ---------------------------------------------------------------------------
-# The admin dashboard talks to the API through its own server-side proxy, so
-# browsers normally never call the API cross-origin. CORS is still configured
-# (from env, never hardcoded) for tools and any direct browser client.
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
+# The web pages are served by this same Django app and the mobile apps are not
+# browsers, so no cross-origin access is needed by default. CORS stays
+# configurable (from env, never hardcoded) for any future browser client.
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 CORS_ALLOW_CREDENTIALS = False
 # Per-IP rate limit for credential endpoints (login, register).
 AUTH_THROTTLE_RATE = env("AUTH_THROTTLE_RATE", default="10/min")

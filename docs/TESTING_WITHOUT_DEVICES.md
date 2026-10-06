@@ -10,6 +10,7 @@ terminal and VS Code:
 | `python manage.py mock_webhook <ref>` | the payment aggregator calling our webhook |
 | `python manage.py run_recurring_topups [--now]` | Celery Beat's recurring top-up job |
 | `docs/requests/*.http` | the parent app, admin dashboard and devices, one request at a time (VS Code REST Client) |
+| `http://localhost:8000/login` | the web dashboard itself (Django templates, same `web` container; seed logins in `backend/README.md`) |
 | `pytest` | everything, automatically (includes an end-to-end `simulate_pos` run) |
 
 ---

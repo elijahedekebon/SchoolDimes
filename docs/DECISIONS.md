@@ -1047,3 +1047,12 @@ Money stays a decimal string/`Decimal` end to end; the `ugx` template filter
 formats it exactly as `formatUGX` did ("UGX 15,000", "UGX 15,000.50",
 "-UGX 500" → "-UGX 500", "—" for none). Chart bar heights use whole shillings
 only. "Today" and every date shown are Africa/Kampala.
+
+### Next.js app removed
+After the owner confirmed the route-by-route parity table, `admin-dashboard/`
+was deleted. `CORS_ALLOWED_ORIGINS` now defaults to empty (the web pages are
+same-origin and the mobile apps aren't browsers; the setting stays for any
+future browser client). `.gitignore`, `.env.example` and the READMEs no
+longer mention Node/npm. Mentions of Next.js that remain in this file,
+`PART4A_PLAN.md` and `WEB_MIGRATION_PLAN.md` are the historical record of
+what was replaced.

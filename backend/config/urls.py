@@ -26,7 +26,7 @@ urlpatterns = [
     # Part 4A
     path("api/v1/", include("backoffice.urls")),
     path("api/v1/", include("parents.urls")),
-    # Web surfaces (Django templates + HTMX), same paths as the old Next.js app
+    # Web surfaces (Django templates + HTMX): school, platform, student portal, /give
     path("", include("web.core.urls")),
     path("", include("web.school.urls")),
     path("", include("web.platform.urls")),

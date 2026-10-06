@@ -55,7 +55,13 @@ export DATABASE_URL=sqlite:///db.sqlite3   # or a local/test Postgres
 pytest
 ```
 
-Part 2 brings the suite to ~165 tests (see `docs/TESTING_WITHOUT_DEVICES.md`).
+The suite is ~380 tests: Parts 1, 2 and 4A (API) plus the web surfaces
+(`web/tests/`, Django test client: route parity against seed data, role
+protection, tenant isolation on every object URL, CSRF on every POST, the
+token-once device flow, card freeze reaching the POS cache, refund and
+disbursement limits, onboarding to a first sale, the contributor page end to
+end with `mock_webhook`, i18n). In Docker: `docker compose exec web pytest`.
+See `docs/TESTING_WITHOUT_DEVICES.md`.
 Part 1's original 23 tests cover: tenant isolation (wallets/students visibility across
 schools and roles), ledger correctness (cached balance always matches an
 independent re-sum of ledger entries, insufficient-funds is rejected
@@ -93,10 +99,47 @@ Idempotent (safe to re-run). Creates:
 Management commands: `seed_demo`, `simulate_pos`, `mock_webhook`,
 `run_recurring_topups`, `build_locale`.
 
-## What's deferred
+## Web surfaces (Django templates + HTMX)
 
-Payments beyond seed data (deposits, P2P, POS, fee top-ups, pooled funds,
-gift vouchers), spending-limit *enforcement*, scheduled recurring top-ups,
-attendance, the merchant network, dispute/refund flow, and every client
-app (`pos-app/`, `parent-app/`, `admin-dashboard/`) are Part 2–4. See
-`docs/DECISIONS.md` for the full breakdown and reasoning.
+The school dashboard, platform back-office, student portal and public
+contributor page are server-rendered Django templates with HTMX, served by
+this same `web` container on `:8000`. There is no separate front-end process
+and no Node.js: `docker compose up --build` serves the API and every page.
+Code: `web/` (`web.core`, `web.school`, `web.platform`, `web.student`,
+`web.give`); route map: `../docs/WEB_MIGRATION_PLAN.md`.
+
+| URL | Who | What |
+|---|---|---|
+| `/login` | everyone | sign in; parents (mobile app) and canteen/merchant staff (POS app) are refused |
+| `/school/...` | `school_admin` | overview, sales, reconciliation, review queue, analytics, students, guardians & KYC, cards, devices, merchants, products, policy, staff, fees, attendance, pooled funds, disputes, P2P alerts, data requests, tips, payment issues |
+| `/platform/...` | `platform_admin` | schools, onboarding wizard, referrals, support (`?school=`), payment issues, audit log, platform tips |
+| `/student` | `student` (school-issued portal login) | own balances, savings goals, recent purchases, a tip |
+| `/give/<token>` | public (no login) | contributor top-up / gift page; the link is the parent app's `share_url` |
+
+Seed accounts (after `manage.py seed_demo`, password `pw123456`):
+
+| Login | Lands on |
+|---|---|
+| `admin@kampaladps.schooldimes.test` | `/school` (Kampala Demo Primary School) |
+| `admin@jinjadss.schooldimes.test` | `/school` (Jinja Demo Secondary School) |
+| `platform@schooldimes.test` | `/platform` |
+| `student.amina@kampaladps.schooldimes.test` | `/student` |
+| `parent1@schooldimes.test` | refused on the web (uses the parent API / app) |
+
+A contributor link to try: `docker compose exec web python manage.py shell -c
+"from payments.models import StudentTopUpLink as L; print(L.objects.filter(revoked_at=None).first().token)"`,
+then open `http://localhost:8000/give/<token>`. Pay with the page, then
+`manage.py mock_webhook <reference shown on the page>`; the page flips to "Paid".
+
+Static files are served by WhiteNoise (`collectstatic` runs at container
+start). Web settings in `.env`: `SESSION_COOKIE_SECURE`, `SESSION_COOKIE_AGE`,
+`DEVICE_API_BASE_URL` (address in device-provisioning QR codes),
+`PUBLIC_TOPUP_BASE_URL`. Translations: `manage.py build_locale` (see
+`../docs/TRANSLATIONS_TODO.md`).
+
+## Client apps
+
+The POS app (`../pos-app/`, Flutter) and the parent app (Flutter, Part 4B)
+use the REST API under `/api/v1/` with JWT / device tokens. See
+`../docs/API_CONTRACTS.md`, `../docs/PARENT_APP_READINESS.md` and
+`../docs/DECISIONS.md`.

@@ -1307,9 +1307,9 @@ and, for the parent app, `docs/requests/parent/`.
   Section J) are rate-limited per client IP (`AUTH_THROTTLE_RATE`, default
   `10/min`) → `429 {"detail": "Request was throttled. Expected available in N seconds."}`.
 - **CORS.** Allowed browser origins come from `CORS_ALLOWED_ORIGINS`
-  (default `http://localhost:3000`). The admin dashboard itself calls the API
-  server-side through its own proxy (see DECISIONS.md), so CORS is only needed
-  by direct browser clients.
+  (default: none). The web pages are served by the backend itself (Django
+  templates, same origin) and the mobile apps aren't browsers, so CORS is only
+  needed by a separate browser client.
 
 #### `GET /api/v1/my-school/`
 JWT, any role. Read-only name and branding of the caller's school(s), for

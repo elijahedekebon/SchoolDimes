@@ -155,7 +155,7 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 
 ## Part 4A backend changes being kept (all of them)
 
-- `django-cors-headers` + `CORS_ALLOWED_ORIGINS` (default changes in K:
+- `django-cors-headers` + `CORS_ALLOWED_ORIGINS` (kept; default is now empty since K:
   the dashboard origin `:3000` is no longer needed).
 - `core.throttles.AuthThrottle` on `POST /auth/login` and `/auth/register` (`AUTH_THROTTLE_RATE`); the web login reuses it.
 - `GET /my-school/`.
@@ -204,4 +204,4 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 - [x] **H. Student portal**
 - [x] **I. Contributor page**
 - [x] **J. Parent-app backend readiness** (verified unchanged; docs updated for the new page origin)
-- [ ] **K. Remove the Next.js app** — waiting for the owner's confirmation of the parity table above
+- [x] **K. Remove the Next.js app** — confirmed by the owner; `admin-dashboard/` deleted, dashboard-only CORS default and Node/npm references removed, README and testing doc updated

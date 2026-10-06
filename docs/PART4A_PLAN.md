@@ -1,5 +1,11 @@
 # Part 4A Plan
 
+> **Superseded stack.** The web surfaces below were later ported like-for-like
+> to Django templates + HTMX inside `backend/web/`, and the Next.js app
+> (`admin-dashboard/`) was removed. Same pages and URLs; see
+> `docs/WEB_MIGRATION_PLAN.md` and DECISIONS.md "Web migration". The backend
+> work listed here is unchanged and still in use.
+
 Web surfaces (admin dashboard, platform back-office, student portal, public
 contributor page) plus backend readiness for the Flutter parent app.
 If a session is interrupted: re-read this file and `git log`, continue from
