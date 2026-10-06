@@ -6,6 +6,14 @@ backend work**. All paths are under `/api/v1/` and documented in
 `docs/API_CONTRACTS.md`. Every request file uses the seed parent
 `parent1@schooldimes.test` / `pw123456` (see `docs/requests/parent/_README.md`).
 
+**Web migration (Django templates + HTMX):** nothing here changed. The web
+surfaces moved into Django, and several API views now call shared service
+functions instead of holding the logic themselves; every request and
+response below is identical (the full API suite is unchanged and green, and
+`backend/parents/test_readiness_routes.py` checks every endpoint in this table
+still resolves with its method). The only visible difference: `share_url` now
+points at the backend origin's `/give/<token>` page (same path).
+
 Status: **P1** = existed in Part 1, **P2** = existed in Part 2, **4A** = added
 or extended in Part 4A.
 
@@ -30,7 +38,7 @@ never from the request.
 | One-tap top-up from low-balance alert (F) | notification `payload.action` = `{type: top_up, student_id, wallet_id, suggested_amount}` → `POST payments/deposits/` | P2 | [notifications.http](requests/parent/notifications.http) |
 | Recurring top-ups CRUD, pause/resume, re-activate (G) | `GET/POST payments/recurring-topups/`, `PATCH …/{id}/ {active}`, `DELETE …/{id}/` | P2 | [recurring.http](requests/parent/recurring.http) |
 | Gift voucher (H) | `POST/GET payments/gift-vouchers/` | P2 | [gifts_and_links.http](requests/parent/gifts_and_links.http) |
-| Top-up links create/list/revoke + share (H) | `POST/GET payments/topup-links/`, `POST …/{id}/revoke/`; share `share_url` as-is (`<dashboard>/give/<token>`) | P2, URL 4A | [gifts_and_links.http](requests/parent/gifts_and_links.http) |
+| Top-up links create/list/revoke + share (H) | `POST/GET payments/topup-links/`, `POST …/{id}/revoke/`; share `share_url` as-is (`<backend origin>/give/<token>`) | P2, URL 4A | [gifts_and_links.http](requests/parent/gifts_and_links.http) |
 | Contributions received (H) | `GET payments/deposits/?from_contributor=true` | 4A | [topups.http](requests/parent/topups.http) |
 | Pooled funds list / detail / log (I) | `GET pooled-funds/`, `GET pooled-funds/{id}/` | P2 | [pooled_funds.http](requests/parent/pooled_funds.http) |
 | Contribute / create fund (I) | `POST pooled-funds/{id}/contribute/` (poll the deposit), `POST pooled-funds/` | P2 | [pooled_funds.http](requests/parent/pooled_funds.http) |

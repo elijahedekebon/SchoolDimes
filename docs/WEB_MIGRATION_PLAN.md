@@ -203,5 +203,5 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 - [x] **G. Platform back-office**
 - [x] **H. Student portal**
 - [x] **I. Contributor page**
-- [ ] **J. Parent-app backend readiness** (verified unchanged; docs updated for the new page origin)
+- [x] **J. Parent-app backend readiness** (verified unchanged; docs updated for the new page origin)
 - [ ] **K. Remove the Next.js app** — waiting for the owner's confirmation of the parity table above
