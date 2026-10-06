@@ -88,7 +88,7 @@ All paths are unchanged. "View" names are in `web/<area>/views.py`.
 | 29 | `/platform/payment-issues` · `platform/payment-issues/page.tsx` | `/platform/payment-issues` | `platform.PaymentIssuesView` | `platform/payment-issues/index.html` | G | ✅ |
 | 30 | `/platform/audit-log` · `platform/audit-log/page.tsx` | `/platform/audit-log` | `platform.AuditLogView` | `platform/audit-log/index.html` | G | ✅ |
 | 31 | `/platform/tips` · `platform/tips/page.tsx` | `/platform/tips` | `platform.TipsView` | `platform/tips/index.html` | G | ✅ |
-| 32 | `/student` · `student/page.tsx` | `/student` | `student.PortalView` | `student/index.html` | H | ⬜ |
+| 32 | `/student` · `student/page.tsx` | `/student` | `student.PortalView` | `student/index.html` | H | ✅ |
 | 33 | `/give/[token]` · `give/[token]/page.tsx` | `/give/<str:token>` | `give.GiveView` | `give/detail.html` | I | ⬜ |
 
 ### Next.js route handlers (not pages) and what replaces them
@@ -201,7 +201,7 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 - [x] **E. Devices (token once + QR), merchants, products, policy & settings, staff accounts**
 - [x] **F. Fees, attendance, pooled funds, disputes, P2P alerts, data requests, tips, payment issues**
 - [x] **G. Platform back-office**
-- [ ] **H. Student portal**
+- [x] **H. Student portal**
 - [ ] **I. Contributor page**
 - [ ] **J. Parent-app backend readiness** (verified unchanged; docs updated for the new page origin)
 - [ ] **K. Remove the Next.js app** — waiting for the owner's confirmation of the parity table above

@@ -1,5 +1,5 @@
 from django.urls import path
 
-from . import views  # noqa: F401
+from . import views
 
-urlpatterns = []
+urlpatterns = [path("student", views.PortalView.as_view(), name="student-portal")]

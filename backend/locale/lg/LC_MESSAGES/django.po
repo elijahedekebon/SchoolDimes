@@ -292,6 +292,9 @@ msgstr ""
 msgid "%(present)s of %(total)s present"
 msgstr ""
 
+msgid "%(school)s · Ask your parent or the school office if something looks wrong."
+msgstr ""
+
 msgid "4 to 6 digits. It is hashed at once and never shown again."
 msgstr ""
 
@@ -886,6 +889,9 @@ msgstr ""
 msgid "Held now"
 msgstr ""
 
+msgid "Hello, %(name)s!"
+msgstr ""
+
 msgid "Hour"
 msgstr ""
 
@@ -1066,6 +1072,9 @@ msgstr ""
 msgid "My SchoolDimes"
 msgstr ""
 
+msgid "My savings goals"
+msgstr ""
+
 msgid "My school"
 msgstr ""
 
@@ -1166,6 +1175,9 @@ msgid "No notifications."
 msgstr ""
 
 msgid "No per-student overrides."
+msgstr ""
+
+msgid "No purchases yet."
 msgstr ""
 
 msgid "No requests."
@@ -1756,6 +1768,9 @@ msgstr ""
 msgid "Spending by category"
 msgstr ""
 
+msgid "Spending money"
+msgstr ""
+
 msgid "Spending policy"
 msgstr ""
 
@@ -1991,6 +2006,9 @@ msgid "Weekly cap"
 msgstr ""
 
 msgid "Weekly spend cap"
+msgstr ""
+
+msgid "What I bought recently"
 msgstr ""
 
 msgid "What the canteen and merchants sell. Categories marked unhealthy feed the nutrition flag in Analytics."

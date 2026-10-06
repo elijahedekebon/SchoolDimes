@@ -1,0 +1,30 @@
+{% extends "student/layout.html" %}{% load i18n web %}
+{% block content %}
+{% error_alert error %}
+{% if data %}
+<div class="stack" style="max-width:720px;margin:0 auto">
+  <h2>{% blocktranslate trimmed with name=data.student.first_name %}Hello, {{ name }}!{% endblocktranslate %}</h2>
+  <div class="grid sm-2">
+    <div class="card" style="background:#e6fcf5"><p class="sm dimmed">{% translate "Spending money" %}</p><p class="xl fw-800" data-testid="portal-balance">{{ data.main_balance|money }}</p></div>
+    <div class="card" style="background:#fff9db"><p class="sm dimmed">{% translate "Savings" %}</p><p class="xl fw-800">{{ data.savings_balance|money }}</p></div>
+  </div>
+  {% if data.savings_goals %}<div class="card">
+    <p class="fw-600 mb-xs">{% translate "My savings goals" %}</p>
+    {% for g in data.savings_goals %}<div class="stack gap-4 mb-sm">
+      <div class="group justify-between"><span>{{ g.goal_name }} {% if g.is_reached %}🎉{% endif %}</span><span class="sm dimmed">{{ g.current_amount|money }} / {{ g.target_amount|money }}</span></div>
+      <div class="progress lg {% if g.is_reached %}c-green{% else %}c-yellow{% endif %}"><span style="width:{{ g.progress_percent }}%"></span></div>
+    </div>{% endfor %}
+  </div>{% endif %}
+  {% if data.tip %}<div class="alert c-grape"><div class="alert-title">{{ data.tip.title }}</div>{{ data.tip.body }}</div>{% endif %}
+  <div class="card">
+    <p class="fw-600 mb-xs">{% translate "What I bought recently" %}</p>
+    {% for p in data.recent_purchases %}<div class="group justify-between nowrap" style="padding:6px 0;border-bottom:1px solid var(--gray-2)">
+      <div><p class="sm">{% if p.items %}{% for i in p.items %}{{ i.quantity }}× {{ i.description }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}{{ p.place }}{% endif %}</p>
+        <p class="xs dimmed">{{ p.when|dt }} · {{ p.place }}</p></div>
+      {{ p.amount|money }}
+    </div>{% empty %}<p class="sm dimmed">{% translate "No purchases yet." %}</p>{% endfor %}
+  </div>
+  <p class="xs dimmed center">{% blocktranslate trimmed with school=data.school.name %}{{ school }} · Ask your parent or the school office if something looks wrong.{% endblocktranslate %}</p>
+</div>
+{% endif %}
+{% endblock %}
