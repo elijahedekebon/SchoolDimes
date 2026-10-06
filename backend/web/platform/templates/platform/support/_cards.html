@@ -1,0 +1,4 @@
+{% load i18n web %}<div id="support_cards" class="table-region"><div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "Student" %}</th><th>{% translate "Card UID" %}</th><th>{% translate "Status" %}</th><th>{% translate "Updated" %}</th></tr></thead>
+  <tbody>{% for c in cards_rows %}<tr><td>{{ c.student_name }}</td><td><span class="mono">{{ c.card_uid }}</span></td><td>{% status_badge c.status %}</td><td>{{ c.updated_at|dt }}</td></tr>{% empty %}{% empty_row 4 %}{% endfor %}</tbody></table></div>
+{% include "platform/support/_pages.html" with page=cards_page target="support_cards" %}</div>

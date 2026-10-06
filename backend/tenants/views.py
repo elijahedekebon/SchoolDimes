@@ -21,15 +21,9 @@ class SchoolReferralViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        qs = SchoolReferral.objects.select_related("referring_school", "referred_school")
-        if is_platform_admin(user):
-            return qs
-        if is_school_admin(user):
-            return qs.filter(
-                Q(referring_school_id=user.school_id) | Q(referred_school_id=user.school_id)
-            )
-        return qs.none()
+        from .services import referrals_for
+
+        return referrals_for(self.request.user, self.request.query_params)
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy", "apply"):

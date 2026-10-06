@@ -1,0 +1,5 @@
+{% extends "platform/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Referrals") _("Schools that referred other schools. Applying marks the reward as granted (billing is outside SchoolDimes).") %}<button type="button" class="btn btn-xs" hx-get="/platform/referrals/new" hx-target="#sd-modal-body">{% translate "New referral" %}</button>{% endpageheader %}
+{% include "platform/referrals/_table.html" %}
+{% endblock %}

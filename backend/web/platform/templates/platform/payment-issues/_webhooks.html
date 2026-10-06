@@ -1,0 +1,10 @@
+{% load i18n web %}<div id="webhooks_table" class="table-region mt-sm" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#webhook-filters" hx-swap="outerHTML">
+{% if errors.webhooks_table %}{% error_alert errors.webhooks_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "When" %}</th><th>{% translate "Reference" %}</th><th>{% translate "Aggregator ref" %}</th><th>{% translate "Reason" %}</th><th>{% translate "Payload" %}</th><th></th></tr></thead>
+  <tbody>{% for h in hook_rows %}<tr><td>{{ h.received_at|dt }}</td><td><span class="mono">{{ h.reference|dash }}</span></td><td><span class="mono">{{ h.aggregator_ref|dash }}</span></td><td>{% status_badge h.reason %}</td><td><span class="mono" style="font-size:11px">{{ h.payload_text }}</span></td>
+    <td>{% if not h.reviewed %}<button type="button" class="btn btn-xs btn-light" hx-get="/platform/payment-issues/webhooks/{{ h.id }}/mark-reviewed" hx-target="#sd-modal-body">{% translate "Mark reviewed" %}</button>{% endif %}</td></tr>
+  {% empty %}{% empty_row 6 _("Nothing to review.") %}{% endfor %}</tbody></table></div>
+{% pagination hooks_page "webhooks_table" "#webhook-filters" %}
+{% endif %}
+</div>

@@ -87,3 +87,29 @@ def update_school_settings(actor, serializer):
     serializer.save()
     audit(actor, "school_settings.update", serializer.instance)
     return serializer.instance
+
+
+
+def schools_for(user, params=None):
+    """GET /schools/ is platform_admin only."""
+    from core.permissions import is_platform_admin
+
+    from .models import School
+
+    return School.objects.all() if is_platform_admin(user) else School.objects.none()
+
+
+def referrals_for(user, params=None):
+    """platform_admin: all referrals; school_admin: their school's (either side)."""
+    from django.db.models import Q
+
+    from core.permissions import is_platform_admin, is_school_admin
+
+    from .models import SchoolReferral
+
+    qs = SchoolReferral.objects.select_related("referring_school", "referred_school")
+    if is_platform_admin(user):
+        return qs
+    if is_school_admin(user):
+        return qs.filter(Q(referring_school_id=user.school_id) | Q(referred_school_id=user.school_id))
+    return qs.none()

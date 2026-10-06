@@ -1,0 +1,5 @@
+{% extends "platform/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Schools") _("Every school on SchoolDimes. Click a school to open its read-only support view.") %}<a class="btn btn-xs" href="/platform/onboard">{% translate "Onboard a school" %}</a>{% endpageheader %}
+{% include "platform/_schools.html" %}
+{% endblock %}

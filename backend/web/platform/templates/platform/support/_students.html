@@ -1,0 +1,4 @@
+{% load i18n web %}<div id="support_students" class="table-region"><div class="table-wrap"><table class="table striped">
+  <thead><tr><th>#</th><th>{% translate "Name" %}</th><th>{% translate "Class" %}</th></tr></thead>
+  <tbody>{% for s in students_rows %}<tr><td>{{ s.id }}</td><td>{{ s.name }}</td><td>{{ s.class_name|dash }}</td></tr>{% empty %}{% empty_row 3 %}{% endfor %}</tbody></table></div>
+{% include "platform/support/_pages.html" with page=students_page target="support_students" %}</div>

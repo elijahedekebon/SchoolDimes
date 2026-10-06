@@ -38,6 +38,11 @@ SCOPES = {
     "funds_detail": "web.core.scoping.fund_detail",
     "tips": "content.services.tips_for",
     "deposits": "payments.services.deposits_for",
+    # Section G
+    "schools": "tenants.services.schools_for",
+    "referrals": "tenants.services.referrals_for",
+    "audit_logs": "backoffice.services.audit_logs_for",
+    "webhooks": "backoffice.services.unmatched_webhooks_for",
 }
 
 

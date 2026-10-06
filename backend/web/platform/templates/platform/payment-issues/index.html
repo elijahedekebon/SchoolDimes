@@ -1,0 +1,22 @@
+{% extends "platform/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Payment issues (all schools)") _("Webhooks we couldn't match to a payment, and failed payments across schools.") %}{% endpageheader %}
+<div class="tabs" data-tabs="pi">
+  <button type="button" class="tab active" data-tab="webhooks">{% translate "Unmatched webhooks" %}</button>
+  <button type="button" class="tab" data-tab="deposits">{% translate "Failed / expired payments" %}</button>
+</div>
+<div class="tab-panel" data-tab-panel="pi:webhooks">
+  <form id="webhook-filters" hx-get="{{ request.path }}" hx-target="#webhooks_table" hx-swap="outerHTML" hx-trigger="change">
+    {% translate "To review" as a %}{% translate "Reviewed" as b %}
+    <label class="field field-xs" style="width:180px"><span class="label">{% translate "Show" %}</span><select class="input" name="reviewed"><option value="">{% translate "All" %}</option><option value="false"{% if reviewed == "false" %} selected{% endif %}>{{ a }}</option><option value="true"{% if reviewed == "true" %} selected{% endif %}>{{ b }}</option></select></label>
+  </form>
+  {% include "platform/payment-issues/_webhooks.html" %}
+</div>
+<div class="tab-panel hidden" data-tab-panel="pi:deposits">
+  <form id="deposit-filters" class="group" hx-get="{{ request.path }}" hx-target="#deposit_issues" hx-swap="outerHTML" hx-trigger="change">
+    {% translate "School" as l %}{% include "core/components/school_picker.html" with label=l value=school %}
+    {% choice_filter "status" _("Status") status status_options %}
+  </form>
+  {% include "core/components/deposit_issues.html" %}
+</div>
+{% endblock %}

@@ -48,15 +48,7 @@ class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     permission_classes = [IsPlatformAdmin]
 
     def get_queryset(self):
-        qs = AuditLog.objects.select_related("actor", "school").order_by("-created_at", "-id")
-        p = self.request.query_params
-        if p.get("school"):
-            qs = qs.filter(school_id=p["school"])
-        if p.get("action"):
-            qs = qs.filter(action__icontains=p["action"])
-        if p.get("actor"):
-            qs = qs.filter(actor_id=p["actor"])
-        return qs
+        return services.audit_logs_for(self.request.user, self.request.query_params)
 
 
 class UnmatchedWebhookViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -67,15 +59,8 @@ class UnmatchedWebhookViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, 
     permission_classes = [IsPlatformAdmin]
 
     def get_queryset(self):
-        qs = UnmatchedWebhook.objects.all()
-        if self.request.query_params.get("reviewed") in ("true", "false"):
-            qs = qs.filter(reviewed=self.request.query_params["reviewed"] == "true")
-        return qs
+        return services.unmatched_webhooks_for(self.request.user, self.request.query_params)
 
     @action(detail=True, methods=["post"], url_path="mark-reviewed")
     def mark_reviewed(self, request, pk=None):
-        hook = self.get_object()
-        hook.reviewed = True
-        hook.save(update_fields=["reviewed"])
-        audit(request.user, "unmatched_webhook.reviewed", hook, force=True)
-        return Response(self.get_serializer(hook).data)
+        return Response(self.get_serializer(services.mark_webhook_reviewed(request.user, self.get_object())).data)

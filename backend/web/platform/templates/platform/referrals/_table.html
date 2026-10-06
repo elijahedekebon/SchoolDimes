@@ -1,0 +1,10 @@
+{% load i18n web %}<div id="referrals_table" class="table-region" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-swap="outerHTML">
+{% if errors.referrals_table %}{% error_alert errors.referrals_table %}{% else %}
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "Referring school" %}</th><th>{% translate "Referred school" %}</th><th>{% translate "Status" %}</th><th>{% translate "Reward applied" %}</th><th>{% translate "Created" %}</th><th></th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td>{{ r.referring_name }}</td><td>{{ r.referred_name }}</td><td>{% status_badge r.status %}</td><td>{% if r.reward_applied %}✓{% else %}—{% endif %}</td><td>{{ r.created_at|d }}</td>
+    <td>{% if r.status == "pending" %}<button type="button" class="btn btn-xs btn-light c-green" hx-get="/platform/referrals/{{ r.id }}/apply" hx-target="#sd-modal-body">{% translate "Apply reward" %}</button>{% endif %}</td></tr>
+  {% empty %}{% empty_row 6 %}{% endfor %}</tbody></table></div>
+{% pagination page "referrals_table" %}
+{% endif %}
+</div>

@@ -1,0 +1,5 @@
+{% extends "platform/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Platform-wide tips") _("Tips shown at every school, one entry per language.") %}{% endpageheader %}
+{% include "core/components/tips_manager.html" %}
+{% endblock %}

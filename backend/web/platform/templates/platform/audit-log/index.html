@@ -1,0 +1,9 @@
+{% extends "platform/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Audit log") _("Privileged writes, including every cross-tenant change by platform staff.") %}{% endpageheader %}
+<form id="audit-filters" class="group align-end mb-sm" hx-get="{{ request.path }}" hx-target="#audit_table" hx-swap="outerHTML" hx-trigger="change, input delay:300ms from:input[name=action]">
+  {% translate "School" as l %}{% include "core/components/school_picker.html" with label=l value=school %}
+  <label class="field field-xs"><span class="label">{% translate "Action" %}</span><input class="input" name="action" placeholder="card." value="{{ action }}"></label>
+</form>
+{% include "platform/audit-log/_table.html" %}
+{% endblock %}

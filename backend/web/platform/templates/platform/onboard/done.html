@@ -1,0 +1,7 @@
+{% extends "platform/layout.html" %}{% load i18n web %}
+{% block content %}
+{% blocktranslate trimmed asvar title with name=school.name %}{{ name }} is ready{% endblocktranslate %}
+{% pageheader title %}{% endpageheader %}
+<div class="alert c-green"><div class="alert-title">{% translate "Onboarding complete" %}</div><p class="sm">{% blocktranslate trimmed with email=admin.email %}{{ email }} can now sign in at this dashboard, register devices, add students and issue cards.{% endblocktranslate %}</p></div>
+<div class="group mt-md"><a class="btn" href="/platform">{% translate "Back to schools" %}</a></div>
+{% endblock %}

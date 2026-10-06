@@ -1,0 +1,8 @@
+{% extends "platform/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Support") _("Read-only views of any school's students, cards, devices and transactions.") %}
+  <form method="get" action="/platform/support">{% translate "School" as l %}<span onchange="this.closest('form').submit()">{% include "core/components/school_picker.html" with label=l value=school %}</span></form>
+{% endpageheader %}
+<div class="alert c-gray mb-md"><p class="sm">{% translate "Read-only. Any change you make for a school elsewhere is recorded in the audit log." %}</p></div>
+{% if not school %}<p class="dimmed">{% translate "Choose a school." %}</p>{% else %}{% include "platform/support/_body.html" %}{% endif %}
+{% endblock %}

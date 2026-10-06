@@ -250,6 +250,9 @@ msgstr[1] ""
 msgid "%(count)s total"
 msgstr ""
 
+msgid "%(email)s can now sign in at this dashboard, register devices, add students and issue cards."
+msgstr ""
+
 msgid "%(email)s can sign in again."
 msgstr ""
 
@@ -257,6 +260,9 @@ msgid "%(email)s can't sign in any more. Nothing they recorded is deleted."
 msgstr ""
 
 msgid "%(name)s goes back to the school defaults, including any limits a parent set."
+msgstr ""
+
+msgid "%(name)s is ready"
 msgstr ""
 
 msgid "%(name)s is refused on its next request and can't be re-enabled (register a new device instead). Do this immediately for a lost or stolen till."
@@ -301,10 +307,19 @@ msgstr ""
 msgid "Account"
 msgstr ""
 
+msgid "Action"
+msgstr ""
+
 msgid "Active"
 msgstr ""
 
 msgid "Active card"
+msgstr ""
+
+msgid "Active cards"
+msgstr ""
+
+msgid "Active devices"
 msgstr ""
 
 msgid "Add a student"
@@ -313,7 +328,16 @@ msgstr ""
 msgid "Added"
 msgstr ""
 
+msgid "Address"
+msgstr ""
+
+msgid "Admins"
+msgstr ""
+
 msgid "Ages"
+msgstr ""
+
+msgid "Aggregator ref"
 msgstr ""
 
 msgid "All"
@@ -367,6 +391,12 @@ msgstr ""
 msgid "Applies to every student. Changes reach POS devices on their next cache refresh."
 msgstr ""
 
+msgid "Apply referral reward"
+msgstr ""
+
+msgid "Apply reward"
+msgstr ""
+
 msgid "Approve"
 msgstr ""
 
@@ -382,6 +412,9 @@ msgstr ""
 msgid "At least 8 characters. Share it privately."
 msgstr ""
 
+msgid "At least 8 characters. Share it privately; they can be given a new one from Staff accounts."
+msgstr ""
+
 msgid "Attendance"
 msgstr ""
 
@@ -389,6 +422,12 @@ msgid "Attendance reader"
 msgstr ""
 
 msgid "Audit log"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Back to schools"
 msgstr ""
 
 msgid "Backend address the device will use"
@@ -454,6 +493,9 @@ msgstr ""
 msgid "Canteen tills may also record attendance taps"
 msgstr ""
 
+msgid "Canteen tills may record attendance"
+msgstr ""
+
 msgid "Card"
 msgstr ""
 
@@ -493,6 +535,9 @@ msgstr ""
 msgid "Check the parent's %(doc)s number %(number)s against the document they show you."
 msgstr ""
 
+msgid "Choose a school."
+msgstr ""
+
 msgid "Choose a student to see their spending in this period."
 msgstr ""
 
@@ -529,6 +574,9 @@ msgstr ""
 msgid "Collected"
 msgstr ""
 
+msgid "Collected, last 30 days"
+msgstr ""
+
 msgid "Completing a deletion is irreversible. A student with money in their wallets can't be redacted until it's withdrawn or spent."
 msgstr ""
 
@@ -556,13 +604,22 @@ msgstr ""
 msgid "Create"
 msgstr ""
 
+msgid "Create %(name)s with %(email)s as its first school admin?"
+msgstr ""
+
 msgid "Create portal login"
+msgstr ""
+
+msgid "Create school"
 msgstr ""
 
 msgid "Created"
 msgstr ""
 
 msgid "Creates a read-only student login for %(name)s. It can never see other students."
+msgstr ""
+
+msgid "Creates the school, its settings, spending policy, system wallets and first admin in one step."
 msgstr ""
 
 msgid "Credits"
@@ -712,6 +769,9 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
+msgid "Email (login)"
+msgstr ""
+
 msgid "Empty = all allowed"
 msgstr ""
 
@@ -724,6 +784,9 @@ msgstr ""
 msgid "Every purchase, transfer and fee payment from %(name)s's card is refused at once. Offline POS devices refuse it after their next cache refresh. Guardians are notified."
 msgstr ""
 
+msgid "Every school on SchoolDimes. Click a school to open its read-only support view."
+msgstr ""
+
 msgid "Every transfer to or from this student."
 msgstr ""
 
@@ -734,6 +797,9 @@ msgid "Export"
 msgstr ""
 
 msgid "Export CSV"
+msgstr ""
+
+msgid "Failed / expired payments"
 msgstr ""
 
 msgid "Fee categories"
@@ -752,6 +818,9 @@ msgid "Find"
 msgstr ""
 
 msgid "Find by UID"
+msgstr ""
+
+msgid "First admin"
 msgstr ""
 
 msgid "First tap in"
@@ -865,6 +934,9 @@ msgstr ""
 msgid "Language"
 msgstr ""
 
+msgid "Languages"
+msgstr ""
+
 msgid "Last changed by %(who)s, %(when)s"
 msgstr ""
 
@@ -916,6 +988,9 @@ msgstr ""
 msgid "Logins for canteen staff, merchant staff, other school admins, and student-portal accounts."
 msgstr ""
 
+msgid "Logo URL"
+msgstr ""
+
 msgid "Low balance only"
 msgstr ""
 
@@ -946,7 +1021,13 @@ msgstr ""
 msgid "Mark lost"
 msgstr ""
 
+msgid "Mark reviewed"
+msgstr ""
+
 msgid "Marks the dispute as under review; the parent is notified."
+msgstr ""
+
+msgid "Marks the referral applied and the reward for %(school)s as granted."
 msgstr ""
 
 msgid "Maximum"
@@ -1027,6 +1108,9 @@ msgstr ""
 msgid "New product"
 msgstr ""
 
+msgid "New referral"
+msgstr ""
+
 msgid "New staff account"
 msgstr ""
 
@@ -1037,6 +1121,9 @@ msgid "New student"
 msgstr ""
 
 msgid "New tip"
+msgstr ""
+
+msgid "Next"
 msgstr ""
 
 msgid "No UID: the server generates one (for testing without a physical card)."
@@ -1126,6 +1213,9 @@ msgstr ""
 msgid "Notify guardians on a student's first tap-in each day"
 msgstr ""
 
+msgid "Notify guardians on first tap-in"
+msgstr ""
+
 msgid "Nutrition flag: share of item revenue in categories this school marks as unhealthy (Products page). Sales sent without line items aren't in this breakdown."
 msgstr ""
 
@@ -1142,6 +1232,9 @@ msgid "Offline spend ceiling"
 msgstr ""
 
 msgid "Onboard a school"
+msgstr ""
+
+msgid "Onboarding complete"
 msgstr ""
 
 msgid "One Kampala day. POS figures are for transactions synced that day, when their ledger entries were written."
@@ -1210,6 +1303,9 @@ msgstr ""
 msgid "POS collected"
 msgstr ""
 
+msgid "POS settings"
+msgstr ""
+
 msgid "POS tills, merchant tills and attendance readers. A device that hasn't synced for %(hours)s h is marked stale."
 msgstr ""
 
@@ -1240,7 +1336,13 @@ msgstr ""
 msgid "Payer"
 msgstr ""
 
+msgid "Payload"
+msgstr ""
+
 msgid "Payment issues"
+msgstr ""
+
+msgid "Payment issues (all schools)"
 msgstr ""
 
 msgid "Payments"
@@ -1288,6 +1390,9 @@ msgstr ""
 msgid "Platform-wide"
 msgstr ""
 
+msgid "Platform-wide tips"
+msgstr ""
+
 msgid "Policy & settings"
 msgstr ""
 
@@ -1316,6 +1421,12 @@ msgid "Price (UGX)"
 msgstr ""
 
 msgid "Primary"
+msgstr ""
+
+msgid "Primary colour"
+msgstr ""
+
+msgid "Privileged writes, including every cross-tenant change by platform staff."
 msgstr ""
 
 msgid "Problems parents reported with a sale or fee. Refunds can never exceed what was actually charged."
@@ -1354,6 +1465,15 @@ msgstr ""
 msgid "Reactivate"
 msgstr ""
 
+msgid "Read-only views of any school's students, cards, devices and transactions."
+msgstr ""
+
+msgid "Read-only. Any change you make for a school elsewhere is recorded in the audit log."
+msgstr ""
+
+msgid "Ready to create"
+msgstr ""
+
 msgid "Reason"
 msgstr ""
 
@@ -1369,6 +1489,9 @@ msgstr ""
 msgid "Reconciliation"
 msgstr ""
 
+msgid "Record that someone has looked into this webhook (e.g. reconciled with the aggregator's dashboard). No money moves."
+msgstr ""
+
 msgid "Record what you found (e.g. spoke to the class teacher)."
 msgstr ""
 
@@ -1382,6 +1505,12 @@ msgid "Reference"
 msgstr ""
 
 msgid "Referrals"
+msgstr ""
+
+msgid "Referred school"
+msgstr ""
+
+msgid "Referring school"
 msgstr ""
 
 msgid "Refresh"
@@ -1483,6 +1612,9 @@ msgstr ""
 msgid "Revoke device"
 msgstr ""
 
+msgid "Reward applied"
+msgstr ""
+
 msgid "Role"
 msgstr ""
 
@@ -1496,6 +1628,9 @@ msgid "Sale time"
 msgstr ""
 
 msgid "Sales"
+msgstr ""
+
+msgid "Sales (30 days)"
 msgstr ""
 
 msgid "Sales today (collected)"
@@ -1516,6 +1651,12 @@ msgstr ""
 msgid "Savings goals"
 msgstr ""
 
+msgid "School"
+msgstr ""
+
+msgid "School & branding"
+msgstr ""
+
 msgid "School admin"
 msgstr ""
 
@@ -1523,6 +1664,12 @@ msgid "School canteen"
 msgstr ""
 
 msgid "School default spending policy"
+msgstr ""
+
+msgid "School defaults; the school admin can change them later and parents can tighten them per child."
+msgstr ""
+
+msgid "School name"
 msgstr ""
 
 msgid "School settlement wallet"
@@ -1535,6 +1682,9 @@ msgid "SchoolDimes back-office"
 msgstr ""
 
 msgid "Schools"
+msgstr ""
+
+msgid "Schools that referred other schools. Applying marks the reward as granted (billing is outside SchoolDimes)."
 msgstr ""
 
 msgid "Scope"
@@ -1573,7 +1723,13 @@ msgstr ""
 msgid "Shortfall"
 msgstr ""
 
+msgid "Shortfall, last 30 days"
+msgstr ""
+
 msgid "Shortfalls"
+msgstr ""
+
+msgid "Show"
 msgstr ""
 
 msgid "Shown only once"
@@ -1588,6 +1744,9 @@ msgstr ""
 msgid "Sign out"
 msgstr ""
 
+msgid "Since"
+msgstr ""
+
 msgid "Sold by"
 msgstr ""
 
@@ -1595,6 +1754,9 @@ msgid "Something went wrong"
 msgstr ""
 
 msgid "Spending by category"
+msgstr ""
+
+msgid "Spending policy"
 msgstr ""
 
 msgid "Spent"
@@ -1624,6 +1786,9 @@ msgstr ""
 msgid "Student #%(id)s"
 msgstr ""
 
+msgid "Student balances"
+msgstr ""
+
 msgid "Student override last set by %(who)s (%(role)s) on %(when)s. Parents can only tighten school limits."
 msgstr ""
 
@@ -1640,6 +1805,9 @@ msgid "Submitted"
 msgstr ""
 
 msgid "Support"
+msgstr ""
+
+msgid "Supported languages"
 msgstr ""
 
 msgid "Suspend"
@@ -1708,6 +1876,9 @@ msgstr ""
 msgid "This can't be undone"
 msgstr ""
 
+msgid "This person signs in to the school dashboard and can add students, staff and devices."
+msgstr ""
+
 msgid "This school"
 msgstr ""
 
@@ -1720,6 +1891,9 @@ msgstr ""
 msgid "Tip"
 msgstr ""
 
+msgid "Tips shown at every school, one entry per language."
+msgstr ""
+
 msgid "Title"
 msgstr ""
 
@@ -1730,6 +1904,9 @@ msgid "To give merchant staff a login, create a merchant_staff account on the St
 msgstr ""
 
 msgid "To link or unlink a guardian, open the student."
+msgstr ""
+
+msgid "To review"
 msgstr ""
 
 msgid "Today, %(date)s (Africa/Kampala)"
@@ -1774,6 +1951,9 @@ msgstr ""
 msgid "Unlink guardian"
 msgstr ""
 
+msgid "Unmatched webhooks"
+msgstr ""
+
 msgid "Unresolved reviews"
 msgstr ""
 
@@ -1804,6 +1984,9 @@ msgstr ""
 msgid "Wallet"
 msgstr ""
 
+msgid "Webhooks we couldn't match to a payment, and failed payments across schools."
+msgstr ""
+
 msgid "Weekly cap"
 msgstr ""
 
@@ -1814,6 +1997,9 @@ msgid "What the canteen and merchants sell. Categories marked unhealthy feed the
 msgstr ""
 
 msgid "When"
+msgstr ""
+
+msgid "Who"
 msgstr ""
 
 msgid "Will be stored as"

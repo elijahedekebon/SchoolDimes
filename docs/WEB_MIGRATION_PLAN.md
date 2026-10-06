@@ -81,13 +81,13 @@ All paths are unchanged. "View" names are in `web/<area>/views.py`.
 | 22 | `/school/privacy` · `school/privacy/page.tsx` | `/school/privacy` | `school.PrivacyView` | `school/privacy/index.html` | F | ✅ |
 | 23 | `/school/tips` · `school/tips/page.tsx` | `/school/tips` | `school.TipsView` | `school/tips/index.html` | F | ✅ |
 | 24 | `/school/payment-issues` · `school/payment-issues/page.tsx` | `/school/payment-issues` | `school.PaymentIssuesView` | `school/payment-issues/index.html` | F | ✅ |
-| 25 | `/platform` · `platform/page.tsx` | `/platform` | `platform.SchoolsView` | `platform/index.html` | G | ⬜ |
-| 26 | `/platform/onboard` · `platform/onboard/page.tsx` | `/platform/onboard` | `platform.OnboardView` | `platform/onboard/index.html` | G | ⬜ |
-| 27 | `/platform/referrals` · `platform/referrals/page.tsx` | `/platform/referrals` | `platform.ReferralsView` | `platform/referrals/index.html` | G | ⬜ |
-| 28 | `/platform/support` · `platform/support/page.tsx` | `/platform/support` (`?school=<id>`) | `platform.SupportView` | `platform/support/index.html` | G | ⬜ |
-| 29 | `/platform/payment-issues` · `platform/payment-issues/page.tsx` | `/platform/payment-issues` | `platform.PaymentIssuesView` | `platform/payment-issues/index.html` | G | ⬜ |
-| 30 | `/platform/audit-log` · `platform/audit-log/page.tsx` | `/platform/audit-log` | `platform.AuditLogView` | `platform/audit-log/index.html` | G | ⬜ |
-| 31 | `/platform/tips` · `platform/tips/page.tsx` | `/platform/tips` | `platform.TipsView` | `platform/tips/index.html` | G | ⬜ |
+| 25 | `/platform` · `platform/page.tsx` | `/platform` | `platform.SchoolsView` | `platform/index.html` | G | ✅ |
+| 26 | `/platform/onboard` · `platform/onboard/page.tsx` | `/platform/onboard` | `platform.OnboardView` | `platform/onboard/index.html` | G | ✅ |
+| 27 | `/platform/referrals` · `platform/referrals/page.tsx` | `/platform/referrals` | `platform.ReferralsView` | `platform/referrals/index.html` | G | ✅ |
+| 28 | `/platform/support` · `platform/support/page.tsx` | `/platform/support` (`?school=<id>`) | `platform.SupportView` | `platform/support/index.html` | G | ✅ |
+| 29 | `/platform/payment-issues` · `platform/payment-issues/page.tsx` | `/platform/payment-issues` | `platform.PaymentIssuesView` | `platform/payment-issues/index.html` | G | ✅ |
+| 30 | `/platform/audit-log` · `platform/audit-log/page.tsx` | `/platform/audit-log` | `platform.AuditLogView` | `platform/audit-log/index.html` | G | ✅ |
+| 31 | `/platform/tips` · `platform/tips/page.tsx` | `/platform/tips` | `platform.TipsView` | `platform/tips/index.html` | G | ✅ |
 | 32 | `/student` · `student/page.tsx` | `/student` | `student.PortalView` | `student/index.html` | H | ⬜ |
 | 33 | `/give/[token]` · `give/[token]/page.tsx` | `/give/<str:token>` | `give.GiveView` | `give/detail.html` | I | ⬜ |
 
@@ -200,7 +200,7 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 - [x] **D. Students (+detail tabs), guardians & KYC, cards**
 - [x] **E. Devices (token once + QR), merchants, products, policy & settings, staff accounts**
 - [x] **F. Fees, attendance, pooled funds, disputes, P2P alerts, data requests, tips, payment issues**
-- [ ] **G. Platform back-office**
+- [x] **G. Platform back-office**
 - [ ] **H. Student portal**
 - [ ] **I. Contributor page**
 - [ ] **J. Parent-app backend readiness** (verified unchanged; docs updated for the new page origin)

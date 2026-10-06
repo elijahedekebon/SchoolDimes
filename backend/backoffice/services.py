@@ -84,3 +84,40 @@ def school_stats():
             "sales_30d_count": sale.get("n", 0), "sales_30d_collected": str(sale.get("t") or Decimal("0.00")),
         })
     return out
+
+
+
+def audit_logs_for(user, params):
+    """GET /audit-logs/ (platform_admin): ?school=, ?action= (contains), ?actor=."""
+    from core.models import AuditLog
+    from core.permissions import is_platform_admin
+
+    qs = AuditLog.objects.select_related("actor", "school").order_by("-created_at", "-id")
+    if not is_platform_admin(user):
+        return qs.none()
+    if params.get("school"):
+        qs = qs.filter(school_id=params["school"])
+    if params.get("action"):
+        qs = qs.filter(action__icontains=params["action"])
+    if params.get("actor"):
+        qs = qs.filter(actor_id=params["actor"])
+    return qs
+
+
+def unmatched_webhooks_for(user, params):
+    """Webhooks that matched no payment (no school, so platform_admin only). ?reviewed="""
+    from core.permissions import is_platform_admin
+    from payments.models import UnmatchedWebhook
+
+    qs = UnmatchedWebhook.objects.all() if is_platform_admin(user) else UnmatchedWebhook.objects.none()
+    if params.get("reviewed") in ("true", "false"):
+        qs = qs.filter(reviewed=params["reviewed"] == "true")
+    return qs
+
+
+def mark_webhook_reviewed(actor, hook):
+    """Records that someone looked into it. No money moves."""
+    hook.reviewed = True
+    hook.save(update_fields=["reviewed"])
+    audit(actor, "unmatched_webhook.reviewed", hook, force=True)
+    return hook

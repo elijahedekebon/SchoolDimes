@@ -1,0 +1,9 @@
+{% load i18n web %}<div id="audit_table" class="table-region" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#audit-filters" hx-swap="outerHTML">
+{% if errors.audit_table %}{% error_alert errors.audit_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "When" %}</th><th>{% translate "Who" %}</th><th>{% translate "School" %}</th><th>{% translate "Action" %}</th><th>{% translate "Target" %}</th><th>{% translate "Details" %}</th></tr></thead>
+  <tbody>{% for l in rows %}<tr><td>{{ l.created_at|dt }}</td><td>{{ l.actor_email|default:"—" }} ({{ l.actor_role }})</td><td>{{ l.school_name|dash }}</td><td>{{ l.action }}</td><td>{% if l.target_type %}{{ l.target_type }} #{{ l.target_id }}{% else %}—{% endif %}</td><td><span class="mono" style="font-size:11px">{{ l.details_text }}</span></td></tr>
+  {% empty %}{% empty_row 6 %}{% endfor %}</tbody></table></div>
+{% pagination page "audit_table" "#audit-filters" %}
+{% endif %}
+</div>

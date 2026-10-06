@@ -1,0 +1,8 @@
+{% load i18n web %}<div id="schools_table" class="table-region" data-testid="schools-table">
+{% if errors.schools_table %}{% error_alert errors.schools_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "School" %}</th><th>{% translate "Students" %}</th><th>{% translate "Active cards" %}</th><th>{% translate "Active devices" %}</th><th>{% translate "Admins" %}</th><th>{% translate "Student balances" %}</th><th>{% translate "Sales (30 days)" %}</th><th>{% translate "Languages" %}</th><th>{% translate "Since" %}</th></tr></thead>
+  <tbody>{% for s in rows %}<tr class="clickable-row" onclick="location.href='/platform/support?school={{ s.id }}'"><td>{{ s.name }}</td><td>{{ s.students }}</td><td>{{ s.active_cards }}</td><td>{{ s.active_devices }}</td><td>{{ s.school_admins }}</td><td>{{ s.student_balances_total|money }}</td><td>{{ s.sales_30d_collected|money }} ({{ s.sales_30d_count }})</td><td>{{ s.supported_languages|join:", " }}</td><td>{{ s.created_at|d }}</td></tr>
+  {% empty %}{% empty_row 9 %}{% endfor %}</tbody></table></div>
+{% endif %}
+</div>

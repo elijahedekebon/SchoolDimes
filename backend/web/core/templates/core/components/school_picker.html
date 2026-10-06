@@ -1,0 +1,2 @@
+{% load i18n %}<label class="field field-xs" style="width:280px"><span class="label">{{ label }}</span>
+  <select class="input" name="{{ name|default:'school' }}"><option value=""></option>{% for id, n in schools %}<option value="{{ id }}"{% if value|stringformat:"s" == id|stringformat:"s" %} selected{% endif %}>{{ n }}</option>{% endfor %}</select></label>

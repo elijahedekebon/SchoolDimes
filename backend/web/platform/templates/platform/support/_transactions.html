@@ -1,0 +1,4 @@
+{% load i18n web %}<div id="support_transactions" class="table-region"><div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>#</th><th>{% translate "When" %}</th><th>{% translate "Student" %}</th><th>{% translate "Device" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Status" %}</th></tr></thead>
+  <tbody>{% for r in txns_rows %}<tr class="clickable-row" hx-get="/platform/support/transactions/{{ r.id }}" hx-target="#sd-drawer-body"><td>{{ r.id }}</td><td>{{ r.device_local_timestamp|dt }}</td><td>{{ r.student_name|dash }}</td><td>{{ r.device_name }}</td><td>{{ r.amount|money }}</td><td><span class="group gap-4">{% status_badge r.sync_status %}{% flags r.flags %}</span></td></tr>{% empty %}{% empty_row 6 %}{% endfor %}</tbody></table></div>
+{% include "platform/support/_pages.html" with page=txns_page target="support_transactions" %}</div>

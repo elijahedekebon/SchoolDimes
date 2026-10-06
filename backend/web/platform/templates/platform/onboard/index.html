@@ -1,0 +1,57 @@
+{% extends "platform/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Onboard a school") _("Creates the school, its settings, spending policy, system wallets and first admin in one step.") %}{% endpageheader %}
+<form method="post" data-stepper data-start="{{ start }}" novalidate>{% csrf_token %}
+  <div class="stepper">
+    {% translate "School & branding" as s1 %}{% translate "Spending policy" as s2 %}{% translate "POS settings" as s3 %}{% translate "First admin" as s4 %}
+    <div class="step" data-step-marker><span class="step-icon">1</span>{{ s1 }}</div><div class="step-sep"></div>
+    <div class="step" data-step-marker><span class="step-icon">2</span>{{ s2 }}</div><div class="step-sep"></div>
+    <div class="step" data-step-marker><span class="step-icon">3</span>{{ s3 }}</div><div class="step-sep"></div>
+    <div class="step" data-step-marker><span class="step-icon">4</span>{{ s4 }}</div>
+  </div>
+  <div class="card stack" data-step>
+    {% translate "School name" as l %}{% include "core/components/field.html" with name="name" label=l required=True value=data.name attrs='data-testid="onboard-name"' %}
+    <label class="field"><span class="label">{% translate "Address" %}</span><textarea class="input" name="address">{{ data.address|default:"" }}</textarea></label>
+    {% translate "Logo URL" as l %}{% include "core/components/field.html" with name="logo_url" label=l type="url" placeholder="https://…/logo.png" value=data.logo_url %}
+    <label class="field"><span class="label">{% translate "Primary colour" %}</span><input class="input" type="color" name="primary_color" value="{{ values.primary_color }}" style="width:80px;padding:2px"></label>
+    <div class="field"><span class="label">{% translate "Supported languages" %}</span>
+      <div class="group" data-require-one>{% for code, n in langs %}<label class="checkbox"><input type="checkbox" name="supported_languages" value="{{ code }}"{% if code in languages %} checked{% endif %}> {{ n }}</label>{% endfor %}</div></div>
+  </div>
+  <div class="card" data-step>
+    <p class="xs dimmed mb-sm">{% translate "School defaults; the school admin can change them later and parents can tighten them per child." %}</p>
+    <div class="grid sm-2">
+      {% translate "Blank = no limit" as blank %}
+      {% for name, label in caps %}{% include "core/components/money_input.html" with name=name label=label description=blank value=data|get:name|default_if_none:"" %}{% endfor %}
+      <label class="switch mt-lg"><input type="checkbox" name="p2p_enabled" value="1"{% if values.p2p_enabled %} checked{% endif %}> {% translate "Student-to-student transfers allowed" %}</label>
+    </div>
+  </div>
+  <div class="card" data-step>
+    <div class="grid sm-2">
+      {% translate "Offline spend ceiling" as l %}{% include "core/components/money_input.html" with name="offline_spend_ceiling" label=l value=values.offline_spend_ceiling required=True %}
+      <label class="field"><span class="label">{% translate "Wrong PINs before lockout" %}</span><input class="input" type="number" min="1" max="20" name="pin_lockout_threshold" value="{{ values.pin_lockout_threshold }}"></label>
+    </div>
+    <div class="stack gap-xs mt-sm">
+      <label class="switch"><input type="checkbox" name="attendance_notify_guardians" value="1"{% if data.attendance_notify_guardians %} checked{% endif %}> {% translate "Notify guardians on first tap-in" %}</label>
+      <label class="switch"><input type="checkbox" name="attendance_on_canteen_devices" value="1"{% if data.attendance_on_canteen_devices %} checked{% endif %}> {% translate "Canteen tills may record attendance" %}</label>
+    </div>
+  </div>
+  <div class="card stack" data-step>
+    <p class="xs dimmed">{% translate "This person signs in to the school dashboard and can add students, staff and devices." %}</p>
+    {% translate "Full name" as l %}{% include "core/components/field.html" with name="full_name" label=l value=data.full_name %}
+    {% translate "Email (login)" as l %}{% include "core/components/field.html" with name="email" label=l type="email" required=True value=data.email attrs='data-testid="onboard-admin-email"' %}
+    {% translate "Phone" as l %}{% include "core/components/field.html" with name="phone_number" label=l value=data.phone_number %}
+    {% translate "Initial password" as l %}{% translate "At least 8 characters. Share it privately; they can be given a new one from Staff accounts." as dsc %}{% include "core/components/field.html" with name="password" label=l type="password" required=True description=dsc attrs='minlength="8" data-testid="onboard-admin-password"' %}
+  </div>
+  <div class="card" data-step>
+    <p class="fw-600">{% translate "Ready to create" %}</p>
+    <p class="sm">{% blocktranslate trimmed with name=data.name|default:"…" email=data.email|default:"…" %}Create {{ name }} with {{ email }} as its first school admin?{% endblocktranslate %}</p>
+    {% error_alert error %}
+    {% if field_errors %}<div class="alert c-red">{% for k, v in field_errors.items %}<div class="sm">{{ k }}: {{ v }}</div>{% endfor %}</div>{% endif %}
+  </div>
+  <div class="group justify-between mt-md">
+    <button type="button" class="btn btn-default" data-step-back>{% translate "Back" %}</button>
+    <button type="button" class="btn" data-step-next data-testid="onboard-next">{% translate "Next" %}</button>
+    <button type="submit" class="btn c-green hidden" data-step-submit data-testid="onboard-submit">{% translate "Create school" %}</button>
+  </div>
+</form>
+{% endblock %}

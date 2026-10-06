@@ -1,0 +1,17 @@
+{% load i18n web %}<div id="support_body">
+{% error_alert errors.support_body %}
+{% if sales %}<div class="grid base-2 md-4 mb-md">
+  <div class="card">{% stat _("Collected, last 30 days") sales.totals.collected_amount|ugx sales.totals.transactions %}</div>
+  <div class="card">{% stat _("Shortfall, last 30 days") sales.totals.shortfall_amount|ugx %}</div>
+</div>{% endif %}
+<div class="tabs" data-tabs="support">
+  <button type="button" class="tab active" data-tab="students">{% translate "Students" %}</button>
+  <button type="button" class="tab" data-tab="cards">{% translate "Cards" %}</button>
+  <button type="button" class="tab" data-tab="devices">{% translate "Devices" %}</button>
+  <button type="button" class="tab" data-tab="transactions">{% translate "Transactions" %}</button>
+</div>
+<div class="tab-panel" data-tab-panel="support:students">{% include "platform/support/_students.html" %}</div>
+<div class="tab-panel hidden" data-tab-panel="support:cards">{% include "platform/support/_cards.html" %}</div>
+<div class="tab-panel hidden" data-tab-panel="support:devices">{% include "platform/support/_devices.html" %}</div>
+<div class="tab-panel hidden" data-tab-panel="support:transactions">{% include "platform/support/_transactions.html" %}</div>
+</div>
