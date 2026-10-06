@@ -120,6 +120,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
         await _refused(outcome.code ?? 'error', [outcome.detail ?? reasonText(l, outcome.code)]);
         return;
       }
+      if (outcome.channel == SaleChannel.offline) ref.read(syncControllerProvider).nudge();
       final cartCopy = List<CartLine>.of(_cart);
       setState(() => _cart.clear());
       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReceiptPage(lines: cartCopy, total: total, studentName: card.displayName, outcome: outcome)));

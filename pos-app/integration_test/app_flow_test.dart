@@ -8,11 +8,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:schooldimes_pos/app/app.dart';
+import 'package:schooldimes_pos/app/session.dart';
 import 'package:schooldimes_pos/core/security/pin_verifier.dart';
 
 const canteenToken = String.fromEnvironment('SD_CANTEEN_TOKEN');
 const cardUid = String.fromEnvironment('SD_CARD_UID');
 const pin = String.fromEnvironment('SD_PIN', defaultValue: '2468');
+const attendanceToken = String.fromEnvironment('SD_ATTENDANCE_TOKEN');
 
 const vector = r'pbkdf2_sha256$870000$Zp1sAltValue0001$QjRoWpfHmhZknMcby7lVqmy5XHN+EwrR+Avul8TiC08=';
 
@@ -97,5 +99,48 @@ void main() {
     await pumpUntil(t, find.byKey(const Key('today-sales')));
     expect(find.textContaining('1 sale'), findsOneWidget);
     debugPrint('INTEGRATION OK');
+  }, timeout: const Timeout(Duration(minutes: 5)));
+
+  testWidgets('attendance device: provision → simulated tap → welcome → duplicate ignored → synced', (t) async {
+    expect(attendanceToken, isNotEmpty, reason: 'run via tool/run_integration.sh');
+    await const FlutterSecureStorage().deleteAll();
+    final dir = await getApplicationSupportDirectory();
+    for (final f in dir.listSync()) {
+      if (f.path.contains('schooldimes_pos.db')) f.deleteSync();
+    }
+    await t.pumpWidget(const ProviderScope(child: PosApp()));
+    await pumpUntil(t, find.byKey(const Key('setup-token')));
+    await t.enterText(find.byKey(const Key('setup-url')), 'http://10.0.2.2:8000');
+    await t.enterText(find.byKey(const Key('setup-token')), attendanceToken);
+    await t.enterText(find.byKey(const Key('setup-pin')), '9999');
+    await t.enterText(find.byKey(const Key('setup-pin2')), '9999');
+    await t.tap(find.byKey(const Key('setup-submit')));
+    await pumpUntil(t, find.byKey(const Key('tap-result')));
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    await t.enterText(find.byKey(const Key('simulate-uid')), cardUid);
+    await t.tap(find.byKey(const Key('simulate-tap')));
+    final changed = find.byWidgetPredicate((w) => w.key == const Key('tap-result') && w is Text && w.data != 'Tap your card');
+    await pumpUntil(t, changed);
+    debugPrint('TAP RESULT: ${(changed.evaluate().first.widget as Text).data}');
+    final container = ProviderScope.containerOf(t.element(find.byType(PosApp)));
+    final db = container.read(sessionProvider).requireValue.db;
+    final roster = await db.select(db.rosterCards).get();
+    debugPrint('ROSTER: ${roster.length} cards; wanted "$cardUid"; has it: ${roster.any((r) => r.cardUid == cardUid)}; sample ${roster.take(3).map((r) => r.cardUid).toList()}');
+    expect(find.textContaining('Welcome, POS E2E Student'), findsOneWidget);
+    await t.pump(const Duration(seconds: 2)); // confirmation clears, ready for the next student
+    expect(find.text('Tap your card'), findsOneWidget);
+
+    await t.tap(find.byKey(const Key('simulate-tap'))); // same card again within the window
+    await pumpUntil(t, find.textContaining('Already recorded'));
+
+    // the tap reaches the server: pending count goes back to "All synced"
+    await pumpUntil(t, find.text('All synced'), timeout: const Duration(minutes: 3));
+    debugPrint('ATTENDANCE OK');
+    // idle for a while: the periodic sync timer must keep firing
+    final idleUntil = DateTime.now().add(const Duration(seconds: 40));
+    while (DateTime.now().isBefore(idleUntil)) {
+      await t.pump(const Duration(milliseconds: 500));
+    }
   }, timeout: const Timeout(Duration(minutes: 5)));
 }

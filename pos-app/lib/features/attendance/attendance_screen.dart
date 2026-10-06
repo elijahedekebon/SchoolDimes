@@ -45,6 +45,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   Future<void> _onTap(String uid) async {
     final r = await ref.read(attendanceServiceProvider).tap(uid, _direction);
     if (!mounted) return;
+    if (r.status == TapStatus.recorded) ref.read(syncControllerProvider).nudge();
     _clear?.cancel();
     setState(() => _last = r);
     _clear = Timer(const Duration(milliseconds: 1500), () => mounted ? setState(() => _last = null) : null);

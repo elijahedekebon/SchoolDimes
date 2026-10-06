@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../app/session.dart';
-import '../../core/api/api_client.dart';
 import '../../core/config/env.dart';
 import '../../core/ui/widgets.dart';
-import '../cache/cache_service.dart';
 import 'device_config.dart';
 import 'provisioning_service.dart';
 
@@ -64,17 +62,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       _status = l.provisioning;
     });
     try {
+      // registers the device and downloads cards/products before returning
       await ref.read(sessionProvider.notifier).provision(baseUrl: _url.text, token: _token.text, adminPin: _pin.text);
-      if (!mounted) return;
-      setState(() => _status = l.downloadingCache);
-      final s = await ref.read(sessionProvider.future);
-      final cache = CacheService(s.db, s.api!);
-      try {
-        if (s.config!.canSell) await cache.refresh(full: true);
-        if (s.config!.canRecordAttendance) await cache.refreshRoster(full: true);
-      } on ApiException {
-        // provisioned; the cache will download on the next sync
-      }
       if (mounted && widget.reprovision) Navigator.of(context).popUntil((r) => r.isFirst);
     } on ProvisioningError catch (e) {
       setState(() => _error = switch (e.code) {

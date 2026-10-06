@@ -19,7 +19,7 @@ abstract final class Env {
 
   /// Sync tuning (overridable in settings).
   static const int syncBatchSize = 100;
-  static const Duration syncInterval = Duration(minutes: 2);
+  static const Duration syncInterval = Duration(seconds: int.fromEnvironment('SYNC_INTERVAL_SECONDS', defaultValue: 120));
   static const Duration cacheRefreshInterval = Duration(minutes: 10);
   static const Duration syncedRetention = Duration(days: 30);
   static const Duration attendanceDedupWindow = Duration(seconds: 60);

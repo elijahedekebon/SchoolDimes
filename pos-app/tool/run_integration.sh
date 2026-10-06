@@ -15,4 +15,6 @@ flutter test integration_test --flavor dev ${1:+-d "$1"} \
   --dart-define=API_BASE_URL=http://10.0.2.2:8000 \
   --dart-define=SD_CANTEEN_TOKEN="$(get canteen_token)" \
   --dart-define=SD_CARD_UID="$(get card_uid)" \
-  --dart-define=SD_PIN="$(get pin)"
+  --dart-define=SD_PIN="$(get pin)" \
+  --dart-define=SD_ATTENDANCE_TOKEN="$(get attendance_token)" \
+  --dart-define=SYNC_INTERVAL_SECONDS=15

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api/api_client.dart';
@@ -74,25 +75,31 @@ final statusProvider = StreamProvider<PosStatus>((ref) async* {
   final online = ref.watch(connectivityProvider).value ?? false;
   final syncing = ref.watch(syncingProvider);
   while (true) {
-    final pendingSales = await (s.db.selectOnly(s.db.saleQueue)
-          ..addColumns([s.db.saleQueue.id.count()])
-          ..where(s.db.saleQueue.status.equals('pending')))
-        .map((r) => r.read(s.db.saleQueue.id.count()) ?? 0)
-        .getSingle();
-    final pendingTaps = await (s.db.selectOnly(s.db.attendanceQueue)
-          ..addColumns([s.db.attendanceQueue.id.count()])
-          ..where(s.db.attendanceQueue.status.equals('pending')))
-        .map((r) => r.read(s.db.attendanceQueue.id.count()) ?? 0)
-        .getSingle();
-    final last = await s.db.getKv('last_sync_ok_at');
-    final cache = await s.db.getKv('cache_refreshed_at');
-    yield PosStatus(
-      online: online,
-      pending: pendingSales + pendingTaps,
-      lastSync: last == null ? null : DateTime.parse(last),
-      cacheRefreshedAt: cache == null ? null : DateTime.parse(cache),
-      syncing: syncing,
-    );
+    try {
+      final pendingSales =
+          await (s.db.selectOnly(s.db.saleQueue)
+                ..addColumns([s.db.saleQueue.id.count()])
+                ..where(s.db.saleQueue.status.equals('pending')))
+              .map((r) => r.read(s.db.saleQueue.id.count()) ?? 0)
+              .getSingle();
+      final pendingTaps =
+          await (s.db.selectOnly(s.db.attendanceQueue)
+                ..addColumns([s.db.attendanceQueue.id.count()])
+                ..where(s.db.attendanceQueue.status.equals('pending')))
+              .map((r) => r.read(s.db.attendanceQueue.id.count()) ?? 0)
+              .getSingle();
+      final last = await s.db.getKv('last_sync_ok_at');
+      final cache = await s.db.getKv('cache_refreshed_at');
+      yield PosStatus(
+        online: online,
+        pending: pendingSales + pendingTaps,
+        lastSync: last == null ? null : DateTime.parse(last),
+        cacheRefreshedAt: cache == null ? null : DateTime.parse(cache),
+        syncing: syncing,
+      );
+    } on StateError {
+      return; // database closed (app shutting down / re-provisioned)
+    }
     await Future<void>.delayed(const Duration(seconds: 3));
   }
 });
@@ -107,7 +114,10 @@ final syncControllerProvider = Provider<SyncController>((ref) {
 
 class SyncController {
   SyncController(this.ref) {
-    _timer = Timer.periodic(Env.syncInterval, (_) => run());
+    _timer = Timer.periodic(Env.syncInterval, (_) {
+      debugPrint('sync trigger: timer');
+      run();
+    });
     ref.listen<AsyncValue<bool>>(connectivityProvider, (prev, next) {
       if (next.value == true && prev?.value != true) run();
     });
@@ -116,6 +126,17 @@ class SyncController {
 
   final Ref ref;
   late final Timer _timer;
+  Timer? _nudge;
+
+  /// A new record was queued: sync soon (debounced) instead of waiting for
+  /// the timer. Offline, the attempt just fails fast and backs off.
+  void nudge() {
+    _nudge?.cancel();
+    _nudge = Timer(const Duration(seconds: 3), () {
+      debugPrint('sync trigger: nudge');
+      run();
+    });
+  }
 
   Future<SyncReport> run({bool manual = false}) async {
     final session = ref.read(sessionProvider).value;
@@ -138,5 +159,8 @@ class SyncController {
     }
   }
 
-  void dispose() => _timer.cancel();
+  void dispose() {
+    _timer.cancel();
+    _nudge?.cancel();
+  }
 }

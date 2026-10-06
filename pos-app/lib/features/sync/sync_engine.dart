@@ -52,6 +52,11 @@ class SyncEngine {
   int _failures = 0;
   DateTime? _nextAllowed;
   Completer<SyncReport>? _running;
+  DateTime? _runningSince;
+
+  /// A run older than this no longer blocks new ones (a hung request must
+  /// never stop a till from syncing for the rest of the day).
+  static const Duration stuckAfter = Duration(minutes: 2);
 
   /// Exponential backoff with jitter after network failures (5 s … 10 min).
   Duration backoffFor(int failures) {
@@ -64,10 +69,14 @@ class SyncEngine {
 
   /// [manual] ("Sync now") ignores the backoff. Concurrent calls share one run.
   Future<SyncReport> run({bool manual = false, bool refreshCache = true}) {
-    if (_running != null) return _running!.future;
+    if (_running != null && DateTime.now().difference(_runningSince!) < stuckAfter) return _running!.future;
     if (!manual && backingOff) return Future.value(SyncReport()..error = 'backoff');
-    final c = _running = Completer<SyncReport>();
-    _run(refreshCache).then(c.complete, onError: c.completeError).whenComplete(() => _running = null);
+    final c = Completer<SyncReport>();
+    _running = c;
+    _runningSince = DateTime.now();
+    _run(refreshCache).then(c.complete, onError: c.completeError).whenComplete(() {
+      if (identical(_running, c)) _running = null;
+    });
     return c.future;
   }
 
