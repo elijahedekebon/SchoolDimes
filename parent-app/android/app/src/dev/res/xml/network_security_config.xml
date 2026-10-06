@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dev flavor only. Cleartext is allowed so the app can reach a backend at
+     http://<PC LAN IP>:8000 or http://10.0.2.2:8000 (emulator). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

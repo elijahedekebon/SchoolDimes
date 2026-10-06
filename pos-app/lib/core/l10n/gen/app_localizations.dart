@@ -388,6 +388,12 @@ abstract class AppLocalizations {
   /// **'Clear'**
   String get clear;
 
+  /// No description provided for @chargeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Charge'**
+  String get chargeButton;
+
   /// No description provided for @tapCard.
   ///
   /// In en, this message translates to:
@@ -567,12 +573,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only cancel before confirming. After a sale is confirmed, corrections go through a dispute in the parent app or school office — not this device.'**
   String get voidHint;
-
-  /// No description provided for @printReceipt.
-  ///
-  /// In en, this message translates to:
-  /// **'Print receipt'**
-  String get printReceipt;
 
   /// No description provided for @flaggedForReview.
   ///
@@ -945,18 +945,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Build'**
   String get flavor;
-
-  /// No description provided for @printer.
-  ///
-  /// In en, this message translates to:
-  /// **'Receipt printer'**
-  String get printer;
-
-  /// No description provided for @printerHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Print on built-in printers (Sunmi-style) when available.'**
-  String get printerHelp;
 
   /// No description provided for @reprovisionConfirm.
   ///

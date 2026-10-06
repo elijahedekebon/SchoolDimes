@@ -264,3 +264,7 @@ SESSION_SAVE_EVERY_REQUEST = True  # sliding expiry: renewed on activity
 # Backend address written into device-provisioning QR codes (a LAN address
 # for phones on the school Wi-Fi). Blank = the address the admin browses on.
 DEVICE_API_BASE_URL = env("DEVICE_API_BASE_URL", default="")
+
+# Part 3: PBKDF2 iterations for CARD PINs (user passwords keep Django's default).
+# Offline POS devices verify these on low-end phones; see DECISIONS.md.
+CARD_PIN_HASH_ITERATIONS = env.int("CARD_PIN_HASH_ITERATIONS", default=40000)

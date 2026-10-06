@@ -194,6 +194,9 @@ class AppLocalizationsLg extends AppLocalizations {
   String get clear => 'Clear';
 
   @override
+  String get chargeButton => 'Charge';
+
+  @override
   String get tapCard => 'Tap the student\'s card';
 
   @override
@@ -297,9 +300,6 @@ class AppLocalizationsLg extends AppLocalizations {
   @override
   String get voidHint =>
       'Only cancel before confirming. After a sale is confirmed, corrections go through a dispute in the parent app or school office — not this device.';
-
-  @override
-  String get printReceipt => 'Print receipt';
 
   @override
   String get flaggedForReview => 'Sent to the school for review';
@@ -531,13 +531,6 @@ class AppLocalizationsLg extends AppLocalizations {
 
   @override
   String get flavor => 'Build';
-
-  @override
-  String get printer => 'Receipt printer';
-
-  @override
-  String get printerHelp =>
-      'Print on built-in printers (Sunmi-style) when available.';
 
   @override
   String get reprovisionConfirm =>

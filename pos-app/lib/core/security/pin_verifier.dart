@@ -8,11 +8,12 @@ import 'pbkdf2.dart';
 /// Verifies a PIN against the cached Django hash, on the device. The raw PIN
 /// is never stored, logged or sent anywhere by this class.
 ///
-/// Android: the platform's native PBKDF2WithHmacSHA256 (fast enough for
-/// 870k iterations on a cheap terminal) through a method channel; anywhere
-/// else, or if the channel fails, the pure-Dart implementation in an isolate.
+/// Default: the pure-Dart implementation (AOT-compiled) in a background
+/// isolate. Measured on the same Android device in a profile build it is ~4x
+/// FASTER than Android's own PBKDF2WithHmacSHA256 (1.4 s vs 5.7 s for 870k
+/// iterations), so the native method channel is kept only as an option.
 class PinVerifier {
-  PinVerifier({MethodChannel? channel, this.preferNative = true})
+  PinVerifier({MethodChannel? channel, this.preferNative = false})
       : _channel = channel ?? const MethodChannel('ug.schooldimes.pos/pbkdf2');
 
   final MethodChannel _channel;

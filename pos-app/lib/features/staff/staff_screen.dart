@@ -52,36 +52,60 @@ class _StaffScreenState extends ConsumerState<StaffScreen> {
   Widget build(BuildContext context) {
     final l = context.l;
     if (!_unlocked) {
-      return Column(children: [
-        const StatusBar(),
-        Expanded(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 360),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(l.enterAdminPin, style: Theme.of(context).textTheme.titleLarge),
-                Text(List.filled(_pin.length, '●').join(' '), style: const TextStyle(fontSize: 28)),
-                if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                NumPad(
-                  onKey: (k) => _pin.length < 8 ? setState(() => _pin += k) : null,
-                  onBackspace: () => _pin.isNotEmpty ? setState(() => _pin = _pin.substring(0, _pin.length - 1)) : null,
-                  onDone: _pin.length >= 4 ? _check : null,
-                  doneLabel: l.confirm,
+      return Column(
+        children: [
+          const StatusBar(),
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l.enterAdminPin, style: Theme.of(context).textTheme.titleLarge),
+                    Text(List.filled(_pin.length, '●').join(' '), style: const TextStyle(fontSize: 28)),
+                    if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    NumPad(
+                      onKey: (k) => _pin.length < 8 ? setState(() => _pin += k) : null,
+                      onBackspace: () =>
+                          _pin.isNotEmpty ? setState(() => _pin = _pin.substring(0, _pin.length - 1)) : null,
+                      onDone: _pin.length >= 4 ? _check : null,
+                      doneLabel: l.confirm,
+                    ),
+                    TextButton.icon(
+                      onPressed: _biometric,
+                      icon: const Icon(Icons.fingerprint),
+                      label: Text(l.useBiometrics),
+                    ),
+                  ],
                 ),
-                TextButton.icon(onPressed: _biometric, icon: const Icon(Icons.fingerprint), label: Text(l.useBiometrics)),
-              ]),
+              ),
             ),
           ),
-        ),
-      ]);
+        ],
+      );
     }
     return DefaultTabController(
       length: 4,
-      child: Column(children: [
-        const StatusBar(),
-        TabBar(isScrollable: true, tabs: [Tab(text: l.todaySummary), Tab(text: l.needsReview), Tab(text: l.rejectedList), Tab(text: l.settings)]),
-        const Expanded(child: TabBarView(children: [_Today(), _ReviewList(rejected: false), _ReviewList(rejected: true), _Settings()])),
-      ]),
+      child: Column(
+        children: [
+          const StatusBar(),
+          TabBar(
+            isScrollable: true,
+            tabs: [
+              Tab(text: l.todaySummary),
+              Tab(text: l.needsReview),
+              Tab(text: l.rejectedList),
+              Tab(text: l.settings),
+            ],
+          ),
+          const Expanded(
+            child: TabBarView(
+              children: [_Today(), _ReviewList(rejected: false), _ReviewList(rejected: true), _Settings()],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -89,10 +113,14 @@ class _StaffScreenState extends ConsumerState<StaffScreen> {
 final _todayProvider = StreamProvider<(List<SaleQueueData>, List<AttendanceQueueData>)>((ref) async* {
   final db = ref.watch(sessionProvider).requireValue.db;
   while (true) {
-    final day = Kampala.day(DateTime.now());
-    final sales = await (db.select(db.saleQueue)..where((s) => s.kampalaDay.equals(day))).get();
-    final taps = await (db.select(db.attendanceQueue)..where((s) => s.kampalaDay.equals(day))).get();
-    yield (sales, taps);
+    try {
+      final day = Kampala.day(DateTime.now());
+      final sales = await (db.select(db.saleQueue)..where((s) => s.kampalaDay.equals(day))).get();
+      final taps = await (db.select(db.attendanceQueue)..where((s) => s.kampalaDay.equals(day))).get();
+      yield (sales, taps);
+    } on StateError {
+      return; // database closed
+    }
     await Future<void>.delayed(const Duration(seconds: 3));
   }
 });
@@ -109,23 +137,26 @@ class _Today extends ConsumerWidget {
     final pending = done.where((s) => s.status == 'pending').length;
     final total = Money.sum(done.map((s) => Money(s.amountCents)));
     final tapsPending = taps.where((t) => t.status == 'pending').length;
-    return ListView(padding: const EdgeInsets.all(16), children: [
-      Card(
-        child: ListTile(
-          leading: const Icon(Icons.point_of_sale),
-          title: Text(l.salesCount(done.length), key: const Key('today-sales')),
-          subtitle: Text('${l.salesTotal(total.format())}\n${l.syncedVsPending(done.length - pending, pending)}'),
-          isThreeLine: true,
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.point_of_sale),
+            title: Text(l.salesCount(done.length), key: const Key('today-sales')),
+            subtitle: Text('${l.salesTotal(total.format())}\n${l.syncedVsPending(done.length - pending, pending)}'),
+            isThreeLine: true,
+          ),
         ),
-      ),
-      Card(
-        child: ListTile(
-          leading: const Icon(Icons.how_to_reg),
-          title: Text(l.tapsCount(taps.length)),
-          subtitle: Text(l.syncedVsPending(taps.length - tapsPending, tapsPending)),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.how_to_reg),
+            title: Text(l.tapsCount(taps.length)),
+            subtitle: Text(l.syncedVsPending(taps.length - tapsPending, tapsPending)),
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 }
 
@@ -147,23 +178,36 @@ class _ReviewList extends ConsumerWidget {
         builder: (_, tsnap) {
           final rows = snap.data ?? const [];
           final taps = tsnap.data ?? const [];
-          return ListView(padding: const EdgeInsets.all(8), children: [
-            Padding(padding: const EdgeInsets.all(8), child: Text(rejected ? l.rejectedHelp : l.needsReviewHelp)),
-            if (rows.isEmpty && taps.isEmpty) Padding(padding: const EdgeInsets.all(16), child: Text(l.nothingHere)),
-            for (final s in rows)
-              ListTile(
-                leading: Icon(rejected ? Icons.block : Icons.report_problem, color: rejected ? Colors.red : Colors.orange),
-                title: Text('${s.studentName} — ${Money(s.amountCents).format()}'),
-                subtitle: Text([
-                  s.deviceLocalTimestamp.replaceFirst('T', ' ').substring(0, 16),
-                  if (s.shortfallCents != null && s.shortfallCents! > 0) 'shortfall ${Money(s.shortfallCents!).format()}',
-                  if (s.flags.isNotEmpty) s.flags.split(',').map((f) => reasonText(l, f)).join('; '),
-                  if (s.reason != null) s.reason!,
-                ].join(' · ')),
-              ),
-            for (final t in taps)
-              ListTile(leading: const Icon(Icons.block, color: Colors.red), title: Text('${t.studentName} (${t.direction})'), subtitle: Text('${t.deviceLocalTimestamp} · ${t.reason ?? ''}')),
-          ]);
+          return ListView(
+            padding: const EdgeInsets.all(8),
+            children: [
+              Padding(padding: const EdgeInsets.all(8), child: Text(rejected ? l.rejectedHelp : l.needsReviewHelp)),
+              if (rows.isEmpty && taps.isEmpty) Padding(padding: const EdgeInsets.all(16), child: Text(l.nothingHere)),
+              for (final s in rows)
+                ListTile(
+                  leading: Icon(
+                    rejected ? Icons.block : Icons.report_problem,
+                    color: rejected ? Colors.red : Colors.orange,
+                  ),
+                  title: Text('${s.studentName} — ${Money(s.amountCents).format()}'),
+                  subtitle: Text(
+                    [
+                      s.deviceLocalTimestamp.replaceFirst('T', ' ').substring(0, 16),
+                      if (s.shortfallCents != null && s.shortfallCents! > 0)
+                        'shortfall ${Money(s.shortfallCents!).format()}',
+                      if (s.flags.isNotEmpty) s.flags.split(',').map((f) => reasonText(l, f)).join('; '),
+                      if (s.reason != null) s.reason!,
+                    ].join(' · '),
+                  ),
+                ),
+              for (final t in taps)
+                ListTile(
+                  leading: const Icon(Icons.block, color: Colors.red),
+                  title: Text('${t.studentName} (${t.direction})'),
+                  subtitle: Text('${t.deviceLocalTimestamp} · ${t.reason ?? ''}'),
+                ),
+            ],
+          );
         },
       ),
     );
@@ -197,62 +241,77 @@ class _SettingsState extends ConsumerState<_Settings> {
     final session = ref.watch(sessionProvider).requireValue;
     final cfg = session.config!;
     final lang = ref.watch(localeProvider).value ?? 'en';
-    final role = switch (cfg.role) { 'merchant' => l.roleMerchant, 'attendance' => l.roleAttendance, _ => l.roleCanteen };
-    return ListView(padding: const EdgeInsets.all(8), children: [
-      ListTile(
-        leading: const Icon(Icons.language),
-        title: Text(l.language),
-        trailing: DropdownButton<String>(
-          value: lang,
-          items: const [
-            DropdownMenuItem(value: 'en', child: Text('English')),
-            DropdownMenuItem(value: 'lg', child: Text('Luganda')),
-            DropdownMenuItem(value: 'sw', child: Text('Kiswahili')),
-          ],
-          onChanged: (v) => v == null ? null : ref.read(sessionProvider.notifier).setLanguage(v),
+    final role = switch (cfg.role) {
+      'merchant' => l.roleMerchant,
+      'attendance' => l.roleAttendance,
+      _ => l.roleCanteen,
+    };
+    return ListView(
+      padding: const EdgeInsets.all(8),
+      children: [
+        ListTile(
+          leading: const Icon(Icons.language),
+          title: Text(l.language),
+          trailing: DropdownButton<String>(
+            value: lang,
+            items: const [
+              DropdownMenuItem(value: 'en', child: Text('English')),
+              DropdownMenuItem(value: 'lg', child: Text('Luganda')),
+              DropdownMenuItem(value: 'sw', child: Text('Kiswahili')),
+            ],
+            onChanged: (v) => v == null ? null : ref.read(sessionProvider.notifier).setLanguage(v),
+          ),
         ),
-      ),
-      ListTile(
-        leading: const Icon(Icons.sync),
-        title: Text(l.syncNow),
-        enabled: !_busy,
-        onTap: () => _wrap(() async {
-          final r = await ref.read(syncControllerProvider).run(manual: true);
-          if (r.networkFailed) throw Exception(l.syncFailed);
-        }, l.syncDone),
-      ),
-      ListTile(
-        leading: const Icon(Icons.download),
-        title: Text(l.refreshCache),
-        enabled: !_busy,
-        onTap: () => _wrap(() async {
-          if (cfg.canSell) await ref.read(cacheServiceProvider).refresh(full: true);
-          if (cfg.canRecordAttendance) await ref.read(cacheServiceProvider).refreshRoster(full: true);
-        }, l.cacheRefreshed),
-      ),
-      const _LockedCards(),
-      const Divider(),
-      ListTile(title: Text(l.deviceInfo), subtitle: Text('${cfg.deviceName} · $role')),
-      ListTile(title: Text(l.school), subtitle: Text(cfg.schoolName)),
-      if (cfg.merchant != null) ListTile(title: Text(l.merchant), subtitle: Text(cfg.merchant!['name'] as String)),
-      ListTile(title: Text(l.appVersion), subtitle: Text('${Env.appVersion} · ${l.flavor}: ${Env.flavor} · ${cfg.baseUrl}')),
-      if (Env.isDev) const _ShowUid(),
-      const Divider(),
-      ListTile(
-        leading: const Icon(Icons.qr_code),
-        title: Text(l.reprovision),
-        onTap: () async {
-          final ok = await showDialog<bool>(
-            context: context,
-            builder: (c) => AlertDialog(
-              content: Text(l.reprovisionConfirm),
-              actions: [TextButton(onPressed: () => Navigator.pop(c, false), child: Text(l.cancel)), FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(l.confirm))],
-            ),
-          );
-          if (ok == true && context.mounted) Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SetupScreen(reprovision: true)));
-        },
-      ),
-    ]);
+        ListTile(
+          leading: const Icon(Icons.sync),
+          title: Text(l.syncNow),
+          enabled: !_busy,
+          onTap: () => _wrap(() async {
+            final r = await ref.read(syncControllerProvider).run(manual: true);
+            if (r.networkFailed) throw Exception(l.syncFailed);
+          }, l.syncDone),
+        ),
+        ListTile(
+          leading: const Icon(Icons.download),
+          title: Text(l.refreshCache),
+          enabled: !_busy,
+          onTap: () => _wrap(() async {
+            if (cfg.canSell) await ref.read(cacheServiceProvider).refresh(full: true);
+            if (cfg.canRecordAttendance) await ref.read(cacheServiceProvider).refreshRoster(full: true);
+          }, l.cacheRefreshed),
+        ),
+        const _LockedCards(),
+        const Divider(),
+        ListTile(title: Text(l.deviceInfo), subtitle: Text('${cfg.deviceName} · $role')),
+        ListTile(title: Text(l.school), subtitle: Text(cfg.schoolName)),
+        if (cfg.merchant != null) ListTile(title: Text(l.merchant), subtitle: Text(cfg.merchant!['name'] as String)),
+        ListTile(
+          title: Text(l.appVersion),
+          subtitle: Text('${Env.appVersion} · ${l.flavor}: ${Env.flavor} · ${cfg.baseUrl}'),
+        ),
+        if (Env.isDev) const _ShowUid(),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.qr_code),
+          title: Text(l.reprovision),
+          onTap: () async {
+            final ok = await showDialog<bool>(
+              context: context,
+              builder: (c) => AlertDialog(
+                content: Text(l.reprovisionConfirm),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(c, false), child: Text(l.cancel)),
+                  FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(l.confirm)),
+                ],
+              ),
+            );
+            if (ok == true && context.mounted) {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SetupScreen(reprovision: true)));
+            }
+          },
+        ),
+      ],
+    );
   }
 }
 
@@ -273,7 +332,10 @@ class _LockedCards extends ConsumerWidget {
             for (final r in rows)
               ListTile(
                 title: Text(r.cardUid),
-                trailing: TextButton(onPressed: () => ref.read(saleServiceProvider).pins.unlock(r.cardUid), child: Text(context.l.unlockCard)),
+                trailing: TextButton(
+                  onPressed: () => ref.read(saleServiceProvider).pins.unlock(r.cardUid),
+                  child: Text(context.l.unlockCard),
+                ),
               ),
           ],
         );
@@ -305,7 +367,11 @@ class _ShowUidState extends ConsumerState<_ShowUid> {
     return ListTile(
       leading: const Icon(Icons.nfc),
       title: Text(l.showUid),
-      subtitle: Text(_uid ?? l.showUidHint, key: const Key('shown-uid'), style: _uid == null ? null : const TextStyle(fontFamily: 'monospace', fontSize: 18)),
+      subtitle: Text(
+        _uid ?? l.showUidHint,
+        key: const Key('shown-uid'),
+        style: _uid == null ? null : const TextStyle(fontFamily: 'monospace', fontSize: 18),
+      ),
       trailing: _uid == null
           ? null
           : IconButton(
@@ -313,7 +379,8 @@ class _ShowUidState extends ConsumerState<_ShowUid> {
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: _uid!));
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.uidCopied)));
-              }),
+              },
+            ),
       onTap: () async {
         final reader = ref.read(nfcReaderProvider);
         _sub ??= reader.uids.listen((u) => mounted ? setState(() => _uid = u) : null);

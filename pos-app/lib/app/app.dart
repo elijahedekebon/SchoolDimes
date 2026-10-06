@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../core/l10n/gen/app_localizations.dart';
+import '../core/nfc/nfc_reader.dart';
 import '../core/ui/widgets.dart';
 import '../features/attendance/attendance_screen.dart';
 import '../features/p2p/p2p_screen.dart';
@@ -66,10 +67,12 @@ class HomeShell extends ConsumerStatefulWidget {
 
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _tab = 0;
+  late final NfcReader _nfc; // kept: `ref` can't be used in dispose()
 
   @override
   void initState() {
     super.initState();
+    _nfc = ref.read(nfcReaderProvider);
     WakelockPlus.enable(); // counter terminal: the screen never sleeps
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
@@ -77,7 +80,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   void dispose() {
     WakelockPlus.disable();
-    ref.read(nfcReaderProvider).stop();
+    _nfc.stop();
     super.dispose();
   }
 

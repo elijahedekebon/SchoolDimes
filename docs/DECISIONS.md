@@ -1056,3 +1056,151 @@ future browser client). `.gitignore`, `.env.example` and the READMEs no
 longer mention Node/npm. Mentions of Next.js that remain in this file,
 `PART4A_PLAN.md` and `WEB_MIGRATION_PLAN.md` are the historical record of
 what was replaced.
+
+### POS app structure and state (Part 4B copies this)
+- **Riverpod 3** (`flutter_riverpod`, no code generation). `Provider` for
+  services, `AsyncNotifier` for the session (identity + encrypted database +
+  API client), `StreamProvider` for live status. Feature-first folders:
+  `lib/core/{api,config,db,l10n,money,nfc,security,time,ui}` and
+  `lib/features/{provisioning,cache,policy,sale,p2p,attendance,sync,staff}`.
+  Business logic is plain Dart classes (`SaleService`, `SyncEngine`,
+  `CacheService`, `AttendanceService`, `purchaseViolations`) behind a `PosApi`
+  interface, so it's unit-tested without a device or network.
+- **One app, three roles.** The role comes from `GET /pos/device/`
+  (`can_sell`, `can_p2p`, `can_record_attendance`); tabs are built from it.
+
+### Encrypted local database
+`drift` on `package:sqlite3` 3.x with the **SQLite3MultipleCiphers** build
+(`hooks.user_defines.sqlite3.source: sqlite3mc` in `pubspec.yaml`). The old
+`sqlcipher_flutter_libs` route is obsolete with sqlite3 3.x. The 256-bit key
+is random per install and kept in `flutter_secure_storage` (Android
+Keystore). A test proves the file is unreadable without the key or with a
+wrong one. A full device wipe needs the key gone too: uninstalling the app
+removes both.
+
+### PIN verification on the device, and card PIN iterations
+- The device verifies Django's `pbkdf2_sha256$<iter>$<salt>$<hash>` itself
+  (constant-time compare), tested against vectors produced by the backend's
+  own `make_password`. The raw PIN is never stored, logged, or sent for
+  purchases (`pin_verified: true`). Exception: `POST /pos/p2p-transfer/`
+  requires the PIN by contract, so for that online-only flow it is held in
+  memory for one request (over TLS in prod).
+- **Measured on the same Android device, profile build:** Android's native
+  `PBKDF2WithHmacSHA256` took 5.7 s for 870,000 iterations; the app's
+  pure-Dart PBKDF2 (AOT) took 1.4 s. Dart is therefore the default; the
+  native channel remains as an option. On a cheap phone (several times
+  slower than an emulator on an Apple-silicon Mac) 870k iterations would
+  keep a student waiting for many seconds at the counter.
+- **So card PINs now use `CARD_PIN_HASH_ITERATIONS` (default 40,000)** for
+  new and reset PINs, about 0.1 s on the emulator and well under a second
+  on low-end phones. **Security trade-off, reversible by setting the env
+  var:** for a 4–6 digit PIN the iteration count was never the protection
+  (10,000 guesses × 870k iterations is minutes on a GPU). The protections
+  are per-school scoping, device revocation, on-device and server lockout,
+  and the offline spend ceiling (Part 2 decision). User passwords keep
+  Django's default. Existing 870k hashes still verify (the contract says to
+  read the iteration count from each hash) until the PIN is reset.
+  `verify_pin()` now uses the PBKDF2 hasher directly, so card PINs never
+  depend on `PASSWORD_HASHERS`.
+
+### Sales: local checks first, then online, with one idempotency key
+Flow: cart → card → PIN → **local policy check** (same codes, same order as
+`debit_violations()`, offline-ceiling balance rule) → staff confirms → the
+row is written to the queue → `POST /pos/purchase/`. A definite refusal
+(422) marks the row `refused` (nothing happened, never synced). No answer,
+or a timeout, keeps the row `pending` with the **same key** for
+`/pos/sync/`, because local checks already passed and the food was handed
+over. If the server had in fact applied it, sync answers `duplicate`. This
+avoids the "uncertain sale" state that a check-after-timeout design would
+create. The weekly cap is checked offline using the new `week_spend`.
+- **Custom amounts** are allowed on canteen and merchant tills (a
+  description plus amount; no product, so category rules don't apply,
+  exactly as on the server).
+- **No void after confirmation.** Corrections go through disputes (said on
+  the confirm dialog and the receipt).
+
+### Sync engine
+Triggers: start-up, connectivity regained, a periodic timer (2 min,
+`SYNC_INTERVAL_SECONDS`), a debounced "nudge" ~3 s after any new offline
+record, "Sync now", and Android WorkManager every ~15 min in the
+background. Sales then attendance, oldest first, in batches of 100; every
+documented per-item result is handled (`applied`, `duplicate`, `shortfall` →
+needs-review list, `rejected` → rejected list). A network failure leaves
+every row pending (exponential backoff 5 s…10 min with ±50 % jitter;
+"Sync now" ignores it). Authoritative balances from responses overwrite
+the cache, then an incremental cache refresh runs. Synced rows are pruned
+after 30 days; pending rows never. A run stuck for over 2 minutes no
+longer blocks new runs.
+
+### Provisioning and revocation
+QR (`{"type":"schooldimes_device","v":1,...}`) or manual token; the base
+URL is editable only in the dev flavor (prod requires https). The initial
+cache downloads **before** the home screen shows. Device testing found the
+first card tapped after setup was otherwise "unknown". A 401 anywhere marks
+the device revoked: selling stops, the queue stays, and staff re-provision.
+Rotating a device's token is fine; switching to a different device id is
+refused while unsynced records exist (their idempotency keys are
+per-device). A local staff PIN (PBKDF2) guards settings; the staff
+member's own fingerprint (`local_auth`) can unlock them too.
+
+### No student biometrics on shared terminals
+`local_auth` only recognises fingerprints enrolled on that phone, i.e. the
+staff member's, so it can't identify a student. PIN stays the only student
+authentication. Student biometrics would need a dedicated fingerprint
+reader with its own SDK and server-side template matching (a future
+hardware decision). `Card.biometric_enrolled` remains a flag only.
+
+### Not built in Part 3
+- **Receipt printing** (optional in the brief): no Sunmi-style hardware was
+  available to test, so no printer plugin was added. The receipt is on
+  screen. Next step: add `sunmi_printer_plus` behind a setting once a
+  device is available.
+- **iOS**: the code avoids Android-only APIs where possible, but iOS builds
+  weren't verified (no Xcode on the build machine).
+
+## Part 4B — Parent app
+
+### Mirrors the POS app
+Same Flutter conventions as `pos-app/`: Riverpod 3 without codegen,
+feature-first folders (`lib/core/*`, `lib/features/*`), plain-Dart logic
+behind an API interface (`ParentApi`, faked in widget tests), ARB en/lg/sw,
+dev/prod Android flavors with cleartext only in dev.
+
+### No shared package (yet)
+The overlap with the POS app is three small files (`Money`, Kampala time,
+the API error shape). They are copied with a "twin of pos-app/…" header
+rather than extracted into `packages/schooldimes_core/`, because a shared
+package would couple two apps with different release cycles (terminals vs.
+parents' phones) for very little code. Revisit if the overlap grows.
+
+### Auth
+JWT access/refresh in `flutter_secure_storage`. One dio interceptor adds
+the Bearer token and, on a 401, performs **one** shared refresh: refresh
+tokens rotate and are blacklisted on use, so concurrent refreshes would log
+the parent out. It then retries once; a failed refresh signs out with "your
+session ended". Logout blacklists the refresh token server-side. The
+optional app lock uses `local_auth`. That's right here (unlike on the
+shared POS terminal) because it's the parent's own phone.
+
+### Slow or intermittent data
+- The last `/parent/dashboard/` response is cached on the phone and shown
+  read-only with "Offline — last updated …" (no top-up/freeze buttons).
+- Every money action keeps its idempotency key across retries of the same
+  action and only gets a new one after success: deposits, gift vouchers,
+  fund contributions, savings withdrawals. A retry on bad data returns the
+  original object instead of charging twice (tested).
+- Deposit status polling (3 s, up to 3 min) survives network blips. After
+  that it says it's safe to leave: money is only credited on confirmation.
+
+### KYC-lite
+Shown as a guided step after sign-up (skippable) and in "More". No feature
+is restricted in the app: nothing in the backend restricts unverified
+parents, and the brief says not to invent restrictions.
+
+### Push notifications
+No Firebase project or `google-services.json` was provided, so real FCM
+delivery isn't wired. The token-registration path (`POST/DELETE
+/notifications/push-tokens/`) exists behind `--dart-define=PUSH_ENABLED=true`
+with a pluggable `PushTokenSource`; the in-app inbox (with deep links) is
+the working channel. `parent-app/README.md` lists the exact steps to switch
+FCM on.

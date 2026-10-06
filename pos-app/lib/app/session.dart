@@ -7,6 +7,7 @@ import '../core/api/api_client.dart';
 import '../core/config/env.dart';
 import '../core/db/database.dart';
 import '../core/security/secure_store.dart';
+import '../features/cache/cache_service.dart';
 import '../features/provisioning/device_config.dart';
 import '../features/provisioning/provisioning_service.dart';
 
@@ -53,9 +54,18 @@ class SessionNotifier extends AsyncNotifier<Session> {
     );
   }
 
+  /// Registers the device, then downloads the offline cache BEFORE the app
+  /// switches to the home screen, so the first card tapped is already known.
   Future<void> provision({required String baseUrl, required String token, required String adminPin}) async {
     final db = await ref.read(databaseProvider.future);
-    await ref.read(provisioningProvider).provision(baseUrl: baseUrl, token: token, adminPin: adminPin, db: db);
+    final config = await ref.read(provisioningProvider).provision(baseUrl: baseUrl, token: token, adminPin: adminPin, db: db);
+    final cache = CacheService(db, ApiClient(baseUrl: config.baseUrl, token: config.token));
+    try {
+      if (config.canSell) await cache.refresh(full: true);
+      if (config.canRecordAttendance) await cache.refreshRoster(full: true);
+    } on ApiException {
+      // provisioned; the cache downloads on the first sync instead
+    }
     ref.invalidateSelf();
     await future;
   }

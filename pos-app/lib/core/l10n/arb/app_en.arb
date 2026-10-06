@@ -26,17 +26,47 @@
   "online": "Online",
   "offline": "Offline",
   "pendingCount": "{count, plural, =0{All synced} one{1 to sync} other{{count} to sync}}",
-  "@pendingCount": {"placeholders": {"count": {"type": "int"}}},
+  "@pendingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "lastSync": "Last sync {time}",
-  "@lastSync": {"placeholders": {"time": {"type": "String"}}},
+  "@lastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "never": "never",
   "cacheAge": "Cards {age}",
-  "@cacheAge": {"placeholders": {"age": {"type": "String"}}},
+  "@cacheAge": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
   "cacheStale": "Card data is old — connect to refresh",
   "minutesAgo": "{n, plural, =0{just now} one{1 min ago} other{{n} min ago}}",
-  "@minutesAgo": {"placeholders": {"n": {"type": "int"}}},
+  "@minutesAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "hoursAgo": "{n, plural, one{1 h ago} other{{n} h ago}}",
-  "@hoursAgo": {"placeholders": {"n": {"type": "int"}}},
+  "@hoursAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "syncNow": "Sync now",
   "syncing": "Syncing…",
   "syncDone": "Sync finished",
@@ -52,8 +82,15 @@
   "emptyCart": "Tap products to add them",
   "total": "Total",
   "charge": "Charge {amount}",
-  "@charge": {"placeholders": {"amount": {"type": "String"}}},
+  "@charge": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "clear": "Clear",
+  "chargeButton": "Charge",
   "tapCard": "Tap the student's card",
   "tapCardHint": "Hold the card against the back of the device",
   "simulateTap": "Simulate tap (dev)",
@@ -67,7 +104,13 @@
   "back": "Back",
   "enterPin": "Student: enter your PIN",
   "pinWrong": "{left, plural, one{Wrong PIN. 1 try left.} other{Wrong PIN. {left} tries left.}}",
-  "@pinWrong": {"placeholders": {"left": {"type": "int"}}},
+  "@pinWrong": {
+    "placeholders": {
+      "left": {
+        "type": "int"
+      }
+    }
+  },
   "pinLocked": "Too many wrong PINs. This card is locked on this device; the school has been told.",
   "checkingPin": "Checking PIN…",
   "cardUnknown": "Unknown card — refresh the card data or contact the school office.",
@@ -85,7 +128,6 @@
   "done": "Done",
   "refusedTitle": "Sale refused",
   "voidHint": "Only cancel before confirming. After a sale is confirmed, corrections go through a dispute in the parent app or school office — not this device.",
-  "printReceipt": "Print receipt",
   "flaggedForReview": "Sent to the school for review",
   "reason_insufficient_funds": "Not enough money on the card.",
   "reason_card_frozen": "This card is frozen.",
@@ -106,16 +148,37 @@
   "reason_recipient_card_inactive": "The other student's card isn't active.",
   "reason_recipient_not_found": "The other student isn't at this school.",
   "reason_other": "Refused ({code}).",
-  "@reason_other": {"placeholders": {"code": {"type": "String"}}},
+  "@reason_other": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "p2pTitle": "Send to a friend",
   "p2pSenderTap": "Sender: tap your card",
   "p2pReceiverTap": "Now tap the receiver's card",
   "p2pAmount": "How much to send?",
   "p2pNote": "Note (optional)",
   "p2pSend": "Send {amount}",
-  "@p2pSend": {"placeholders": {"amount": {"type": "String"}}},
+  "@p2pSend": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "p2pDone": "{amount} sent to {name}",
-  "@p2pDone": {"placeholders": {"amount": {"type": "String"}, "name": {"type": "String"}}},
+  "@p2pDone": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "p2pOnlineOnly": "Transfers need an internet connection.",
   "p2pSameCard": "Tap a different student's card.",
   "attendanceTitle": "Attendance",
@@ -123,11 +186,29 @@
   "directionOut": "Leaving",
   "tapToRecord": "Tap your card",
   "welcome": "Welcome, {name}!",
-  "@welcome": {"placeholders": {"name": {"type": "String"}}},
+  "@welcome": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "goodbye": "Goodbye, {name}!",
-  "@goodbye": {"placeholders": {"name": {"type": "String"}}},
+  "@goodbye": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "alreadyRecorded": "Already recorded, {name}",
-  "@alreadyRecorded": {"placeholders": {"name": {"type": "String"}}},
+  "@alreadyRecorded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "tapUnknown": "Card not recognised — see the office",
   "tapLost": "This card was reported lost — see the office",
   "staffTitle": "Staff",
@@ -136,13 +217,40 @@
   "useBiometrics": "Use fingerprint",
   "todaySummary": "Today",
   "salesCount": "{count, plural, =0{No sales} one{1 sale} other{{count} sales}}",
-  "@salesCount": {"placeholders": {"count": {"type": "int"}}},
+  "@salesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "tapsCount": "{count, plural, =0{No taps} one{1 tap} other{{count} taps}}",
-  "@tapsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@tapsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "salesTotal": "Total {amount}",
-  "@salesTotal": {"placeholders": {"amount": {"type": "String"}}},
+  "@salesTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "syncedVsPending": "{synced} synced · {pending} pending",
-  "@syncedVsPending": {"placeholders": {"synced": {"type": "int"}, "pending": {"type": "int"}}},
+  "@syncedVsPending": {
+    "placeholders": {
+      "synced": {
+        "type": "int"
+      },
+      "pending": {
+        "type": "int"
+      }
+    }
+  },
   "needsReview": "Needs review",
   "needsReviewHelp": "Offline sales the server recorded with a shortfall or broken rule. The school resolves these in the dashboard.",
   "rejectedList": "Rejected",
@@ -158,8 +266,6 @@
   "merchant": "Merchant",
   "appVersion": "App version",
   "flavor": "Build",
-  "printer": "Receipt printer",
-  "printerHelp": "Print on built-in printers (Sunmi-style) when available.",
   "reprovisionConfirm": "Set this device up again? Unsynced records stay on the device.",
   "showUid": "Show card UID (dev)",
   "showUidHint": "Tap any card to read its UID, then issue that UID to a student in the dashboard.",
@@ -174,5 +280,11 @@
   "menuAttendance": "Attendance",
   "menuStaff": "Staff",
   "error": "Something went wrong: {message}",
-  "@error": {"placeholders": {"message": {"type": "String"}}}
+  "@error": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  }
 }

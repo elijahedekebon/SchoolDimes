@@ -32,10 +32,26 @@ def normalize_card_uid(raw: str) -> str:
 
 
 def hash_pin(raw_pin: str) -> str:
-    return make_password(raw_pin)
+    """Card PINs use Django's pbkdf2_sha256 format, with CARD_PIN_HASH_ITERATIONS
+    (default 40,000) instead of Django's 870,000: offline POS devices verify the
+    hash on cheap phones while a student waits, and for a 4-6 digit PIN the
+    iteration count adds little -- lockout and device revocation are the real
+    protection (DECISIONS.md, Part 3). Devices read the iteration count from each
+    hash, so older 870k hashes keep working until the PIN is reset."""
+    from django.conf import settings
+    from django.contrib.auth.hashers import PBKDF2PasswordHasher
+
+    hasher = PBKDF2PasswordHasher()
+    return hasher.encode(raw_pin, hasher.salt(), iterations=settings.CARD_PIN_HASH_ITERATIONS)
 
 
 def verify_pin(card: Card, raw_pin: str) -> bool:
+    # Card PINs are always pbkdf2_sha256 (see hash_pin), whatever
+    # PASSWORD_HASHERS says for user passwords; older hashes fall back.
+    from django.contrib.auth.hashers import PBKDF2PasswordHasher
+
+    if card.pin_hash.startswith("pbkdf2_sha256$"):
+        return PBKDF2PasswordHasher().verify(raw_pin, card.pin_hash)
     return check_password(raw_pin, card.pin_hash)
 
 

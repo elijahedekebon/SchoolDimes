@@ -120,6 +120,7 @@ class _SaleScreenState extends ConsumerState<SaleScreen> {
         await _refused(outcome.code ?? 'error', [outcome.detail ?? reasonText(l, outcome.code)]);
         return;
       }
+      if (outcome.channel == SaleChannel.offline) ref.read(syncControllerProvider).nudge();
       final cartCopy = List<CartLine>.of(_cart);
       setState(() => _cart.clear());
       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReceiptPage(lines: cartCopy, total: total, studentName: card.displayName, outcome: outcome)));
@@ -235,15 +236,25 @@ class _CartPanel extends StatelessWidget {
             ),
           Row(children: [
             TextButton(onPressed: cart.isEmpty ? null : onClear, child: Text(l.clear)),
-            const Spacer(),
-            Text('${l.total}: ', style: Theme.of(context).textTheme.titleMedium),
-            Text(total.format(), key: const Key('cart-total'), style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(width: 12),
+            // the total shrinks to fit narrow terminals instead of overflowing
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Text.rich(TextSpan(children: [
+                  TextSpan(text: '${l.total}: ', style: Theme.of(context).textTheme.titleMedium),
+                  TextSpan(text: total.format(), style: Theme.of(context).textTheme.titleLarge),
+                ])),
+              ),
+            ),
+            // keyed copy of the total for tests / accessibility
+            Offstage(child: Text(total.format(), key: const Key('cart-total'))),
+            const SizedBox(width: 8),
             FilledButton.icon(
               key: const Key('charge'),
               onPressed: cart.isEmpty || busy ? null : onCharge,
               icon: busy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.contactless),
-              label: Text(l.charge(total.format())),
+              label: Text(l.chargeButton),
             ),
           ]),
         ]),

@@ -688,3 +688,18 @@ file. Placeholders such as `%(name)s` must be kept as they are.
 
 </details>
 
+
+## POS app (`pos-app/lib/core/l10n/arb/`)
+
+`app_lg.arb` and `app_sw.arb` contain no translations yet (155 keys
+each fall back to English, including every policy reason-code message).
+Flutter writes the current list to `pos-app/lib/core/l10n/untranslated.json`
+on every `flutter gen-l10n`; translate the English values in `app_en.arb`.
+Flutter's own widget strings have no Luganda; the app falls back to English
+for those.
+
+## Parent app (`parent-app/lib/core/l10n/arb/`)
+
+Like the POS app: `app_lg.arb` and `app_sw.arb` are empty, so every key in
+`app_en.arb` falls back to English until translated. The current list is
+written to `parent-app/lib/core/l10n/untranslated.json` by `flutter gen-l10n`.
