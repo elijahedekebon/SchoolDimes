@@ -68,11 +68,11 @@ All paths are unchanged. "View" names are in `web/<area>/views.py`.
 | 9 | `/school/students/[id]` · `school/students/[id]/page.tsx` | `/school/students/<int:id>` | `school.StudentDetailView` | `school/students/detail.html` | D | ✅ |
 | 10 | `/school/guardians` · `school/guardians/page.tsx` | `/school/guardians` | `school.GuardiansView` | `school/guardians/index.html` | D | ✅ |
 | 11 | `/school/cards` · `school/cards/page.tsx` | `/school/cards` | `school.CardsView` | `school/cards/index.html` | D | ✅ |
-| 12 | `/school/devices` · `school/devices/page.tsx` | `/school/devices` | `school.DevicesView` | `school/devices/index.html` | E | ⬜ |
-| 13 | `/school/merchants` · `school/merchants/page.tsx` | `/school/merchants` | `school.MerchantsView` | `school/merchants/index.html` | E | ⬜ |
-| 14 | `/school/products` · `school/products/page.tsx` | `/school/products` | `school.ProductsView` | `school/products/index.html` | E | ⬜ |
-| 15 | `/school/policy` · `school/policy/page.tsx` | `/school/policy` | `school.PolicyView` | `school/policy/index.html` | E | ⬜ |
-| 16 | `/school/staff` · `school/staff/page.tsx` | `/school/staff` | `school.StaffView` | `school/staff/index.html` | E | ⬜ |
+| 12 | `/school/devices` · `school/devices/page.tsx` | `/school/devices` | `school.DevicesView` | `school/devices/index.html` | E | ✅ |
+| 13 | `/school/merchants` · `school/merchants/page.tsx` | `/school/merchants` | `school.MerchantsView` | `school/merchants/index.html` | E | ✅ |
+| 14 | `/school/products` · `school/products/page.tsx` | `/school/products` | `school.ProductsView` | `school/products/index.html` | E | ✅ |
+| 15 | `/school/policy` · `school/policy/page.tsx` | `/school/policy` | `school.PolicyView` | `school/policy/index.html` | E | ✅ |
+| 16 | `/school/staff` · `school/staff/page.tsx` | `/school/staff` | `school.StaffView` | `school/staff/index.html` | E | ✅ |
 | 17 | `/school/fees` · `school/fees/page.tsx` | `/school/fees` | `school.FeesView` | `school/fees/index.html` | F | ⬜ |
 | 18 | `/school/attendance` · `school/attendance/page.tsx` | `/school/attendance` | `school.AttendanceView` | `school/attendance/index.html` | F | ⬜ |
 | 19 | `/school/pooled-funds` · `school/pooled-funds/page.tsx` | `/school/pooled-funds` | `school.PooledFundsView` | `school/pooled-funds/index.html` | F | ⬜ |
@@ -198,7 +198,7 @@ None. Every Part 4A section (A–J) was finished before this migration; all
 - [x] **B. Overview, sales, reconciliation (+CSV), review queue**
 - [x] **C. Analytics** (Chart.js)
 - [x] **D. Students (+detail tabs), guardians & KYC, cards**
-- [ ] **E. Devices (token once + QR), merchants, products, policy & settings, staff accounts**
+- [x] **E. Devices (token once + QR), merchants, products, policy & settings, staff accounts**
 - [ ] **F. Fees, attendance, pooled funds, disputes, P2P alerts, data requests, tips, payment issues**
 - [ ] **G. Platform back-office**
 - [ ] **H. Student portal**

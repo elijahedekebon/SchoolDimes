@@ -1,0 +1,19 @@
+{% load i18n web %}<form id="school_settings" class="card" hx-post="/school/policy/settings" hx-target="this" hx-swap="outerHTML">
+  <p class="fw-600">{% translate "POS & attendance settings" %}</p>
+  <p class="xs dimmed mb-sm">{% translate "Per-school settings used by the offline POS devices." %}</p>
+  {% error_alert errors.school_settings %}
+  {% if settings %}
+  <div class="grid sm-3">
+    {% translate "Offline spend ceiling" as l %}{% translate "How far below its cached balance a card may go across offline devices." as dsc %}
+    {% include "core/components/money_input.html" with name="offline_spend_ceiling" label=l description=dsc value=settings.offline_spend_ceiling required=True %}
+    <label class="field"><span class="label">{% translate "Wrong PINs before lockout" %}</span><span class="description">{% translate "Within 24 h; the card is frozen when reached." %}</span><input class="input" type="number" min="1" max="20" name="pin_lockout_threshold" value="{{ settings.pin_lockout_threshold }}"></label>
+    <label class="field"><span class="label">{% translate "Device is stale after (hours)" %}</span><input class="input" type="number" min="1" max="720" name="device_stale_after_hours" value="{{ settings.device_stale_after_hours }}"></label>
+  </div>
+  <div class="stack gap-xs mt-sm">
+    <label class="switch"><input type="checkbox" name="attendance_notify_guardians" value="1"{% if settings.attendance_notify_guardians %} checked{% endif %}> {% translate "Notify guardians on a student's first tap-in each day" %}</label>
+    <label class="switch"><input type="checkbox" name="attendance_on_canteen_devices" value="1"{% if settings.attendance_on_canteen_devices %} checked{% endif %}> {% translate "Canteen tills may also record attendance taps" %}</label>
+  </div>
+  {% error_alert settings_error %}
+  <div class="group justify-end mt-md"><button type="submit" class="btn">{% translate "Save" %}</button></div>
+  {% endif %}
+</form>

@@ -1,0 +1,18 @@
+{% load i18n web %}<div id="overrides_table" class="card" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-swap="outerHTML">
+  <p class="fw-600">{% translate "Per-student overrides" %}</p>
+  <p class="xs dimmed mb-sm">{% translate "Set by parents (tighten only) or by you. Purple = set by a parent." %}</p>
+  {% if errors.overrides_table %}{% error_alert errors.overrides_table %}{% else %}
+  <div class="table-wrap"><table class="table striped wide">
+    <thead><tr><th>{% translate "Student" %}</th><th>{% translate "Daily spend cap" %}</th><th>{% translate "Per-transaction cap" %}</th><th>{% translate "Student-to-student transfers allowed" %}</th><th>{% translate "Blocks" %}</th><th>{% translate "Set by" %}</th><th>{% translate "Updated" %}</th><th></th></tr></thead>
+    <tbody>{% for p in rows %}<tr><td><a href="/school/students/{{ p.student }}">{{ p.student_name }}</a></td>
+      <td>{% if p.daily_spend_cap is None %}—{% else %}{{ p.daily_spend_cap|money }}{% endif %}</td>
+      <td>{% if p.per_transaction_cap is None %}—{% else %}{{ p.per_transaction_cap|money }}{% endif %}</td>
+      <td>{% if p.p2p_enabled is False %}{% translate "Off" %}{% else %}{% translate "Inherit" %}{% endif %}</td>
+      <td>{{ p.blocks }}</td>
+      <td><span class="group gap-4">{{ p.updated_by_name|dash }}{% if p.updated_by_role %}{% if p.updated_by_role == "parent" %}{% badge p.updated_by_role "grape" "filled" "xs" %}{% else %}{% badge p.updated_by_role "blue" "filled" "xs" %}{% endif %}{% endif %}</span></td>
+      <td>{{ p.updated_at|dt }}</td>
+      <td><button type="button" class="btn btn-xs btn-light c-red" hx-get="/school/policy/overrides/{{ p.id }}/remove" hx-target="#sd-modal-body">{% translate "Remove" %}</button></td></tr>
+    {% empty %}{% empty_row 8 _("No per-student overrides.") %}{% endfor %}</tbody></table></div>
+  {% pagination page "overrides_table" %}
+  {% endif %}
+</div>

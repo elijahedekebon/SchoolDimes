@@ -54,33 +54,15 @@ class SchoolSettingsView(generics.RetrieveUpdateAPIView):
     http_method_names = ["get", "patch", "put", "head", "options"]
 
     def get_object(self):
-        from django.utils.translation import gettext as _
+        from .services import school_settings_for
 
-        from core.exceptions import ServiceError
-        from students.access import STAFF_ROLES
-
-        from .services import get_school_settings
-
-        user = self.request.user
-        if is_platform_admin(user):
-            school_id = self.request.query_params.get("school")
-            if not school_id:
-                raise ServiceError("school_required", _("platform_admin must pass ?school=<id>."))
-        elif user.role in STAFF_ROLES and user.school_id:
-            school_id = user.school_id
-        else:
-            raise ServiceError("forbidden", _("Only school staff can see school settings."), status=403)
-        if self.request.method not in permissions.SAFE_METHODS and not (
-            is_platform_admin(user) or is_school_admin(user)
-        ):
-            raise ServiceError("forbidden", _("Only a school admin can change school settings."), status=403)
-        return get_school_settings(int(school_id))
+        return school_settings_for(self.request.user, self.request.query_params,
+                                   write=self.request.method not in permissions.SAFE_METHODS)
 
     def perform_update(self, serializer):
-        from core.audit import audit
+        from .services import update_school_settings
 
-        serializer.save()
-        audit(self.request.user, "school_settings.update", serializer.instance)
+        update_school_settings(self.request.user, serializer)
 
 
 class MySchoolView(generics.GenericAPIView):

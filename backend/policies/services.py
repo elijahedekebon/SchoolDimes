@@ -264,3 +264,161 @@ def policies_for(user, params):
         get_school_policy(user.school_id)
         return qs.filter(school_id=user.school_id)
     return qs.none()
+
+
+
+# ---------------------------------------------------------------------------
+# Catalogue and policy writes (shared by the API viewsets and the web pages)
+# ---------------------------------------------------------------------------
+
+def _check_catalog_refs(data, school_id):
+    """Products: the category must be this school's, the merchant approved for it."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+
+    category = data.get("category")
+    if category is not None and getattr(category, "school_id", school_id) != school_id:
+        raise ServiceError("category_invalid", _("That category belongs to another school."))
+    merchant = data.get("merchant")
+    if merchant is not None:
+        from merchants.services import is_approved_for
+
+        if not is_approved_for(merchant, school_id):
+            raise ServiceError("merchant_not_approved", _("That merchant is not approved for this school."))
+
+
+def create_catalog_item(actor, serializer, basename, requested_school=None):
+    """Product categories, products, fee categories: created in the actor's
+    school (platform_admin must name one)."""
+    from django.utils.translation import gettext as _
+
+    from core.audit import audit
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin
+
+    if is_platform_admin(actor):
+        if not requested_school:
+            raise ServiceError("school_required", _("platform_admin must pass school."))
+        school_id = int(requested_school)
+    else:
+        school_id = actor.school_id
+    _check_catalog_refs(serializer.validated_data, school_id)
+    serializer.save(school_id=school_id)
+    audit(actor, f"{basename}.create", serializer.instance)
+    return serializer.instance
+
+
+def update_catalog_item(actor, serializer, basename):
+    from core.audit import audit
+
+    _check_catalog_refs(serializer.validated_data, serializer.instance.school_id)
+    serializer.save()
+    audit(actor, f"{basename}.update", serializer.instance)
+    return serializer.instance
+
+
+def delete_catalog_item(actor, instance, basename):
+    from core.audit import audit
+
+    audit(actor, f"{basename}.destroy", instance)
+    instance.delete()
+
+
+def _authorize_policy_write(actor, student, school_id):
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin, is_school_admin
+    from students.access import is_guardian
+
+    if is_platform_admin(actor):
+        return
+    if is_school_admin(actor) and actor.school_id == school_id:
+        return
+    if student is not None and is_guardian(actor, student):
+        return
+    raise ServiceError("forbidden", _("You cannot change this policy."), status=403)
+
+
+def _check_policy_refs(data, school_id):
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from merchants.services import is_approved_for
+
+    for f in ("blocked_categories", "allowed_categories", "blocked_items"):
+        for obj in data.get(f) or []:
+            if obj.school_id != school_id:
+                raise ServiceError("reference_invalid", _("A referenced category or item belongs to another school."))
+    for f in ("blocked_merchants", "allowed_merchants"):
+        for merchant in data.get(f) or []:
+            if not is_approved_for(merchant, school_id):
+                raise ServiceError("reference_invalid", _("A referenced merchant is not approved for this school."))
+
+
+def _tighten_check(actor, data, student, instance=None):
+    if student is None or actor.role != "parent":
+        return
+    merged = {f: data.get(f, getattr(instance, f, None) if instance else None)
+              for f in ("daily_spend_cap", "weekly_spend_cap", "per_transaction_cap", "p2p_daily_cap", "p2p_enabled")}
+    merged["allowed_categories"] = data.get("allowed_categories")
+    validate_override_tightens(get_school_policy(student.school_id), merged)
+
+
+def create_policy(actor, serializer):
+    """Per-student overrides only (the school default always exists)."""
+    from django.utils.translation import gettext as _
+
+    from core.audit import audit
+    from core.exceptions import ServiceError
+    from core.permissions import is_school_admin
+
+    from .models import Policy
+
+    student = serializer.validated_data.get("student")
+    if student is None:
+        if not is_school_admin(actor):
+            raise ServiceError("forbidden", _("Only a school admin can edit the school default."), status=403)
+        raise ServiceError("default_exists", _("The school default already exists; PATCH it instead."), status=409)
+    _authorize_policy_write(actor, student, student.school_id)
+    if Policy.objects.filter(student=student).exists():
+        raise ServiceError("override_exists", _("This student already has an override; PATCH it instead."), status=409)
+    _check_policy_refs(serializer.validated_data, student.school_id)
+    _tighten_check(actor, serializer.validated_data, student)
+    serializer.save(school_id=student.school_id, updated_by=actor)
+    audit(actor, "policy.create", serializer.instance)
+    return serializer.instance
+
+
+def update_policy(actor, serializer):
+    from django.utils.translation import gettext as _
+
+    from core.audit import audit
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin, is_school_admin
+
+    instance = serializer.instance
+    if "student" in serializer.validated_data and serializer.validated_data["student"] != instance.student:
+        raise ServiceError("student_immutable", _("A policy's student cannot be changed."))
+    if instance.student is None and not (is_school_admin(actor) or is_platform_admin(actor)):
+        raise ServiceError("forbidden", _("Only a school admin can edit the school default."), status=403)
+    _authorize_policy_write(actor, instance.student, instance.school_id)
+    _check_policy_refs(serializer.validated_data, instance.school_id)
+    _tighten_check(actor, serializer.validated_data, instance.student, instance)
+    serializer.save(updated_by=actor)
+    audit(actor, "policy.update", serializer.instance)
+    return serializer.instance
+
+
+def delete_policy(actor, instance):
+    from django.utils.translation import gettext as _
+
+    from core.audit import audit
+    from core.exceptions import ServiceError
+
+    if instance.student is None:
+        raise ServiceError("forbidden", _("The school default cannot be deleted."), status=403)
+    _authorize_policy_write(actor, instance.student, instance.school_id)
+    audit(actor, "policy.destroy", instance)
+    instance.delete()

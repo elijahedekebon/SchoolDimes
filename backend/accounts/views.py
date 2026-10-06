@@ -137,69 +137,32 @@ class StaffUserViewSet(viewsets.ModelViewSet):
             raise ServiceError("forbidden", _("Only admins manage staff accounts."), status=403)
 
     def get_queryset(self):
-        from .services import staff_users_visible_to
+        from .services import staff_for
 
-        qs = staff_users_visible_to(self.request.user)
-        params = self.request.query_params
-        if params.get("role"):
-            qs = qs.filter(role=params["role"])
-        if params.get("school") and is_platform_admin(self.request.user):
-            qs = qs.filter(school_id=params["school"])
-        if params.get("search"):
-            from django.db.models import Q
-
-            qs = qs.filter(Q(email__icontains=params["search"]) | Q(full_name__icontains=params["search"]))
-        return qs.order_by("role", "email")
+        return staff_for(self.request.user, self.request.query_params)
 
     def create(self, request, *args, **kwargs):
-        from core.exceptions import ServiceError
-        from merchants.models import Merchant
-
-        from .services import create_staff_user
+        from .services import create_staff_from
 
         s = self.get_serializer(data=request.data)
         s.is_valid(raise_exception=True)
-        d = s.validated_data
-        if not d.get("password"):
-            raise ServiceError("password_required", _("Set an initial password (at least 8 characters)."))
-        merchant = None
-        if d.get("merchant"):
-            merchant = Merchant.objects.filter(pk=d["merchant"]).first()
-            if merchant is None:
-                raise ServiceError("not_found", _("Merchant not found."), status=404)
-        user = create_staff_user(
-            request.user, email=d["email"], password=d["password"], role=d["role"],
-            full_name=d.get("full_name", ""), phone_number=d.get("phone_number", ""),
-            school_id=(d["school"].pk if d.get("school") else None), merchant=merchant,
-            preferred_language=d.get("preferred_language", "en"),
-        )
+        user = create_staff_from(request.user, s.validated_data)
         return Response(self.get_serializer(user).data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
         """Editable: full_name, phone_number, preferred_language, is_active."""
-        from core.audit import audit
-        from core.exceptions import ServiceError
+        from .services import update_staff_user
 
-        user = self.get_object()
-        allowed = {k: v for k, v in request.data.items() if k in ("full_name", "phone_number", "preferred_language", "is_active")}
-        if user.pk == request.user.pk and allowed.get("is_active") is False:
-            raise ServiceError("cannot_deactivate_self", _("You can't deactivate your own account."), status=409)
-        s = self.get_serializer(user, data=allowed, partial=True)
-        s.is_valid(raise_exception=True)
-        s.save()
-        audit(request.user, "user.update", user, school_id=user.school_id, details=allowed, force=True)
-        return Response(s.data)
+        return Response(self.get_serializer(update_staff_user(request.user, self.get_object(), request.data)).data)
 
     @action(detail=True, methods=["post"], url_path="set-password")
     def set_password(self, request, pk=None):
-        from core.audit import audit
+        from .services import set_staff_password
 
         user = self.get_object()
         s = SetPasswordSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        user.set_password(s.validated_data["password"])
-        user.save(update_fields=["password"])
-        audit(request.user, "user.set_password", user, school_id=user.school_id, force=True)
+        set_staff_password(request.user, user, s.validated_data["password"])
         return Response({"detail": _("Password updated.")})
 
 

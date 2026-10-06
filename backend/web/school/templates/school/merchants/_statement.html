@@ -1,0 +1,5 @@
+{% load i18n %}<div class="drawer-xl">
+<div class="dialog-header"><h3 class="dialog-title">{% blocktranslate trimmed with name=merchant.name %}{{ name }} — statement{% endblocktranslate %}</h3><button type="button" class="close-btn" data-close>×</button></div>
+<form id="statement-range" hx-get="/school/merchants/{{ merchant.id }}/statement" hx-target="#statement_body" hx-swap="outerHTML" hx-trigger="change">{% include "core/components/date_range.html" %}</form>
+{% include "school/merchants/_statement_body.html" %}
+</div>

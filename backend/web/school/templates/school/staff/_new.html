@@ -1,0 +1,15 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n web %}
+{% block title %}{% translate "New staff account" %}{% endblock %}
+{% block description %}{% endblock %}
+{% block fields %}
+<label class="field"><span class="label">{% translate "Role" %}</span>
+  <select class="input" name="role">{% for value, label, help in roles %}<option value="{{ value }}"{% if data.role == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+{% for value, label, help in roles %}<p class="xs dimmed" data-show-if="role={{ value }}">{{ help }}</p>{% endfor %}
+<div data-show-if="role=merchant_staff">{% with err=field_errors|get:"merchant" %}<label class="field"><span class="label">{% translate "Merchant" %} <span class="req">*</span></span>
+  <select class="input{% if err %} error{% endif %}" name="merchant"><option value=""></option>{% for m in merchants %}<option value="{{ m.id }}"{% if data.merchant == m.id|stringformat:"s" %} selected{% endif %}>{{ m.name }}</option>{% endfor %}</select>{% if err %}<span class="field-error">{{ err }}</span>{% endif %}</label>{% endwith %}</div>
+{% translate "Full name" as l %}{% include "core/components/field.html" with name="full_name" label=l value=data.full_name %}
+{% translate "Email" as l %}{% include "core/components/field.html" with name="email" label=l type="email" required=True value=data.email %}
+{% translate "Phone" as l %}{% include "core/components/field.html" with name="phone_number" label=l value=data.phone_number %}
+{% translate "Initial password" as l %}{% translate "At least 8 characters. Share it privately." as dsc %}{% include "core/components/field.html" with name="password" label=l type="password" required=True description=dsc attrs='minlength="8"' %}
+{% endblock %}
+{% block confirm_label %}{% translate "Create" %}{% endblock %}

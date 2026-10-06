@@ -1414,15 +1414,23 @@ PATCH accepts only `full_name`, `phone_number`, `preferred_language`, `is_active
 (`409 cannot_deactivate_self`). `set-password` body `{ "password": "…" }`.
 
 #### Device provisioning QR (consumed by the POS app, Part 3)
-At registration and token rotation the dashboard shows the raw `device_token`
-once, as text and as a QR code whose content is this JSON (UTF-8):
+At registration and token rotation the web dashboard (`/school/devices`,
+`/school/merchants`) shows the raw `device_token` once, as text and as a QR
+code (drawn server-side as SVG with `segno`, error correction M, 4-module
+quiet zone). The QR content is this JSON, UTF-8, **compact (no spaces), keys
+in this order** (format unchanged from Part 4A):
 ```json
-{ "type": "schooldimes_device", "v": 1,
-  "api_base_url": "http://192.168.1.20:8000", "device_token": "<raw token>" }
+{"type":"schooldimes_device","v":1,"api_base_url":"http://192.168.1.20:8000","device_token":"<raw token>"}
 ```
-`api_base_url` is the backend **origin** (no `/api/v1`) that the device should
-use. The admin can edit it before the QR is shown; it defaults to
-`NEXT_PUBLIC_DEVICE_API_BASE_URL`, else `NEXT_PUBLIC_API_BASE_URL`.
+- `type` is always `schooldimes_device`; the POS app rejects any other code.
+- `v` is the format version (1). A later format bumps it.
+- `api_base_url` is the backend **origin** (no `/api/v1`, no trailing slash)
+  the device should use. The admin can edit it in the token dialog (the QR is
+  redrawn); it defaults to `DEVICE_API_BASE_URL`, else the address the admin's
+  browser is using (so set `DEVICE_API_BASE_URL` to the PC's LAN address when
+  phones on the school Wi-Fi provision against a dev machine).
+- `device_token` is the raw token, exactly as `Authorization: Device <token>`
+  expects it. The web never stores or logs it; the list shows only `token_prefix`.
 
 ### Section G additions — platform back-office (`backoffice` app, platform_admin only)
 

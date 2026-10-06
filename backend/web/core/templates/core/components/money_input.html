@@ -1,0 +1,5 @@
+{% load web %}{% with err=field_errors|get:name %}<label class="field"><span class="label">{{ label }}{% if required %} <span class="req">*</span>{% endif %}</span>
+  {% if description %}<span class="description">{{ description }}</span>{% endif %}
+  <span class="input-prefix"><span>UGX</span><input class="input{% if err %} error{% endif %}" inputmode="decimal" name="{{ name }}" value="{{ value|default_if_none:'' }}"{% if required %} required{% endif %}{% if attrs %} {{ attrs }}{% endif %}></span>
+  {% if err %}<span class="field-error">{{ err }}</span>{% endif %}
+</label>{% endwith %}

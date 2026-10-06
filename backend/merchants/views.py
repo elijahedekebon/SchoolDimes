@@ -102,29 +102,9 @@ class MerchantViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.C
     def statement(self, request, pk=None):
         """merchant_staff of this merchant (all its schools, ?school= to narrow)
         and school_admin (their own school only). ?from=&to= (Kampala days)."""
-        merchant = self.get_object()
-        user = request.user
-        if is_platform_admin(user) or services.user_merchant(user) == merchant:
-            school_ids = services.approved_school_ids(merchant) or list(
-                merchant.approvals.values_list("school_id", flat=True))
-            if request.query_params.get("school"):
-                school_ids = [int(request.query_params["school"])] if int(request.query_params["school"]) in school_ids else []
-        elif is_school_admin(user):
-            school_ids = [user.school_id]
-        else:
-            raise ServiceError("not_found", _("Merchant not found."), status=404)
-
-        def day(key, plus=0):
-            value = request.query_params.get(key)
-            parsed = parse_date(value) if value else None
-            if value and parsed is None:
-                raise ServiceError("date_invalid", _("Dates must be YYYY-MM-DD."))
-            return datetime.combine(parsed + timedelta(days=plus), time.min, KAMPALA) if parsed else None
-
-        wallets, entries = services.statement(merchant, school_ids=school_ids,
-                                              date_from=day("from"), date_to=day("to", plus=1))
-        credits = entries.filter(direction="credit").aggregate(s=Sum("amount"))["s"] or Decimal("0")
-        debits = entries.filter(direction="debit").aggregate(s=Sum("amount"))["s"] or Decimal("0")
+        st = services.merchant_statement(request.user, self.get_object(), request.query_params)
+        merchant, school_ids, wallets, entries = st["merchant"], st["school_ids"], st["wallets"], st["entries"]
+        credits, debits = st["total_credits"], st["total_debits"]
         paginator = StandardResultsSetPagination()
         page = paginator.paginate_queryset(entries, request, view=self)
         return Response({

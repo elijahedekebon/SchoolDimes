@@ -1,0 +1,9 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n %}
+{% block title %}{% translate "Register merchant" %}{% endblock %}
+{% block description %}<p class="xs dimmed">{% translate "The merchant is approved for your school straight away. Other schools approve it separately." %}</p>{% endblock %}
+{% block fields %}
+{% translate "Name" as l %}{% include "core/components/field.html" with name="name" label=l required=True value=data.name %}
+{% translate "Category" as l %}{% include "core/components/field.html" with name="category" label=l placeholder="bookshop" value=data.category %}
+{% translate "Phone" as l %}{% include "core/components/field.html" with name="contact_phone" label=l value=data.contact_phone %}
+{% endblock %}
+{% block confirm_label %}{% translate "Create" %}{% endblock %}

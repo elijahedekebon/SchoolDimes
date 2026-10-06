@@ -1,0 +1,9 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Policy & settings") _("School-wide spending rules and POS settings. Parents can tighten these per child but never loosen them.") %}{% endpageheader %}
+<div class="stack">
+{% include "school/policy/_default.html" %}
+{% include "school/policy/_settings.html" %}
+{% include "school/policy/_overrides.html" %}
+</div>
+{% endblock %}

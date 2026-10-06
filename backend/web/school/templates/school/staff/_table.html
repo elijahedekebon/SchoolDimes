@@ -1,0 +1,13 @@
+{% load i18n web %}<div id="staff_table" class="table-region mt-sm" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#staff-filters" hx-swap="outerHTML">
+{% if errors.staff_table %}{% error_alert errors.staff_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "Full name" %}</th><th>{% translate "Email" %}</th><th>{% translate "Role" %}</th><th>{% translate "Merchant" %}</th><th>{% translate "Status" %}</th><th>{% translate "Created" %}</th><th></th></tr></thead>
+  <tbody>{% for u in rows %}<tr><td>{{ u.full_name|dash }}</td><td>{{ u.email }}</td><td>{{ u.role_label }}</td><td>{{ u.merchant_name|dash }}</td><td>{% if u.is_active %}{% status_badge "active" %}{% else %}{% status_badge "suspended" %}{% endif %}</td><td>{{ u.date_joined|d }}</td>
+    <td><span class="group gap-xs">
+      <button type="button" class="btn btn-xs btn-light {% if u.is_active %}c-red{% else %}c-green{% endif %}" hx-get="/school/staff/{{ u.id }}/toggle" hx-target="#sd-modal-body">{% if u.is_active %}{% translate "Deactivate" %}{% else %}{% translate "Reactivate" %}{% endif %}</button>
+      <button type="button" class="btn btn-xs btn-light" hx-get="/school/staff/{{ u.id }}/set-password" hx-target="#sd-modal-body">{% translate "Set password" %}</button>
+    </span></td></tr>
+  {% empty %}{% empty_row 7 %}{% endfor %}</tbody></table></div>
+{% pagination page "staff_table" "#staff-filters" %}
+{% endif %}
+</div>

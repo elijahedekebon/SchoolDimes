@@ -1,0 +1,6 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Staff accounts") _("Logins for canteen staff, merchant staff, other school admins, and student-portal accounts.") %}<button type="button" class="btn btn-xs" hx-get="/school/staff/new" hx-target="#sd-modal-body">{% translate "New staff account" %}</button>{% endpageheader %}
+<form id="staff-filters" hx-get="{{ request.path }}" hx-target="#staff_table" hx-swap="outerHTML" hx-trigger="change">{% choice_filter "role" _("Role") filters.role role_options %}</form>
+{% include "school/staff/_table.html" %}
+{% endblock %}

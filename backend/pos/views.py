@@ -47,24 +47,7 @@ class DeviceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.G
     def register(self, request):
         s = DeviceRegisterSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        d = s.validated_data
-        user = request.user
-        if is_platform_admin(user):
-            school = School.objects.filter(pk=d.get("school")).first()
-            if school is None:
-                raise ServiceError("school_required", _("platform_admin must pass school."))
-        else:
-            school = user.school
-        merchant = None
-        if d.get("merchant"):
-            from merchants.models import Merchant
-
-            merchant = Merchant.objects.filter(pk=d["merchant"]).first()
-            if merchant is None:
-                raise ServiceError("merchant_not_approved", _("That merchant is not approved for this school."))
-        device, raw_token = services.register_device(
-            user, school=school, device_name=d["device_name"], device_role=d["device_role"], merchant=merchant
-        )
+        device, raw_token = services.register_device_for(request.user, s.validated_data)
         # The raw token is returned ONCE; only its hash is stored.
         return Response({**DeviceSerializer(device).data, "device_token": raw_token}, status=status.HTTP_201_CREATED)
 

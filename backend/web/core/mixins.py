@@ -96,8 +96,24 @@ class ActionView(AreaRequiredMixin, TenantScopedMixin, View):
     def success(self, result):
         return hx_done(self.success_message or _("Done"))
 
+    # Form dialogs: field names whose initial values come from `self.obj`
+    # (edit) or are blank (create); after a POST they come from the POST.
+    form_fields = ()
+    obj = None
+
+    def form_values(self, data):
+        if self.request.method == "POST":
+            return {f: data.get(f, "") for f in self.form_fields}
+        values = {}
+        for f in self.form_fields:
+            v = getattr(self.obj, f + "_id", None) if self.obj is not None and hasattr(self.obj, f + "_id") \
+                else getattr(self.obj, f, "") if self.obj is not None else ""
+            values[f] = "" if v is None else (v.isoformat() if hasattr(v, "isoformat") else v)
+        return values
+
     def render_dialog(self, extra=None):
         ctx = {"view": self, "action_url": self.request.path, **self.dialog_context(), **(extra or {})}
+        ctx["values"] = self.form_values(ctx.get("data") or {})
         return render(self.request, self.template_name, ctx)
 
     def get(self, request, *args, **kwargs):

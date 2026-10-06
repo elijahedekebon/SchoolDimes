@@ -115,3 +115,42 @@ def merchants_for(user, params=None):
     if user.role == User.Role.MERCHANT_STAFF:
         return qs.filter(staff__user=user)
     return qs.none()
+
+
+
+def merchant_statement(user, merchant, params):
+    """GET /merchants/{id}/statement/: merchant_staff of this merchant (all its
+    schools, ?school= to narrow) and school_admin (their own school only).
+    ?from=&to= (Kampala days). Returns wallets, the entries queryset and totals."""
+    from datetime import datetime, time, timedelta
+    from decimal import Decimal
+
+    from django.db.models import Sum
+    from django.utils.dateparse import parse_date
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin, is_school_admin
+    from policies.services import KAMPALA
+
+    if is_platform_admin(user) or user_merchant(user) == merchant:
+        school_ids = approved_school_ids(merchant) or list(merchant.approvals.values_list("school_id", flat=True))
+        if params.get("school"):
+            school_ids = [int(params["school"])] if int(params["school"]) in school_ids else []
+    elif is_school_admin(user):
+        school_ids = [user.school_id]
+    else:
+        raise ServiceError("not_found", _("Merchant not found."), status=404)
+
+    def day(key, plus=0):
+        value = params.get(key)
+        parsed = parse_date(value) if value else None
+        if value and parsed is None:
+            raise ServiceError("date_invalid", _("Dates must be YYYY-MM-DD."))
+        return datetime.combine(parsed + timedelta(days=plus), time.min, KAMPALA) if parsed else None
+
+    wallets, entries = statement(merchant, school_ids=school_ids, date_from=day("from"), date_to=day("to", plus=1))
+    credits = entries.filter(direction="credit").aggregate(s=Sum("amount"))["s"] or Decimal("0")
+    debits = entries.filter(direction="debit").aggregate(s=Sum("amount"))["s"] or Decimal("0")
+    return {"merchant": merchant, "school_ids": school_ids, "wallets": wallets, "entries": entries,
+            "total_credits": credits, "total_debits": debits}

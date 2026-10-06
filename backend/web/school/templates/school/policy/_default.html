@@ -1,0 +1,19 @@
+{% load i18n web %}<form id="default_policy" class="card" hx-post="/school/policy/default" hx-target="this" hx-swap="outerHTML">
+  <p class="fw-600">{% translate "School default spending policy" %}</p>
+  <p class="xs dimmed mb-sm">{% translate "Applies to every student. Changes reach POS devices on their next cache refresh." %}</p>
+  {% error_alert errors.default_policy %}
+  <div class="grid sm-2 md-3">
+    {% translate "Blank = no limit" as blank %}
+    {% for name, label, value in caps %}{% include "core/components/money_input.html" with name=name label=label value=value description=blank %}{% endfor %}
+    <label class="switch mt-lg"><input type="checkbox" name="p2p_enabled" value="1"{% if p2p_enabled %} checked{% endif %}> {% translate "Student-to-student transfers allowed" %}</label>
+  </div>
+  <div class="grid md-2 mt-sm">
+    {% for l in lists %}<label class="field"><span class="label">{{ l.label }}</span>{% if l.all_empty %}<span class="description">{% translate "Empty = all allowed" %}</span>{% endif %}
+      <select class="input" name="{{ l.name }}" multiple size="4">{% for v, label, sel in l.options %}<option value="{{ v }}"{% if sel %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>{% endfor %}
+  </div>
+  {% error_alert policy_error %}
+  <div class="group justify-between mt-md">
+    <span class="xs dimmed">{% blocktranslate trimmed with who=policy.updated_by_name|default:"—" when=policy.updated_at|dt %}Last changed by {{ who }}, {{ when }}{% endblocktranslate %}</span>
+    <button type="submit" class="btn">{% translate "Save" %}</button>
+  </div>
+</form>

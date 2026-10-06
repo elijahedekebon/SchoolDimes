@@ -56,3 +56,34 @@ def my_school(user) -> dict:
     school = user.school if user.school_id else None
     return {"school": public_school(school) if school else None,
             "schools": [public_school(school)] if school else []}
+
+
+
+def school_settings_for(user, params, *, write=False):
+    """GET/PATCH /school-settings/: the caller's own school (school_admin
+    read/write, other staff read); platform_admin must pass ?school=<id>."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin, is_school_admin
+    from students.access import STAFF_ROLES
+
+    if is_platform_admin(user):
+        school_id = params.get("school")
+        if not school_id:
+            raise ServiceError("school_required", _("platform_admin must pass ?school=<id>."))
+    elif user.role in STAFF_ROLES and user.school_id:
+        school_id = user.school_id
+    else:
+        raise ServiceError("forbidden", _("Only school staff can see school settings."), status=403)
+    if write and not (is_platform_admin(user) or is_school_admin(user)):
+        raise ServiceError("forbidden", _("Only a school admin can change school settings."), status=403)
+    return get_school_settings(int(school_id))
+
+
+def update_school_settings(actor, serializer):
+    from core.audit import audit
+
+    serializer.save()
+    audit(actor, "school_settings.update", serializer.instance)
+    return serializer.instance

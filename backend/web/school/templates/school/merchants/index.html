@@ -1,0 +1,7 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Merchants") _("Nearby shops approved to accept your students' cards. Approval is for your school only.") %}<button type="button" class="btn btn-xs" hx-get="/school/merchants/new" hx-target="#sd-modal-body">{% translate "Register merchant" %}</button>{% endpageheader %}
+<form id="merchants-filters" hx-get="{{ request.path }}" hx-target="#merchants_table" hx-swap="outerHTML" hx-trigger="change">{% choice_filter "approval" _("My school") approval approval_options %}</form>
+{% include "school/merchants/_table.html" %}
+<p class="xs dimmed mt-sm">{% translate "To give merchant staff a login, create a merchant_staff account on the Staff accounts page." %}</p>
+{% endblock %}

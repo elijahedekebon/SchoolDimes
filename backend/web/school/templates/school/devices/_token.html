@@ -1,0 +1,20 @@
+{% load i18n %}<div class="dialog-lg" data-no-dismiss>
+<div class="dialog-header"><h3 class="dialog-title">{% blocktranslate trimmed with name=device.device_name %}Device token for {{ name }}{% endblocktranslate %}</h3></div>
+<div class="stack">
+  <div class="alert c-red"><div class="alert-title">{% translate "Shown only once" %}</div>{% translate "This token is not stored anywhere readable. Copy it or scan the QR code with the POS app now. If it's lost, rotate the token." %}</div>
+  <p class="sm fw-600">{% translate "Device token" %}</p>
+  <div class="group nowrap align-start">
+    <span class="mono sm" id="device-token" data-testid="device-token" style="flex:1">{{ token }}</span>
+    <button type="button" class="btn btn-xs" data-copy="#device-token" data-copied-label="{% translate 'Copied' %}">{% translate "Copy" %}</button>
+  </div>
+  <form hx-post="/school/devices/qr" hx-target="#device-qr" hx-trigger="input changed delay:400ms">
+    <input type="hidden" name="token" value="{{ token }}">
+    <label class="field"><span class="label">{% translate "Backend address the device will use" %}</span>
+      <span class="description">{% translate "For a phone on the school Wi-Fi use this PC's LAN address (e.g. http://192.168.1.20:8000), not localhost." %}</span>
+      <input class="input" name="api_base_url" value="{{ base }}"></label>
+  </form>
+  <div class="group justify-center pad-md" style="background:#fff" id="device-qr">{% include "school/devices/_qr.html" %}</div>
+  <p class="xs dimmed">{% translate "Open the SchoolDimes POS app's setup screen and scan this code. It contains the backend address and the token." %}</p>
+  <div class="group justify-end"><button type="button" class="btn" data-close data-testid="token-saved">{% translate "I've saved it" %}</button></div>
+</div>
+</div>

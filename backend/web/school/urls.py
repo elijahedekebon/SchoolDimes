@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, views_students as d
+from . import views, views_setup as e, views_students as d
 
 urlpatterns = [
     # B
@@ -34,4 +34,30 @@ urlpatterns = [
     path("school/cards/<int:pk>/unfreeze", d.UnfreezeCardView.as_view(), name="school-card-unfreeze"),
     path("school/cards/<int:pk>/mark-lost", d.MarkLostView.as_view(), name="school-card-lost"),
     path("school/cards/<int:pk>/reset-pin", d.ResetPinView.as_view(), name="school-card-reset-pin"),
+    # E
+    path("school/devices", e.DevicesView.as_view(), name="school-devices"),
+    path("school/devices/register", e.RegisterDeviceView.as_view(), name="school-device-register"),
+    path("school/devices/qr", e.DeviceQrView.as_view(), name="school-device-qr"),
+    path("school/devices/<int:pk>/rotate-token", e.RotateTokenView.as_view(), name="school-device-rotate"),
+    path("school/devices/<int:pk>/revoke", e.RevokeDeviceView.as_view(), name="school-device-revoke"),
+    path("school/merchants", e.MerchantsView.as_view(), name="school-merchants"),
+    path("school/merchants/new", e.NewMerchantView.as_view(), name="school-merchant-new"),
+    path("school/merchants/<int:pk>/approve", e.ApproveMerchantView.as_view(), name="school-merchant-approve"),
+    path("school/merchants/<int:pk>/suspend", e.SuspendMerchantView.as_view(), name="school-merchant-suspend"),
+    path("school/merchants/<int:pk>/statement", e.MerchantStatementView.as_view(), name="school-merchant-statement"),
+    path("school/products", e.ProductsView.as_view(), name="school-products"),
+    path("school/products/new", e.ProductFormView.as_view(), name="school-product-new"),
+    path("school/products/<int:pk>/edit", e.ProductFormView.as_view(), name="school-product-edit"),
+    path("school/products/<int:pk>/delete", e.DeleteProductView.as_view(), name="school-product-delete"),
+    path("school/products/categories/new", e.CategoryFormView.as_view(), name="school-category-new"),
+    path("school/products/categories/<int:pk>/edit", e.CategoryFormView.as_view(), name="school-category-edit"),
+    path("school/products/categories/<int:pk>/delete", e.DeleteCategoryView.as_view(), name="school-category-delete"),
+    path("school/policy", e.PolicyView.as_view(), name="school-policy"),
+    path("school/policy/default", e.SaveDefaultPolicyView.as_view(), name="school-policy-default"),
+    path("school/policy/settings", e.SaveSchoolSettingsView.as_view(), name="school-policy-settings"),
+    path("school/policy/overrides/<int:pk>/remove", e.RemoveOverrideView.as_view(), name="school-override-remove"),
+    path("school/staff", e.StaffView.as_view(), name="school-staff"),
+    path("school/staff/new", e.NewStaffView.as_view(), name="school-staff-new"),
+    path("school/staff/<int:pk>/toggle", e.ToggleStaffView.as_view(), name="school-staff-toggle"),
+    path("school/staff/<int:pk>/set-password", e.SetStaffPasswordView.as_view(), name="school-staff-password"),
 ]

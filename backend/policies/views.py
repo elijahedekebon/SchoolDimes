@@ -29,27 +29,20 @@ class _SchoolCatalogViewSet(AuditPlatformAdminWritesMixin, viewsets.ModelViewSet
             return [_IsSchoolAdminOrPlatformAdmin()]
         return [permissions.IsAuthenticated()]
 
-    def _school_id(self, serializer):
-        user = self.request.user
-        if is_platform_admin(user):
-            school_id = self.request.data.get("school")
-            if not school_id:
-                raise ServiceError("school_required", _("platform_admin must pass school."))
-            return int(school_id)
-        return user.school_id
-
     def perform_create(self, serializer):
-        school_id = self._school_id(serializer)
-        self._check_refs(serializer, school_id)
-        serializer.save(school_id=school_id)
-        audit(self.request.user, f"{self.basename}.create", serializer.instance)
+        from .services import create_catalog_item
+
+        create_catalog_item(self.request.user, serializer, self.basename, self.request.data.get("school"))
 
     def perform_update(self, serializer):
-        self._check_refs(serializer, serializer.instance.school_id)
-        super().perform_update(serializer)
+        from .services import update_catalog_item
 
-    def _check_refs(self, serializer, school_id):
-        pass
+        update_catalog_item(self.request.user, serializer, self.basename)
+
+    def perform_destroy(self, instance):
+        from .services import delete_catalog_item
+
+        delete_catalog_item(self.request.user, instance, self.basename)
 
 
 class _IsSchoolAdminOrPlatformAdmin(permissions.BasePermission):
@@ -71,16 +64,6 @@ class ProductViewSet(_SchoolCatalogViewSet):
 
         return products_for(self.request.user, self.request.query_params)
 
-    def _check_refs(self, serializer, school_id):
-        category = serializer.validated_data.get("category")
-        if category is not None and category.school_id != school_id:
-            raise ServiceError("category_invalid", _("That category belongs to another school."))
-        merchant = serializer.validated_data.get("merchant")
-        if merchant is not None:
-            from merchants.services import is_approved_for
-
-            if not is_approved_for(merchant, school_id):
-                raise ServiceError("merchant_not_approved", _("That merchant is not approved for this school."))
 
 
 class PolicyViewSet(AuditPlatformAdminWritesMixin, viewsets.ModelViewSet):
@@ -102,67 +85,17 @@ class PolicyViewSet(AuditPlatformAdminWritesMixin, viewsets.ModelViewSet):
 
         return policies_for(self.request.user, self.request.query_params)
 
-    def _authorize_write(self, student, school_id):
-        user = self.request.user
-        if is_platform_admin(user):
-            return
-        if is_school_admin(user) and user.school_id == school_id:
-            return
-        if student is not None and is_guardian(user, student):
-            return
-        raise ServiceError("forbidden", _("You cannot change this policy."), status=403)
-
-    def _check_refs(self, data, school_id):
-        for f in ("blocked_categories", "allowed_categories", "blocked_items"):
-            for obj in data.get(f) or []:
-                if obj.school_id != school_id:
-                    raise ServiceError("reference_invalid", _("A referenced category or item belongs to another school."))
-        from merchants.services import is_approved_for
-
-        for f in ("blocked_merchants", "allowed_merchants"):
-            for merchant in data.get(f) or []:
-                if not is_approved_for(merchant, school_id):
-                    raise ServiceError("reference_invalid", _("A referenced merchant is not approved for this school."))
-
-    def _tighten_check(self, data, student, instance=None):
-        if student is None or not self.request.user.role == User.Role.PARENT:
-            return
-        merged = {f: data.get(f, getattr(instance, f, None) if instance else None)
-                  for f in ("daily_spend_cap", "weekly_spend_cap", "per_transaction_cap", "p2p_daily_cap", "p2p_enabled")}
-        merged["allowed_categories"] = data.get("allowed_categories")
-        validate_override_tightens(get_school_policy(student.school_id), merged)
-
     def perform_create(self, serializer):
-        user = self.request.user
-        student = serializer.validated_data.get("student")
-        if student is None:
-            if not is_school_admin(user):
-                raise ServiceError("forbidden", _("Only a school admin can edit the school default."), status=403)
-            # the default row always exists (created lazily); create = update it
-            raise ServiceError("default_exists", _("The school default already exists; PATCH it instead."), status=409)
-        self._authorize_write(student, student.school_id)
-        if Policy.objects.filter(student=student).exists():
-            raise ServiceError("override_exists", _("This student already has an override; PATCH it instead."), status=409)
-        self._check_refs(serializer.validated_data, student.school_id)
-        self._tighten_check(serializer.validated_data, student)
-        serializer.save(school_id=student.school_id, updated_by=user)
-        audit(user, "policy.create", serializer.instance)
+        from .services import create_policy
+
+        create_policy(self.request.user, serializer)
 
     def perform_update(self, serializer):
-        instance = serializer.instance
-        if "student" in serializer.validated_data and serializer.validated_data["student"] != instance.student:
-            raise ServiceError("student_immutable", _("A policy's student cannot be changed."))
-        if instance.student is None and not (is_school_admin(self.request.user) or is_platform_admin(self.request.user)):
-            raise ServiceError("forbidden", _("Only a school admin can edit the school default."), status=403)
-        self._authorize_write(instance.student, instance.school_id)
-        self._check_refs(serializer.validated_data, instance.school_id)
-        self._tighten_check(serializer.validated_data, instance.student, instance)
-        serializer.save(updated_by=self.request.user)
-        audit(self.request.user, "policy.update", serializer.instance)
+        from .services import update_policy
+
+        update_policy(self.request.user, serializer)
 
     def perform_destroy(self, instance):
-        if instance.student is None:
-            raise ServiceError("forbidden", _("The school default cannot be deleted."), status=403)
-        self._authorize_write(instance.student, instance.school_id)
-        audit(self.request.user, "policy.destroy", instance)
-        instance.delete()
+        from .services import delete_policy
+
+        delete_policy(self.request.user, instance)

@@ -1,0 +1,15 @@
+{% load i18n web %}<div id="statement_body" class="stack mt-md">
+{% error_alert error %}
+{% if st %}
+<div class="group">
+  <span class="sm">{% translate "Credits" %}: {{ st.total_credits|money }}</span>
+  <span class="sm">{% translate "Debits" %}: {{ st.total_debits|money }}</span>
+  {% for w in st.wallets %}<span class="sm">{% translate "Settlement balance" %}: {{ w.cached_balance|money }}</span>{% endfor %}
+</div>
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "When" %}</th><th>{% translate "Type" %}</th><th>{% translate "Amount" %}</th><th>{% translate "Reference" %}</th></tr></thead>
+  <tbody>{% for e in entries %}<tr><td>{{ e.created_at|dt }}</td><td>{{ e.entry_type|human }}</td><td>{{ e.amount|signed:e.direction|money }}</td><td><span class="mono">{{ e.reference_id }}</span></td></tr>
+  {% empty %}{% empty_row 4 %}{% endfor %}</tbody></table></div>
+{% if page.paginator.num_pages > 1 %}<div class="group justify-end pagination">{% for n in page.paginator.page_range %}<button type="button" class="page-btn{% if n == page.number %} active{% endif %}" hx-get="/school/merchants/{{ merchant.id }}/statement" hx-vals='{"page": "{{ n }}"}' hx-include="#statement-range" hx-target="#statement_body" hx-swap="outerHTML">{{ n }}</button>{% endfor %}</div>{% endif %}
+{% endif %}
+</div>

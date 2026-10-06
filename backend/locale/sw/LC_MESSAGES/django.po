@@ -250,7 +250,25 @@ msgstr[1] ""
 msgid "%(count)s total"
 msgstr ""
 
+msgid "%(email)s can sign in again."
+msgstr ""
+
+msgid "%(email)s can't sign in any more. Nothing they recorded is deleted."
+msgstr ""
+
+msgid "%(name)s goes back to the school defaults, including any limits a parent set."
+msgstr ""
+
+msgid "%(name)s is refused on its next request and can't be re-enabled (register a new device instead). Do this immediately for a lost or stolen till."
+msgstr ""
+
+msgid "%(name)s — statement"
+msgstr ""
+
 msgid "%(name)s's card can be used again. Guardians are notified."
+msgstr ""
+
+msgid "%(name)s's current token stops working at once. You'll see the new token once; enter it on the device to keep it working. Unsynced sales on the device stay queued."
 msgstr ""
 
 msgid "%(parent)s will be able to see %(student)s's balances and history, top up, set spending limits and freeze the card."
@@ -269,6 +287,9 @@ msgid "Accept (acknowledge the flag)"
 msgstr ""
 
 msgid "Account"
+msgstr ""
+
+msgid "Active"
 msgstr ""
 
 msgid "Active card"
@@ -298,6 +319,12 @@ msgstr ""
 msgid "Allowed categories"
 msgstr ""
 
+msgid "Allowed categories only"
+msgstr ""
+
+msgid "Allowed merchants only"
+msgstr ""
+
 msgid "Amount"
 msgstr ""
 
@@ -310,13 +337,37 @@ msgstr ""
 msgid "Analytics"
 msgstr ""
 
+msgid "App version"
+msgstr ""
+
+msgid "Applies to every student. Changes reach POS devices on their next cache refresh."
+msgstr ""
+
+msgid "Approve"
+msgstr ""
+
+msgid "Approve %(name)s"
+msgstr ""
+
+msgid "Approved"
+msgstr ""
+
 msgid "At least 8 characters. Give it to the student privately."
+msgstr ""
+
+msgid "At least 8 characters. Share it privately."
 msgstr ""
 
 msgid "Attendance"
 msgstr ""
 
+msgid "Attendance reader"
+msgstr ""
+
 msgid "Audit log"
+msgstr ""
+
+msgid "Backend address the device will use"
 msgstr ""
 
 msgid "Balance"
@@ -328,7 +379,13 @@ msgstr ""
 msgid "Balances"
 msgstr ""
 
+msgid "Belongs to an approved nearby merchant; sells only that merchant's products."
+msgstr ""
+
 msgid "Best-sellers"
+msgstr ""
+
+msgid "Blank = no limit"
 msgstr ""
 
 msgid "Blocked categories"
@@ -338,6 +395,9 @@ msgid "Blocked items"
 msgstr ""
 
 msgid "Blocked merchants"
+msgstr ""
+
+msgid "Blocks"
 msgstr ""
 
 msgid "Books NOT balanced — investigate"
@@ -358,6 +418,18 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
+msgid "Canteen staff"
+msgstr ""
+
+msgid "Canteen till"
+msgstr ""
+
+msgid "Canteen till 1"
+msgstr ""
+
+msgid "Canteen tills may also record attendance taps"
+msgstr ""
+
 msgid "Card"
 msgstr ""
 
@@ -374,6 +446,9 @@ msgid "Card issued"
 msgstr ""
 
 msgid "Cards"
+msgstr ""
+
+msgid "Categories"
 msgstr ""
 
 msgid "Category"
@@ -412,13 +487,31 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
+msgid "Copied"
+msgstr ""
+
+msgid "Copy"
+msgstr ""
+
+msgid "Create"
+msgstr ""
+
 msgid "Create portal login"
+msgstr ""
+
+msgid "Created"
 msgstr ""
 
 msgid "Creates a read-only student login for %(name)s. It can never see other students."
 msgstr ""
 
+msgid "Credits"
+msgstr ""
+
 msgid "Daily cap"
+msgstr ""
+
+msgid "Daily spend cap"
 msgstr ""
 
 msgid "Data requests"
@@ -430,7 +523,28 @@ msgstr ""
 msgid "Date of birth"
 msgstr ""
 
+msgid "Deactivate"
+msgstr ""
+
+msgid "Debits"
+msgstr ""
+
 msgid "Decision"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Delete \"%(name)s\"? Prefer making it inactive if products or past sales use it."
+msgstr ""
+
+msgid "Delete \"%(name)s\"? Prefer making it inactive: past sales keep their line items either way."
+msgstr ""
+
+msgid "Delete category"
+msgstr ""
+
+msgid "Delete product"
 msgstr ""
 
 msgid "Deposits"
@@ -443,6 +557,18 @@ msgid "Description"
 msgstr ""
 
 msgid "Device"
+msgstr ""
+
+msgid "Device is stale after (hours)"
+msgstr ""
+
+msgid "Device name"
+msgstr ""
+
+msgid "Device token"
+msgstr ""
+
+msgid "Device token for %(name)s"
 msgstr ""
 
 msgid "Devices"
@@ -475,6 +601,12 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
+msgid "Empty = all allowed"
+msgstr ""
+
+msgid "Enter a positive amount, e.g. 1500"
+msgstr ""
+
 msgid "Every amount next to a ledger amount is recomputed from the ledger entries carrying its reference. Sum of every wallet in the school:"
 msgstr ""
 
@@ -505,6 +637,9 @@ msgstr ""
 msgid "Flags"
 msgstr ""
 
+msgid "For a phone on the school Wi-Fi use this PC's LAN address (e.g. http://192.168.1.20:8000), not localhost."
+msgstr ""
+
 msgid "For school administrators, platform staff and students (student portal)."
 msgstr ""
 
@@ -523,6 +658,15 @@ msgstr ""
 msgid "Frozen card"
 msgstr ""
 
+msgid "Full access to this school's dashboard."
+msgstr ""
+
+msgid "Full name"
+msgstr ""
+
+msgid "Gate reader: records tap-in/out, never moves money."
+msgstr ""
+
 msgid "Gross"
 msgstr ""
 
@@ -538,7 +682,16 @@ msgstr ""
 msgid "Hour"
 msgstr ""
 
+msgid "How far below its cached balance a card may go across offline devices."
+msgstr ""
+
+msgid "I've saved it"
+msgstr ""
+
 msgid "Identity checks (KYC-lite) for parents linked to your students, and all guardian links."
+msgstr ""
+
+msgid "Inherit"
 msgstr ""
 
 msgid "Initial password"
@@ -571,6 +724,12 @@ msgstr ""
 msgid "KYC status"
 msgstr ""
 
+msgid "Last changed by %(who)s, %(when)s"
+msgstr ""
+
+msgid "Last seen"
+msgstr ""
+
 msgid "Last sync"
 msgstr ""
 
@@ -598,13 +757,22 @@ msgstr ""
 msgid "Link guardian"
 msgstr ""
 
+msgid "Linked to one approved merchant; sees that merchant's statement."
+msgstr ""
+
 msgid "Login email (school-issued)"
+msgstr ""
+
+msgid "Logins for canteen staff, merchant staff, other school admins, and student-portal accounts."
 msgstr ""
 
 msgid "Low balance only"
 msgstr ""
 
 msgid "Low-balance alert"
+msgstr ""
+
+msgid "Low-balance alert level"
 msgstr ""
 
 msgid "MISMATCH"
@@ -616,10 +784,22 @@ msgstr ""
 msgid "Mark all read"
 msgstr ""
 
+msgid "Mark as unhealthy (nutrition flag)"
+msgstr ""
+
 msgid "Mark card lost"
 msgstr ""
 
 msgid "Mark lost"
+msgstr ""
+
+msgid "Merchant"
+msgstr ""
+
+msgid "Merchant staff"
+msgstr ""
+
+msgid "Merchant till"
 msgstr ""
 
 msgid "Merchants"
@@ -629,6 +809,9 @@ msgid "Must be 4–32 bytes of hex, e.g. 04:A2:2B:7C"
 msgstr ""
 
 msgid "My SchoolDimes"
+msgstr ""
+
+msgid "My school"
 msgstr ""
 
 msgid "NOT balanced"
@@ -646,7 +829,25 @@ msgstr ""
 msgid "Name or class"
 msgstr ""
 
+msgid "Nearby shops approved to accept your students' cards. Approval is for your school only."
+msgstr ""
+
 msgid "Needs review"
+msgstr ""
+
+msgid "New category"
+msgstr ""
+
+msgid "New password"
+msgstr ""
+
+msgid "New password for %(email)s"
+msgstr ""
+
+msgid "New product"
+msgstr ""
+
+msgid "New staff account"
 msgstr ""
 
 msgid "New student"
@@ -679,6 +880,9 @@ msgstr ""
 msgid "No notifications."
 msgstr ""
 
+msgid "No per-student overrides."
+msgstr ""
+
 msgid "No savings goals."
 msgstr ""
 
@@ -686,6 +890,9 @@ msgid "No sync within the school's stale limit"
 msgstr ""
 
 msgid "No verifications submitted."
+msgstr ""
+
+msgid "Not requested"
 msgstr ""
 
 msgid "Note"
@@ -703,6 +910,9 @@ msgstr ""
 msgid "Notifications"
 msgstr ""
 
+msgid "Notify guardians on a student's first tap-in each day"
+msgstr ""
+
 msgid "Nutrition flag: share of item revenue in categories this school marks as unhealthy (Products page). Sales sent without line items aren't in this breakdown."
 msgstr ""
 
@@ -713,6 +923,9 @@ msgid "Offline sales that synced with a shortfall or broke a policy rule. Nothin
 msgstr ""
 
 msgid "Offline shortfalls and policy flags"
+msgstr ""
+
+msgid "Offline spend ceiling"
 msgstr ""
 
 msgid "Onboard a school"
@@ -728,6 +941,9 @@ msgid "Open P2P alerts"
 msgstr ""
 
 msgid "Open disputes"
+msgstr ""
+
+msgid "Open the SchoolDimes POS app's setup screen and scan this code. It contains the backend address and the token."
 msgstr ""
 
 msgid "Optional read-only portal where the student sees their balance, savings goals and recent purchases. The physical card stays the main way students pay."
@@ -766,10 +982,16 @@ msgstr ""
 msgid "PINs don't match"
 msgstr ""
 
+msgid "POS & attendance settings"
+msgstr ""
+
 msgid "POS (card + PIN)"
 msgstr ""
 
 msgid "POS collected"
+msgstr ""
+
+msgid "POS tills, merchant tills and attendance readers. A device that hasn't synced for %(hours)s h is marked stale."
 msgstr ""
 
 msgid "Parent app"
@@ -787,7 +1009,16 @@ msgstr ""
 msgid "Peak hours (%(tz)s)"
 msgstr ""
 
+msgid "Pending"
+msgstr ""
+
 msgid "Pending data requests"
+msgstr ""
+
+msgid "Per-school settings used by the offline POS devices."
+msgstr ""
+
+msgid "Per-student overrides"
 msgstr ""
 
 msgid "Per-student spending"
@@ -800,6 +1031,9 @@ msgid "Permanent: %(name)s's card can never be used again. Issue a replacement a
 msgstr ""
 
 msgid "Phone"
+msgstr ""
+
+msgid "Platform status"
 msgstr ""
 
 msgid "Policy & settings"
@@ -815,6 +1049,12 @@ msgid "Pooled funds"
 msgstr ""
 
 msgid "Portal login"
+msgstr ""
+
+msgid "Price"
+msgstr ""
+
+msgid "Price (UGX)"
 msgstr ""
 
 msgid "Primary"
@@ -833,6 +1073,9 @@ msgid "Qty"
 msgstr ""
 
 msgid "Quantity"
+msgstr ""
+
+msgid "Reactivate"
 msgstr ""
 
 msgid "Reason"
@@ -865,6 +1108,15 @@ msgstr ""
 msgid "Refunds"
 msgstr ""
 
+msgid "Register a device"
+msgstr ""
+
+msgid "Register device"
+msgstr ""
+
+msgid "Register merchant"
+msgstr ""
+
 msgid "Reject reason"
 msgstr ""
 
@@ -872,6 +1124,12 @@ msgid "Rejected"
 msgstr ""
 
 msgid "Relationship"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Remove override"
 msgstr ""
 
 msgid "Remove portal login"
@@ -916,7 +1174,19 @@ msgstr ""
 msgid "Review status"
 msgstr ""
 
+msgid "Revoke"
+msgstr ""
+
+msgid "Revoke device"
+msgstr ""
+
 msgid "Role"
+msgstr ""
+
+msgid "Rotate device token"
+msgstr ""
+
+msgid "Rotate token"
 msgstr ""
 
 msgid "Sale time"
@@ -934,10 +1204,25 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
+msgid "Saved"
+msgstr ""
+
 msgid "Savings"
 msgstr ""
 
 msgid "Savings goals"
+msgstr ""
+
+msgid "School admin"
+msgstr ""
+
+msgid "School canteen"
+msgstr ""
+
+msgid "School default spending policy"
+msgstr ""
+
+msgid "School-wide spending rules and POS settings. Parents can tighten these per child but never loosen them."
 msgstr ""
 
 msgid "SchoolDimes back-office"
@@ -949,10 +1234,25 @@ msgstr ""
 msgid "Search"
 msgstr ""
 
+msgid "Sells canteen products; can also take attendance taps if enabled in Policy & settings."
+msgstr ""
+
 msgid "Sent"
 msgstr ""
 
 msgid "Set a new PIN"
+msgstr ""
+
+msgid "Set by"
+msgstr ""
+
+msgid "Set by parents (tighten only) or by you. Purple = set by a parent."
+msgstr ""
+
+msgid "Set password"
+msgstr ""
+
+msgid "Settlement balance"
 msgstr ""
 
 msgid "Share"
@@ -964,6 +1264,9 @@ msgstr ""
 msgid "Shortfalls"
 msgstr ""
 
+msgid "Shown only once"
+msgstr ""
+
 msgid "Sign in"
 msgstr ""
 
@@ -971,6 +1274,9 @@ msgid "Sign in to the school dashboard"
 msgstr ""
 
 msgid "Sign out"
+msgstr ""
+
+msgid "Sold by"
 msgstr ""
 
 msgid "Something went wrong"
@@ -988,6 +1294,12 @@ msgstr ""
 msgid "Stale / unsynced devices"
 msgstr ""
 
+msgid "Stale only"
+msgstr ""
+
+msgid "Statement"
+msgstr ""
+
 msgid "Status"
 msgstr ""
 
@@ -1000,6 +1312,9 @@ msgstr ""
 msgid "Student portal"
 msgstr ""
 
+msgid "Student-to-student transfers allowed"
+msgstr ""
+
 msgid "Students"
 msgstr ""
 
@@ -1007,6 +1322,15 @@ msgid "Submitted"
 msgstr ""
 
 msgid "Support"
+msgstr ""
+
+msgid "Suspend"
+msgstr ""
+
+msgid "Suspend %(name)s"
+msgstr ""
+
+msgid "Suspended"
 msgstr ""
 
 msgid "Sync status"
@@ -1027,10 +1351,16 @@ msgstr ""
 msgid "The append-only ledger. Balances are the sum of these entries; nothing is ever edited or deleted."
 msgstr ""
 
+msgid "The merchant is approved for your school straight away. Other schools approve it separately."
+msgstr ""
+
 msgid "The old PIN stops working. POS devices pick up the new PIN on their next refresh. A card frozen after wrong PINs stays frozen until you unfreeze it."
 msgstr ""
 
 msgid "The old card (%(uid)s) stays retired as lost. The new card gets a new UID and PIN."
+msgstr ""
+
+msgid "The old password stops working."
 msgstr ""
 
 msgid "The parent registers in the SchoolDimes app first. Enter the exact email of their account."
@@ -1045,13 +1375,22 @@ msgstr ""
 msgid "This student has no usable card."
 msgstr ""
 
+msgid "This token is not stored anywhere readable. Copy it or scan the QR code with the POS app now. If it's lost, rotate the token."
+msgstr ""
+
 msgid "To"
+msgstr ""
+
+msgid "To give merchant staff a login, create a merchant_staff account on the Staff accounts page."
 msgstr ""
 
 msgid "To link or unlink a guardian, open the student."
 msgstr ""
 
 msgid "Today, %(date)s (Africa/Kampala)"
+msgstr ""
+
+msgid "Token"
 msgstr ""
 
 msgid "Top-ups"
@@ -1072,6 +1411,9 @@ msgstr ""
 msgid "Unfreeze card"
 msgstr ""
 
+msgid "Unhealthy"
+msgstr ""
+
 msgid "Unit price"
 msgstr ""
 
@@ -1090,6 +1432,12 @@ msgstr ""
 msgid "Until real devices exist, this queue is filled by the backend's simulate_pos command."
 msgstr ""
 
+msgid "Updated"
+msgstr ""
+
+msgid "Uses the POS app at the canteen. Can't sign in to this dashboard."
+msgstr ""
+
 msgid "Verification queue"
 msgstr ""
 
@@ -1105,19 +1453,40 @@ msgstr ""
 msgid "Weekly cap"
 msgstr ""
 
+msgid "Weekly spend cap"
+msgstr ""
+
+msgid "What the canteen and merchants sell. Categories marked unhealthy feed the nutrition flag in Analytics."
+msgstr ""
+
 msgid "When"
 msgstr ""
 
 msgid "Will be stored as"
 msgstr ""
 
+msgid "Within 24 h; the card is frozen when reached."
+msgstr ""
+
 msgid "Write off"
+msgstr ""
+
+msgid "Wrong PINs before lockout"
 msgstr ""
 
 msgid "Your session ended. Please sign in again."
 msgstr ""
 
+msgid "Your students' cards are removed from this merchant's devices at their next refresh; later sales are rejected. Past sales and the statement stay."
+msgstr ""
+
+msgid "Your students' cards will work at this merchant's devices from their next cache refresh. Parents can still block it per child."
+msgstr ""
+
 msgid "matches ledger"
+msgstr ""
+
+msgid "stale"
 msgstr ""
 
 msgid "unhealthy"

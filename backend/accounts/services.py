@@ -139,3 +139,70 @@ def lookup_parent(actor, email):
     if user is None:
         raise ServiceError("not_found", _("No parent account with that email."), status=404)
     return user
+
+
+
+def staff_for(user, params):
+    """GET /users/ (?role=, ?school= for platform_admin, ?search=)."""
+    from django.db.models import Q
+
+    from core.permissions import is_platform_admin
+
+    qs = staff_users_visible_to(user)
+    if params.get("role"):
+        qs = qs.filter(role=params["role"])
+    if params.get("school") and is_platform_admin(user):
+        qs = qs.filter(school_id=params["school"])
+    if params.get("search"):
+        qs = qs.filter(Q(email__icontains=params["search"]) | Q(full_name__icontains=params["search"]))
+    return qs.order_by("role", "email")
+
+
+def create_staff_from(actor, data):
+    """POST /users/ with validated StaffUserSerializer data."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from merchants.models import Merchant
+
+    if not data.get("password"):
+        raise ServiceError("password_required", _("Set an initial password (at least 8 characters)."))
+    merchant = None
+    if data.get("merchant"):
+        merchant = Merchant.objects.filter(pk=data["merchant"]).first()
+        if merchant is None:
+            raise ServiceError("not_found", _("Merchant not found."), status=404)
+    return create_staff_user(
+        actor, email=data["email"], password=data["password"], role=data["role"],
+        full_name=data.get("full_name", ""), phone_number=data.get("phone_number", ""),
+        school_id=(data["school"].pk if data.get("school") else None), merchant=merchant,
+        preferred_language=data.get("preferred_language", "en"),
+    )
+
+
+def update_staff_user(actor, user, data):
+    """PATCH /users/{id}/: full_name, phone_number, preferred_language, is_active."""
+    from django.utils.translation import gettext as _
+
+    from core.audit import audit
+    from core.exceptions import ServiceError
+
+    from .serializers import StaffUserSerializer
+
+    allowed = {k: v for k, v in data.items() if k in ("full_name", "phone_number", "preferred_language", "is_active")}
+    if user.pk == actor.pk and allowed.get("is_active") is False:
+        raise ServiceError("cannot_deactivate_self", _("You can't deactivate your own account."), status=409)
+    s = StaffUserSerializer(user, data=allowed, partial=True)
+    s.is_valid(raise_exception=True)
+    s.save()
+    audit(actor, "user.update", user, school_id=user.school_id, details=allowed, force=True)
+    return user
+
+
+def set_staff_password(actor, user, password):
+    from core.audit import audit
+
+    user.set_password(password)
+    user.save(update_fields=["password"])
+    audit(actor, "user.set_password", user, school_id=user.school_id, force=True)
+    return user

@@ -1,0 +1,11 @@
+{% load i18n web %}<div id="categories_table" class="table-region" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-swap="outerHTML">
+{% if errors.categories_table %}{% error_alert errors.categories_table %}{% else %}
+<div class="table-wrap"><table class="table striped">
+  <thead><tr><th>{% translate "Name" %}</th><th>{% translate "Unhealthy" %}</th><th>{% translate "Active" %}</th><th></th></tr></thead>
+  <tbody>{% for c in category_rows %}<tr><td>{{ c.name }}</td><td>{% if c.is_unhealthy %}<span class="badge badge-filled c-red">{% translate "Unhealthy" %}</span>{% else %}—{% endif %}</td><td>{% if c.active %}{% status_badge "active" %}{% else %}{% status_badge "closed" %}{% endif %}</td>
+    <td><span class="group gap-xs"><button type="button" class="btn btn-xs btn-light" hx-get="/school/products/categories/{{ c.id }}/edit" hx-target="#sd-modal-body">{% translate "Edit" %}</button>
+      <button type="button" class="btn btn-xs btn-light c-red" hx-get="/school/products/categories/{{ c.id }}/delete" hx-target="#sd-modal-body">{% translate "Delete" %}</button></span></td></tr>
+  {% empty %}{% empty_row 4 %}{% endfor %}</tbody></table></div>
+{% pagination categories_page "categories_table" %}
+{% endif %}
+</div>

@@ -1,0 +1,22 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% pageheader _("Products") _("What the canteen and merchants sell. Categories marked unhealthy feed the nutrition flag in Analytics.") %}{% endpageheader %}
+<div class="tabs" data-tabs="products">
+  <button type="button" class="tab active" data-tab="products">{% translate "Products" %}</button>
+  <button type="button" class="tab" data-tab="categories">{% translate "Categories" %}</button>
+</div>
+<div class="tab-panel" data-tab-panel="products:products">
+  <div class="group justify-between align-end mb-sm">
+    <form id="products-filters" class="group" hx-get="{{ request.path }}" hx-target="#products_table" hx-swap="outerHTML" hx-trigger="change">
+      {% choice_filter "category" _("Category") filters.category category_options %}
+      {% choice_filter "merchant" _("Merchant") filters.merchant merchant_options %}
+    </form>
+    <button type="button" class="btn btn-xs" hx-get="/school/products/new" hx-target="#sd-modal-body">{% translate "New product" %}</button>
+  </div>
+  {% include "school/products/_products.html" %}
+</div>
+<div class="tab-panel hidden" data-tab-panel="products:categories">
+  <div class="group justify-end mb-sm"><button type="button" class="btn btn-xs" hx-get="/school/products/categories/new" hx-target="#sd-modal-body">{% translate "New category" %}</button></div>
+  {% include "school/products/_categories.html" %}
+</div>
+{% endblock %}

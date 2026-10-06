@@ -1,0 +1,16 @@
+{% load i18n web %}<div id="merchants_table" class="table-region mt-sm" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#merchants-filters" hx-swap="outerHTML">
+{% if errors.merchants_table %}{% error_alert errors.merchants_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "Name" %}</th><th>{% translate "Category" %}</th><th>{% translate "Phone" %}</th><th>{% translate "Platform status" %}</th><th>{% translate "My school" %}</th><th></th></tr></thead>
+  <tbody>{% for m in rows %}<tr><td>{{ m.name }}</td><td>{{ m.category|dash }}</td><td>{{ m.contact_phone|dash }}</td><td>{% status_badge m.status %}</td><td>{% status_badge m.my_school_approval|default:"none" %}</td>
+    <td><span class="group gap-xs">{% if m.my_school_approval != "approved" %}
+      <button type="button" class="btn btn-xs btn-light c-green" hx-get="/school/merchants/{{ m.id }}/approve" hx-target="#sd-modal-body">{% translate "Approve" %}</button>
+    {% else %}
+      <button type="button" class="btn btn-xs btn-light c-red" hx-get="/school/merchants/{{ m.id }}/suspend" hx-target="#sd-modal-body">{% translate "Suspend" %}</button>
+      <button type="button" class="btn btn-xs btn-light" hx-get="/school/merchants/{{ m.id }}/statement" hx-target="#sd-drawer-body">{% translate "Statement" %}</button>
+      <button type="button" class="btn btn-xs" hx-get="/school/devices/register?merchant={{ m.id }}" hx-target="#sd-modal-body">{% translate "Register device" %}</button>
+    {% endif %}</span></td></tr>
+  {% empty %}{% empty_row 6 %}{% endfor %}</tbody></table></div>
+{% pagination page "merchants_table" "#merchants-filters" %}
+{% endif %}
+</div>

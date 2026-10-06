@@ -756,3 +756,31 @@ def shortfalls_for(user, params, *, for_list=True):
     elif kind == "flagged":
         qs = qs.filter(shortfall_amount=0)
     return qs
+
+
+
+def register_device_for(actor, data):
+    """POST /pos/devices/register/ with validated DeviceRegisterSerializer data:
+    the actor's own school (platform_admin names one), optional merchant.
+    Returns (device, raw_token) -- the raw token exists only in this return."""
+    from django.utils.translation import gettext as _
+
+    from core.exceptions import ServiceError
+    from core.permissions import is_platform_admin
+    from tenants.models import School
+
+    if is_platform_admin(actor):
+        school = School.objects.filter(pk=data.get("school")).first()
+        if school is None:
+            raise ServiceError("school_required", _("platform_admin must pass school."))
+    else:
+        school = actor.school
+    merchant = None
+    if data.get("merchant"):
+        from merchants.models import Merchant
+
+        merchant = Merchant.objects.filter(pk=data["merchant"]).first()
+        if merchant is None:
+            raise ServiceError("merchant_not_approved", _("That merchant is not approved for this school."))
+    return register_device(actor, school=school, device_name=data["device_name"], device_role=data["device_role"],
+                           merchant=merchant)

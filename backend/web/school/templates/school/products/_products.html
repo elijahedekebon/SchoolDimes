@@ -1,0 +1,11 @@
+{% load i18n web %}<div id="products_table" class="table-region" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#products-filters" hx-swap="outerHTML">
+{% if errors.products_table %}{% error_alert errors.products_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "Name" %}</th><th>{% translate "Category" %}</th><th>{% translate "Price" %}</th><th>{% translate "Sold by" %}</th><th>{% translate "Active" %}</th><th></th></tr></thead>
+  <tbody>{% for p in product_rows %}<tr><td>{{ p.name }}</td><td>{{ p.category_name }}</td><td>{{ p.price|money }}</td><td>{{ p.sold_by }}</td><td>{% if p.active %}{% status_badge "active" %}{% else %}{% status_badge "closed" %}{% endif %}</td>
+    <td><span class="group gap-xs"><button type="button" class="btn btn-xs btn-light" hx-get="/school/products/{{ p.id }}/edit" hx-target="#sd-modal-body">{% translate "Edit" %}</button>
+      <button type="button" class="btn btn-xs btn-light c-red" hx-get="/school/products/{{ p.id }}/delete" hx-target="#sd-modal-body">{% translate "Delete" %}</button></span></td></tr>
+  {% empty %}{% empty_row 6 %}{% endfor %}</tbody></table></div>
+{% pagination products_page "products_table" "#products-filters" %}
+{% endif %}
+</div>

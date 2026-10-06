@@ -1,0 +1,9 @@
+{% extends "core/components/confirm_action.html" %}{% load i18n %}
+{% block title %}{% if obj %}{% translate "Edit" %}{% else %}{% translate "New category" %}{% endif %}{% endblock %}
+{% block description %}{% endblock %}
+{% block fields %}
+{% translate "Name" as l %}{% include "core/components/field.html" with name="name" label=l required=True value=values.name %}
+<label class="checkbox"><input type="checkbox" name="is_unhealthy" value="1"{% if values.is_unhealthy %} checked{% endif %}> {% translate "Mark as unhealthy (nutrition flag)" %}</label>
+<label class="checkbox"><input type="checkbox" name="active" value="1"{% if values.active or not obj and request.method == "GET" %} checked{% endif %}> {% translate "Active" %}</label>
+{% endblock %}
+{% block confirm_label %}{% translate "Save" %}{% endblock %}

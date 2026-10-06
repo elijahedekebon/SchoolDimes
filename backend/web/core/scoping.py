@@ -30,6 +30,7 @@ SCOPES = {
     "products": "policies.services.products_for",
     "merchants": "merchants.services.merchants_for",
     "attendance": "attendance.services.attendance_for",
+    "staff": "accounts.services.staff_for",
 }
 
 

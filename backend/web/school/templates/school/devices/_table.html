@@ -1,0 +1,16 @@
+{% load i18n web %}<div id="devices_table" class="table-region" data-testid="devices-table" hx-get="{{ request.path }}" hx-trigger="sd-refresh from:body" hx-include="#devices-filters" hx-swap="outerHTML">
+{% if errors.devices_table %}{% error_alert errors.devices_table %}{% else %}
+<div class="table-wrap"><table class="table striped wide">
+  <thead><tr><th>{% translate "Device name" %}</th><th>{% translate "Role" %}</th><th>{% translate "Token" %}</th><th>{% translate "Status" %}</th><th>{% translate "Last seen" %}</th><th>{% translate "Last sync" %}</th><th>{% translate "App version" %}</th><th></th></tr></thead>
+  <tbody>{% for d in rows %}<tr>
+    <td><span class="group gap-6">{{ d.device_name }}{% if d.is_stale %}<span class="badge badge-filled badge-xs c-red">{% translate "stale" %}</span>{% endif %}</span></td>
+    <td>{{ d.role_label }}</td><td><span class="mono">{{ d.token_prefix }}…</span></td><td>{% status_badge d.status %}</td>
+    <td>{{ d.last_seen_at|dt }}</td><td><span class="sm{% if d.is_stale %} text c-red{% endif %}">{{ d.last_sync_at|dt }}</span></td><td>{{ d.app_version|dash }}</td>
+    <td>{% if d.status == "active" %}<span class="group gap-xs">
+      <button type="button" class="btn btn-xs btn-light" hx-get="/school/devices/{{ d.id }}/rotate-token" hx-target="#sd-modal-body">{% translate "Rotate token" %}</button>
+      <button type="button" class="btn btn-xs btn-light c-red" data-testid="revoke-device" hx-get="/school/devices/{{ d.id }}/revoke" hx-target="#sd-modal-body">{% translate "Revoke" %}</button>
+    </span>{% endif %}</td></tr>
+  {% empty %}{% empty_row 8 %}{% endfor %}</tbody></table></div>
+{% pagination page "devices_table" "#devices-filters" %}
+{% endif %}
+</div>

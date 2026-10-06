@@ -1,0 +1,11 @@
+{% extends "school/layout.html" %}{% load i18n web %}
+{% block content %}
+{% blocktranslate trimmed asvar subtitle with hours=stale_after %}POS tills, merchant tills and attendance readers. A device that hasn't synced for {{ hours }} h is marked stale.{% endblocktranslate %}
+{% pageheader _("Devices") subtitle %}<button type="button" class="btn btn-xs" data-testid="register-device" hx-get="/school/devices/register" hx-target="#sd-modal-body">{% translate "Register device" %}</button>{% endpageheader %}
+<form id="devices-filters" class="group align-end mb-sm" hx-get="{{ request.path }}" hx-target="#devices_table" hx-swap="outerHTML" hx-trigger="change">
+  {% choice_filter "device_role" _("Role") filters.device_role role_options %}
+  {% choice_filter "status" _("Status") filters.status status_options %}
+  <label class="switch"><input type="checkbox" name="stale" value="true"{% if filters.stale %} checked{% endif %}> {% translate "Stale only" %}</label>
+</form>
+{% include "school/devices/_table.html" %}
+{% endblock %}
