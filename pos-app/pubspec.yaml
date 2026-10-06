@@ -1,0 +1,48 @@
+name: schooldimes_pos
+description: "SchoolDimes POS: canteen, merchant and attendance terminals."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  connectivity_plus: ^7.3.2
+  dio: ^5.11.1
+  drift: ^2.35.1
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
+  flutter_secure_storage: ^11.2.0
+  intl: ^0.20.3
+  local_auth: ^3.0.2
+  mobile_scanner: ^7.4.2
+  nfc_manager: ^4.2.1
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  sqlite3: ^3.7.0
+  uuid: ^4.6.0
+  wakelock_plus: ^1.8.1
+  workmanager: ^0.10.10
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.16.1
+  drift_dev: ^2.35.1
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+# Encrypted local database: SQLite3MultipleCiphers build of package:sqlite3
+# (PRAGMA key). See docs/DECISIONS.md, Part 3.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc
